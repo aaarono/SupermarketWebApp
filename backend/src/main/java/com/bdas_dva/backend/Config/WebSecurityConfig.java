@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -15,11 +16,11 @@ public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())  // Отключаем CSRF
-            .authorizeHttpRequests(authorizeRequests -> 
+            .csrf(AbstractHttpConfigurer::disable)  // Отключаем CSRF
+            .authorizeHttpRequests(authorizeRequests ->
                 authorizeRequests
-                    .mvcMatchers("/public/**").permitAll()       // Доступ к публичным ресурсам
-                    .mvcMatchers("/admin/**").hasRole("Admin")   // Используйте "Admin" без префикса "ROLE_"
+                    .requestMatchers("/", "/home").permitAll()       // Доступ к публичным ресурсам
+                    .requestMatchers("/admin/**").hasRole("Admin")   // Используйте "Admin" без префикса "ROLE_"
                     .anyRequest().authenticated()                // Требуется аутентификация для всех остальных запросов
             )
             .sessionManagement(sessionManagement ->
