@@ -1,6 +1,6 @@
 package com.bdas_dva.backend.Service;
 
-import com.bdas_dva.backend.Model.Dodavatele;
+import com.bdas_dva.backend.Model.Dodavatel;
 import com.bdas_dva.backend.Repository.DodavatelRepository;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +15,7 @@ public class DodavatelService {
         this.dodavatelRepository = dodavatelRepository;
     }
 
-    public List<Dodavatele> getAllDodavatele() {
+    public List<Dodavatel> getAllDodavatele() {
         return dodavatelRepository.findAll();
     }
 }
