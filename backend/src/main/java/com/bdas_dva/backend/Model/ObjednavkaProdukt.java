@@ -1,6 +1,5 @@
 package com.bdas_dva.backend.Model;
 
-import com.bdas_dva.backend.Repository.ObjednavkaProduktId;
 import jakarta.persistence.*;
 
 @Entity
