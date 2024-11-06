@@ -6,6 +6,7 @@ import MainPage from './pages/MainPage';
 import SupermarketPage from './pages/SupermarketPage';
 import SupermarketUserPage from './pages/SupermarketUserPage';
 import UserPage from './pages/UserPage';
+import TestOutput from './pages/TestOutput';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
       <Route path="/registration" element={<RegistrationForm />} />
       <Route path="/supermarket" element={<SupermarketPage />} />
       <Route path="/user/supermarket" element={<SupermarketUserPage />} />
+      <Route path="/test" element={<TestOutput />}/>
     </Routes>
   );
 }
