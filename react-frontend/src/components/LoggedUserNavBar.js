@@ -143,6 +143,7 @@ const LoggedUserNavBar = () => {
                 color="inherit"
                 aria-label="Shopping Cart"
                 sx={{ ml: 1 }}
+                onClick={() => navigate('/user/cart')}
               >
                 <Badge badgeContent={cartItems} color="error">
                   <FaShoppingCart />
