@@ -4,14 +4,14 @@ import ProductList from "../components/ProductList";
 import Supermarket from "../components/Supermarket";
 import AdminNavBar from "../components/AdminNavBar";
 
-const MainPage = () => {
+const AdminPage = () => {
   
     return (
       <>
-          <UserNavBar/>
+          <AdminNavBar/>
           <ProductList/>
       </>
     );
 };
 
-export default MainPage;
+export default AdminPage;
