@@ -4,19 +4,12 @@ import {
   Toolbar,
   Typography,
   Button,
-  IconButton,
-  Menu,
-  MenuItem,
-  Badge,
   Box,
-  Avatar,
   Tooltip,
   Container
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { FaShoppingCart, FaStore, FaUserCircle } from "react-icons/fa";
-import { BiStore } from "react-icons/bi";
-import { MdKeyboardArrowDown } from "react-icons/md";
 import { useNavigate } from 'react-router-dom';
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -57,28 +50,6 @@ const LogoutButton = styled(Button)({
 
 const UserNavBar = () => {
   const navigate = useNavigate();
-  const [supermarketAnchor, setSupermarketAnchor] = useState(null);
-  const [cartItems] = useState(3); // Dummy cart items count
-  const userName = "John Doe"; // Dummy user name
-
-  const supermarkets = [
-    "Walmart Supermarket",
-    "Target Superstore",
-    "Costco Wholesale",
-    "Kroger Marketplace"
-  ];
-
-  const handleSupermarketClick = (event) => {
-    setSupermarketAnchor(event.currentTarget);
-  };
-
-  const handleSupermarketClose = () => {
-    setSupermarketAnchor(null);
-  };
-
-  const handleLogout = () => {
-    console.log("Logging out...");
-  };
 
   return (
     <StyledAppBar position="sticky">
@@ -90,7 +61,7 @@ const UserNavBar = () => {
               component="div"
               sx={{ display: { xs: "none", sm: "block" } }}
             >
-              Welcome to YourSupermarket
+              Welcome to YourMarket
             </Typography>
           </Box>
 
@@ -104,39 +75,6 @@ const UserNavBar = () => {
                 Products
               </StyledButton>
             </Tooltip>
-
-            <Tooltip title="Select Supermarket">
-              <StyledButton
-                startIcon={<BiStore />}
-                endIcon={<MdKeyboardArrowDown />}
-                onClick={handleSupermarketClick}
-                aria-controls="supermarket-menu"
-                aria-haspopup="true"
-                aria-label="Select Supermarket"
-              >
-                Supermarkets
-              </StyledButton>
-            </Tooltip>
-
-            <Menu
-              id="supermarket-menu"
-              anchorEl={supermarketAnchor}
-              open={Boolean(supermarketAnchor)}
-              onClose={handleSupermarketClose}
-              MenuListProps={{
-                "aria-labelledby": "supermarket-button"
-              }}
-            >
-              {supermarkets.map((market) => (
-                <MenuItem
-                  key={market}
-                  onClick={() => navigate('/supermarket')}
-                  sx={{ minWidth: "200px" }}
-                >
-                  {market}
-                </MenuItem>
-              ))}
-            </Menu>
 
             <Tooltip title="LogIn">
               <LogoutButton

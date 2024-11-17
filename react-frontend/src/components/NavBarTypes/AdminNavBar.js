@@ -15,9 +15,8 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { FaShoppingCart, FaStore, FaUserCircle } from "react-icons/fa";
-import { BiStore } from "react-icons/bi";
-import { MdKeyboardArrowDown } from "react-icons/md";
-import { useNavigate } from 'react-router-dom';
+import LocalOfferIcon from '@mui/icons-material/LocalOffer';
+import { Link, useNavigate } from 'react-router-dom';
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   background: "linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)",
@@ -55,26 +54,10 @@ const LogoutButton = styled(Button)({
   }
 });
 
-const LoggedUserNavBar = () => {
+const AdminNavBar = ({ NavBarTypeRole }) => {
   const navigate = useNavigate();
-  const [supermarketAnchor, setSupermarketAnchor] = useState(null);
-  const [cartItems] = useState(3); // Dummy cart items count
-  const userName = "John Doe"; // Dummy user name
-
-  const supermarkets = [
-    "Walmart Supermarket",
-    "Target Superstore",
-    "Costco Wholesale",
-    "Kroger Marketplace"
-  ];
-
-  const handleSupermarketClick = (event) => {
-    setSupermarketAnchor(event.currentTarget);
-  };
-
-  const handleSupermarketClose = () => {
-    setSupermarketAnchor(null);
-  };
+  const [cartItems] = useState(0);
+  const userName = "John Admin";
 
   const handleLogout = () => {
     console.log("Logging out...");
@@ -99,51 +82,28 @@ const LoggedUserNavBar = () => {
               <StyledButton
                 startIcon={<FaStore />}
                 aria-label="View Products"
-                onClick={() => navigate('/user')}
+                onClick={() => navigate('/' + NavBarTypeRole)}
               >
                 Products
               </StyledButton>
             </Tooltip>
 
-            <Tooltip title="Select Supermarket">
+            <Tooltip title="Browse Orders">
               <StyledButton
-                startIcon={<BiStore />}
-                endIcon={<MdKeyboardArrowDown />}
-                onClick={handleSupermarketClick}
-                aria-controls="supermarket-menu"
-                aria-haspopup="true"
-                aria-label="Select Supermarket"
+                startIcon={<LocalOfferIcon />}
+                aria-label="View Orders"
+                onClick={() => navigate('/' + NavBarTypeRole + '/orders')}
               >
-                Supermarkets
+                My Orders
               </StyledButton>
             </Tooltip>
-
-            <Menu
-              id="supermarket-menu"
-              anchorEl={supermarketAnchor}
-              open={Boolean(supermarketAnchor)}
-              onClose={handleSupermarketClose}
-              MenuListProps={{
-                "aria-labelledby": "supermarket-button"
-              }}
-            >
-              {supermarkets.map((market) => (
-                <MenuItem
-                  key={market}
-                  onClick={() => navigate('/user/supermarket')}
-                  sx={{ minWidth: "200px" }}
-                >
-                  {market}
-                </MenuItem>
-              ))}
-            </Menu>
 
             <Tooltip title="Shopping Cart">
               <IconButton
                 color="inherit"
                 aria-label="Shopping Cart"
                 sx={{ ml: 1 }}
-                onClick={() => navigate('/user/cart')}
+                onClick={() => navigate('/' + NavBarTypeRole + '/cart')}
               >
                 <Badge badgeContent={cartItems} color="error">
                   <FaShoppingCart />
@@ -152,13 +112,15 @@ const LoggedUserNavBar = () => {
             </Tooltip>
 
             <Tooltip title="Log Out">
-              <LogoutButton
-                startIcon={<FaUserCircle />}
-                onClick={() => navigate('/')}
-                aria-label="Log Out"
-              >
-                Log Out
-              </LogoutButton>
+              <Link to='/'>
+                <LogoutButton
+                  startIcon={<FaUserCircle />}
+                  onClick={() => handleLogout()}
+                  aria-label="Log Out"
+                >
+                  Log Out
+                </LogoutButton>
+              </Link>
             </Tooltip>
           </NavLinks>
         </StyledToolbar>
@@ -167,4 +129,4 @@ const LoggedUserNavBar = () => {
   );
 };
 
-export default LoggedUserNavBar;
+export default AdminNavBar;

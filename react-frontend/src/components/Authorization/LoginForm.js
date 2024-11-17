@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { MdEmail, MdLock, MdVisibility, MdVisibilityOff } from "react-icons/md";
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
@@ -56,7 +56,12 @@ const FormBackground = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2)
 }));
 
-const LoginForm = () => {
+const LoginForm = ({ LoginUserRole }) => {
+  
+  function linkUserRole() {
+    return '/' + LoginUserRole;
+  }
+
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
@@ -187,20 +192,22 @@ const LoginForm = () => {
               aria-label="Password input field"
             />
 
-            <StyledButton
-              onClick={() => navigate('/user')}
-              type="submit"
-              fullWidth
-              variant="contained"
-              disabled={loading || Boolean(errors.email) || Boolean(errors.password)}
-              aria-label="Login button"
-            >
-              {loading ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                "Login"
-              )}
-            </StyledButton>
+            <Link to = {linkUserRole()}>
+              <StyledButton
+                // onClick={() => handleSubmit()}
+                type="submit"
+                fullWidth
+                variant="contained"
+                disabled={loading || Boolean(errors.email) || Boolean(errors.password)}
+                aria-label="Login button"
+              >
+                {loading ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  "Login"
+                )}
+              </StyledButton>
+            </Link>
           </StyledForm>
 
           {Object.keys(errors).length > 0 && (

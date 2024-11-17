@@ -19,7 +19,6 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { FiSearch, FiShoppingCart } from "react-icons/fi";
-import UserNavBar from "./UserNavBar";
 
 const StyledCard = styled(Card)(({ theme }) => ({
   height: "100%",
@@ -107,6 +106,14 @@ const ProductList = () => {
       id: 8,
       name: "Protein Powder",
       price: 54.99,
+      category: "fitness",
+      description: "Premium whey protein powder for muscle recovery",
+      image: "images.unsplash.com/photo-1593095948071-474c5cc2989d",
+    },
+    {
+      id: 9,
+      name: "Protein Powder 2.0",
+      price: 58.99,
       category: "fitness",
       description: "Premium whey protein powder for muscle recovery",
       image: "images.unsplash.com/photo-1593095948071-474c5cc2989d",

@@ -1,14 +1,12 @@
 import React, { useState } from "react";
-import UserNavBar from "../components/UserNavBar";
+import NavBar from "../components/NavBar";
 import ProductList from "../components/ProductList";
-import Supermarket from "../components/Supermarket";
-import AdminNavBar from "../components/AdminNavBar";
 
-const MainPage = () => {
+const MainPage = ({ MainPageUserRole }) => {
   
     return (
       <>
-          <UserNavBar/>
+          <NavBar NavBarUserRole = { MainPageUserRole }/>
           <ProductList/>
       </>
     );

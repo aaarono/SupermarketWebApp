@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
     padding: theme.spacing(4),
@@ -249,29 +249,31 @@ const RegistrationForm = () => {
               </Grid>
 
               <Grid item xs={12}>
-                <StyledButton
-                  onClick={() => navigate('/user')}
-                  fullWidth
-                  type="submit"
-                  variant="contained"
-                  size="large"
-                  disabled={loading}
-                  sx={{
-                    mt: 2,
-                    height: "56px",
-                    borderRadius: "8px",
-                    backgroundColor: "#667eea",
-                    "&:hover": {
-                      backgroundColor: "#764ba2",
-                    },
-                  }}
-                >
-                  {loading ? (
-                    <CircularProgress size={24} color="inherit" />
-                  ) : (
-                    "Register"
-                  )}
-                </StyledButton>
+                <Link to = '/user'>
+                  <StyledButton
+                    // onClick={() => handleSubmit()}
+                    fullWidth
+                    type="submit"
+                    variant="contained"
+                    size="large"
+                    disabled={loading}
+                    sx={{
+                      mt: 2,
+                      height: "56px",
+                      borderRadius: "8px",
+                      backgroundColor: "#667eea",
+                      "&:hover": {
+                        backgroundColor: "#764ba2",
+                      },
+                    }}
+                  >
+                    {loading ? (
+                      <CircularProgress size={24} color="inherit" />
+                    ) : (
+                      "Register"
+                    )}
+                  </StyledButton>
+                </Link>
               </Grid>
             </Grid>
           </form>

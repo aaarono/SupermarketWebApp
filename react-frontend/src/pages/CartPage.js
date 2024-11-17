@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import Cart from "../components/Cart";
-import LoggedUserNavBar from "../components/LoggedUserNavBar";
+import NavBar from "../components/NavBar";
 
-const CartPage = () => {
+const CartPage = ({ CartUserRole }) => {
   
     return (
       <>
-          <LoggedUserNavBar/>
+          <NavBar NavBarUserRole = { CartUserRole } />
           <Cart/>
       </>
     );

@@ -1,6 +1,6 @@
 // TestOutput.js
 import React, { useState, useEffect } from "react";
-import UserNavBar from "../components/UserNavBar";
+import UserNavBar from "../components/NavBarTypes/PublicNavBar";
 import TextOutput from "../components/TextOutput"; // Убедитесь, что путь корректен
 import api from "../services/api"; // Убедитесь, что путь корректен
 import { Grid2 } from "@mui/material";
