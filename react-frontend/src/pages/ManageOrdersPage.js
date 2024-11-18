@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import NavBar from "../components/NavBar";
+import ManageOrders from "../components/ManageOrders";
 
 const ManageOrdersPage = ({ ManageOrdersRole }) => {
   
     return (
       <>
           <NavBar NavBarUserRole = { ManageOrdersRole } />
-          <h1 textAlign = 'center'>Manage Orders { ManageOrdersRole }</h1>
+          <ManageOrders />
       </>
     );
 };

@@ -20,7 +20,7 @@ function App() {
     EMPLOYEE: 'employee',
     ADMIN: 'admin',
   }
-  const CURRENT_USER_ROLE = USER_ROLE.EMPLOYEE;
+  const CURRENT_USER_ROLE = USER_ROLE.ADMIN;
 
   return (
     <Routes>
