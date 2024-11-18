@@ -13,7 +13,7 @@ const NavBar = ({ NavBarUserRole }) => {
     } else if (NavBarUserRole === 'employee') {
         return <EmployeeNavBar NavBarTypeRole = { NavBarUserRole } />
     } else {
-        return <PublicNavBar/> // Default to public nav bar if no role is provided.
+        return <PublicNavBar/>
     }
 
 };

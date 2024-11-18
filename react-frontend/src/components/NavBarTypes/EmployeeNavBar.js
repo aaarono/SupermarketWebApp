@@ -16,6 +16,8 @@ import {
 import { styled } from "@mui/system";
 import { FaShoppingCart, FaStore, FaUserCircle } from "react-icons/fa";
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import LocalMallIcon from '@mui/icons-material/LocalMall';
 import { Link, useNavigate } from 'react-router-dom';
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -95,6 +97,26 @@ const EmployeeNavBar = ({ NavBarTypeRole }) => {
                 onClick={() => navigate('/' + NavBarTypeRole + '/orders')}
               >
                 My Orders
+              </StyledButton>
+            </Tooltip>
+
+            <Tooltip title="Browse Orders">
+              <StyledButton
+                startIcon={<InventoryIcon />}
+                aria-label="View Orders"
+                onClick={() => navigate('/' + NavBarTypeRole + '/manage-orders')}
+              >
+                User`s Orders
+              </StyledButton>
+            </Tooltip>
+
+            <Tooltip title="Order Products">
+              <StyledButton
+                startIcon={<LocalMallIcon />}
+                aria-label="Order Products"
+                onClick={() => navigate('/' + NavBarTypeRole + '/order-supplier')}
+              >
+                Order Supplier
               </StyledButton>
             </Tooltip>
 

@@ -8,6 +8,9 @@ import TestOutput from './pages/TestOutput';
 import { textAlign } from '@mui/system';
 import './App.css';
 import OrdersPage from './pages/OrdersPage';
+import ManageOrdersPage from './pages/ManageOrdersPage';
+import OrderSupplierPage from './pages/OrderSupplierPage';
+import AdminPanelPage from './pages/AdminPanelPage';
 
 function App() {
 
@@ -17,7 +20,7 @@ function App() {
     EMPLOYEE: 'employee',
     ADMIN: 'admin',
   }
-  const CURRENT_USER_ROLE = USER_ROLE.USER;
+  const CURRENT_USER_ROLE = USER_ROLE.EMPLOYEE;
 
   return (
     <Routes>
@@ -33,6 +36,14 @@ function App() {
       <Route path="/user/orders" element={<UserElement> <OrdersPage OrdersUserRole = { CURRENT_USER_ROLE } /> </UserElement>} />
       <Route path="/employee/orders" element={<EmployeeElement> <OrdersPage OrdersUserRole = { CURRENT_USER_ROLE } /> </EmployeeElement>} />
       <Route path="/admin/orders" element={<AdminElement> <OrdersPage OrdersUserRole = { CURRENT_USER_ROLE } /> </AdminElement>} />
+
+      <Route path="/employee/manage-orders" element={<EmployeeElement> <ManageOrdersPage ManageOrdersRole = { CURRENT_USER_ROLE } /> </EmployeeElement>} />
+      <Route path="/admin/manage-orders" element={<AdminElement> <ManageOrdersPage ManageOrdersRole = { CURRENT_USER_ROLE } /> </AdminElement>} />
+
+      <Route path="/employee/order-supplier" element={<EmployeeElement> <OrderSupplierPage OrderSupplierRole = { CURRENT_USER_ROLE } /> </EmployeeElement>} />
+      <Route path="/admin/order-supplier" element={<AdminElement> <OrderSupplierPage OrderSupplierRole = { CURRENT_USER_ROLE } /> </AdminElement>} />
+
+      <Route path="/admin/admin-panel" element={<AdminElement> <AdminPanelPage AdminPanelRole = { CURRENT_USER_ROLE } /> </AdminElement>} />
 
       <Route path="/login" element={<PublicElement> <LoginForm LoginUserRole = { CURRENT_USER_ROLE } /> </PublicElement>} />
       <Route path="/registration" element={<PublicElement> <RegistrationForm /> </PublicElement>} />
