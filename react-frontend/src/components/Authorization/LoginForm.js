@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { login } from '../../services/api';
 import {
   Box,
   TextField,
@@ -100,12 +101,29 @@ const LoginForm = ({ LoginUserRole }) => {
     e.preventDefault();
     if (!errors.email && !errors.password && formData.email && formData.password) {
       setLoading(true);
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      setLoading(false);
-      console.log("Form submitted:", formData);
+      try {
+        // Вызов функции login
+        const response = await login(formData.email, formData.password);
+        console.log("Login successful:", response);
+  
+        // Переход на страницу пользователя после успешного входа
+        navigate(linkUserRole());
+      } catch (error) {
+        console.error('Ошибка при логине:', error);
+        setErrors((prev) => ({ ...prev, form: 'Неверный email или пароль' }));
+      } finally {
+        setLoading(false);
+      }
     }
   };
+  
+  {errors.form && (
+    <Alert severity="error" sx={{ mt: 2 }}>
+      {errors.form}
+    </Alert>
+  )}
+  
+  
 
   return (
     <FormBackground>

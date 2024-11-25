@@ -14,4 +14,14 @@ const login = async (username, password) => {
     }
 };
 
-export { login };
+const register = async (userData) => {
+    try {
+      const response = await api.post('/api/auth/register', userData);
+      return response;
+    } catch (error) {
+      console.error('Ошибка при регистрации:', error);
+      throw error;
+    }
+  };
+  
+export { login, register };

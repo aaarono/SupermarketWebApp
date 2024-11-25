@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { register } from '../../services/api';
 import {
   Box,
   Container,
@@ -106,23 +107,26 @@ const RegistrationForm = () => {
 
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      console.log("Form submitted:", formData);
-      // Reset form after successful submission
-      setFormData({
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone: "",
-        password: "",
-      });
+      // Вызов функции register
+      const response = await register(formData);
+      console.log('Registration successful:', response);
+
+      // Переход на страницу входа после успешной регистрации
+      navigate('/login');
     } catch (error) {
-      console.error("Submission error:", error);
+      console.error('Ошибка при регистрации:', error);
+      setErrors((prev) => ({ ...prev, form: 'Регистрация не удалась. Попробуйте снова.' }));
     } finally {
       setLoading(false);
     }
   };
+
+  {errors.form && (
+    <Alert severity="error" sx={{ mt: 2 }}>
+      {errors.form}
+    </Alert>
+  )}
+  
 
   return (
     <FormBackground>
