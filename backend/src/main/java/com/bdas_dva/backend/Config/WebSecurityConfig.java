@@ -1,78 +1,56 @@
 package com.bdas_dva.backend.Config;
 
+import com.bdas_dva.backend.Security.AuthEntryPointJwt;
+import com.bdas_dva.backend.Security.AuthTokenFilter;
+import com.bdas_dva.backend.Security.CustomUserDetailsService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.config.Customizer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.*;
 
 import java.util.Arrays;
 
 @Configuration
-@EnableWebSecurity
 @EnableMethodSecurity  // Включение методовой безопасности для аннотаций, таких как @PreAuthorize
 public class WebSecurityConfig {
 
+    @Autowired
+    private CustomUserDetailsService userDetailsService;
+
+    @Autowired
+    private AuthEntryPointJwt unauthorizedHandler;
+
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                // Включаем CORS с использованием кастомного источника конфигурации
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-                // Отключаем CSRF, если не требуется
-                .csrf(csrf -> csrf.disable())
-
-                // Настройка авторизации запросов
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/home").permitAll()
-                        .requestMatchers("/api/**").permitAll()     // Публичные ресурсы /TODO ОТДЕЛИТЬ ПОТОМ ЭТУ ХУЙНЮ/
-                        .requestMatchers("/admin/**").hasRole("ADMIN")   // Доступ только для ADMIN
-                        .anyRequest().authenticated()                    // Все остальные запросы требуют аутентификации
-                )
-
-                // Настройка управления сессиями
-                .sessionManagement(session -> session
-                        .maximumSessions(1)                           // Ограничение до одной сессии на пользователя
-                        .expiredUrl("/login?expired=true")            // URL для перенаправления после истечения сессии
-                )
-
-                // Настройка формы логина
-                .formLogin(form -> form
-                        .loginPage("/login")                              // Указываем страницу логина
-                        .permitAll()
-                )
-
-                // Настройка выхода из системы
-                .logout(logout -> logout
-                        .logoutUrl("/logout")                             // URL для выхода из системы
-                        .logoutSuccessUrl("/login?logout=true")           // URL после успешного выхода
-                        .invalidateHttpSession(true)                      // Инвалидировать сессию
-                        .deleteCookies("JSESSIONID")                      // Удалить cookie с идентификатором сессии
-                );
-
-        return http.build();
+    public AuthTokenFilter authenticationJwtTokenFilter() {
+        return new AuthTokenFilter();
     }
 
-    // Бин для кодирования паролей
+    @Bean
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration authConfig) throws Exception {
+        return authConfig.getAuthenticationManager();
+    }
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // Глобальная конфигурация CORS
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
         // Разрешенные источники (домены)
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000")); // Замените на ваш адрес фронтенда
 
         // Разрешенные методы
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
@@ -92,5 +70,39 @@ public class WebSecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
 
         return source;
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                // Настройка CORS с использованием кастомного источника конфигурации
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+                // Отключение CSRF, так как используем JWT
+                .csrf(csrf -> csrf.disable())
+
+                // Настройка обработчика исключений
+                .exceptionHandling(exception ->
+                        exception.authenticationEntryPoint(unauthorizedHandler))
+
+                // Настройка сессионной политики как STATELESS
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                // Настройка авторизации запросов
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/", "/home").permitAll()
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/employee/**").hasRole("EMPLOYEE")
+                        .requestMatchers("/user/**").hasRole("USER")
+                        .anyRequest().authenticated()
+                );
+
+        // Добавление фильтра JWT перед фильтром UsernamePasswordAuthenticationFilter
+        http.addFilterBefore(authenticationJwtTokenFilter(),
+                UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
     }
 }
