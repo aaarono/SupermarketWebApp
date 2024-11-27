@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { login } from '../../services/api';
+import { login } from '../../services/authService';
 import {
   Box,
   TextField,
@@ -117,11 +117,11 @@ const LoginForm = ({ LoginUserRole }) => {
     }
   };
   
-  {errors.form && (
-    <Alert severity="error" sx={{ mt: 2 }}>
-      {errors.form}
-    </Alert>
-  )}
+  // {errors.form && (
+  //   <Alert severity="error" sx={{ mt: 2 }}>
+  //     {errors.form}
+  //   </Alert>
+  // )}
   
   
 
@@ -212,7 +212,7 @@ const LoginForm = ({ LoginUserRole }) => {
 
             <Link to = {linkUserRole()}>
               <StyledButton
-                // onClick={() => handleSubmit()}
+                onClick={() => handleSubmit()}
                 type="submit"
                 fullWidth
                 variant="contained"

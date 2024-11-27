@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { register } from '../../services/api';
+import { register } from '../../services/authService';
 import {
   Box,
   Container,
@@ -121,11 +121,11 @@ const RegistrationForm = () => {
     }
   };
 
-  {errors.form && (
-    <Alert severity="error" sx={{ mt: 2 }}>
-      {errors.form}
-    </Alert>
-  )}
+  // {errors.form && (
+  //   <Alert severity="error" sx={{ mt: 2 }}>
+  //     {errors.form}
+  //   </Alert>
+  // )}
   
 
   return (
@@ -253,9 +253,9 @@ const RegistrationForm = () => {
               </Grid>
 
               <Grid item xs={12}>
-                <Link to = '/user'>
+                <Link to = '/login'>
                   <StyledButton
-                    // onClick={() => handleSubmit()}
+                    onClick={() => handleSubmit()}
                     fullWidth
                     type="submit"
                     variant="contained"
