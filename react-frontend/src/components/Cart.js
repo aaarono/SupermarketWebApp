@@ -11,12 +11,16 @@ import {
   Typography,
   CircularProgress,
   FormControl,
-  InputLabel,
-  MenuItem,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon,
   Select,
+  MenuItem
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { FaTrash } from "react-icons/fa";
+import { BsCreditCard2Front, BsCash, BsBank } from "react-icons/bs";
 
 const StyledCard = styled(Card)(({ theme }) => ({
   marginBottom: "1rem",
@@ -33,18 +37,27 @@ const ProductImage = styled("img")({
   borderRadius: "4px",
 });
 
+const StyledSelect = styled(Select)({
+  width: "100%",
+  "& .MuiSelect-select": {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px"
+  }
+});
+
 const Cart = () => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    phone: "",
-    email: "",
     street: "",
     postCode: "",
     city: "",
     streetNumber: "",
-    deliveryOption: "standard"
+    deliveryOption: "standard",
+    paymentType: "card",
+    cardNumber: "",
+    cashCount: "",
+    bankAccountNumber: ""
   });
 
   const [products, setProducts] = useState([
@@ -86,9 +99,14 @@ const Cart = () => {
     return products.reduce((total, product) => total + (product.price * product.quantity), 0);
   };
 
+  const calculateChange = () => {
+    const cashCount = parseFloat(formData.cashCount) || 0;
+    const total = calculateTotal();
+    return (cashCount - total).toFixed(2);
+  };
+
   const handleSubmit = async () => {
     setLoading(true);
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 2000));
     setLoading(false);
   };
@@ -148,42 +166,11 @@ const Cart = () => {
             <CardContent>
               <Typography variant="h6" gutterBottom>Order Information</Typography>
               <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  <TextField
-                    label="First Name"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleInputChange}
-                    fullWidth
-                    required
-                  />
-                </Grid>
-                <Grid item xs={6}>
-                  <TextField
-                    label="Last Name"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleInputChange}
-                    fullWidth
-                    required
-                  />
-                </Grid>
                 <Grid item xs={12}>
                   <TextField
-                    label="Email"
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    fullWidth
-                    required
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    label="Phone"
-                    name="phone"
-                    value={formData.phone}
+                    label="City"
+                    name="city"
+                    value={formData.city}
                     onChange={handleInputChange}
                     fullWidth
                     required
@@ -220,17 +207,77 @@ const Cart = () => {
                   />
                 </Grid>
                 <Grid item xs={12}>
-                  <TextField
-                    label="City"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleInputChange}
-                    fullWidth
-                    required
-                  />
+                  <FormControl component="fieldset" fullWidth>
+                    <Typography variant="subtitle1" gutterBottom>Payment Method</Typography>
+                    <StyledSelect
+                      value={formData.paymentType}
+                      onChange={handleInputChange}
+                      name="paymentType"
+                    >
+                      <MenuItem value="card">
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                          <BsCreditCard2Front size={24} />
+                          <Typography>Card</Typography>
+                        </Box>
+                      </MenuItem>
+                      <MenuItem value="cash">
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                          <BsCash size={24} />
+                          <Typography>Cash</Typography>
+                        </Box>
+                      </MenuItem>
+                      <MenuItem value="invoice">
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                          <BsBank size={24} />
+                          <Typography>Invoice</Typography>
+                        </Box>
+                      </MenuItem>
+                    </StyledSelect>
+                  </FormControl>
                 </Grid>
+                {formData.paymentType === "card" && (
+                  <Grid item xs={12}>
+                    <TextField
+                      label="Card Number"
+                      name="cardNumber"
+                      value={formData.cardNumber}
+                      onChange={handleInputChange}
+                      fullWidth
+                      required
+                    />
+                  </Grid>
+                )}
+                {formData.paymentType === "cash" && (
+                  <Grid item xs={12}>
+                    <TextField
+                      label="Cash Amount"
+                      name="cashCount"
+                      type="number"
+                      value={formData.cashCount}
+                      onChange={handleInputChange}
+                      fullWidth
+                      required
+                    />
+                    {formData.cashCount && (
+                      <Typography variant="body1" sx={{ mt: 1 }}>
+                        Change: ${calculateChange()}
+                      </Typography>
+                    )}
+                  </Grid>
+                )}
+                {formData.paymentType === "invoice" && (
+                  <Grid item xs={12}>
+                    <TextField
+                      label="Bank Account Number"
+                      name="bankAccountNumber"
+                      value={formData.bankAccountNumber}
+                      onChange={handleInputChange}
+                      fullWidth
+                      required
+                    />
+                  </Grid>
+                )}
               </Grid>
-
               <Box sx={{ mt: 3 }}>
                 <Typography variant="h6" gutterBottom>
                   Total: ${calculateTotal().toFixed(2)}
@@ -247,7 +294,7 @@ const Cart = () => {
                   {loading ? (
                     <CircularProgress size={24} color="inherit" />
                   ) : (
-                    "Continue to Payment"
+                    "Pay Now"
                   )}
                 </Button>
               </Box>
