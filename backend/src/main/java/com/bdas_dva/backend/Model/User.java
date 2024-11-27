@@ -1,33 +1,32 @@
 package com.bdas_dva.backend.Model;
 
-import jakarta.persistence.*;
-import java.util.Set;
-import java.util.HashSet;
-
-@Entity
-@Table(name = "USERS") // Избегайте использования зарезервированных слов
 public class User {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "ID_USER", nullable = false)
     private Long idUser;
-
-    @Column(name = "USERNAME", unique = true, nullable = false, length = 50)
-    private String username;
-
-    @Column(name = "PASSWORD", nullable = false)
+    private String jmeno;
+    private String prijmeni;
+    private String email;
+    private String telNumber;
     private String password;
+    private Long roleIdRole;
+    private Long zakaznikIdZakazniku;
+    private Long zamnestnanecIdZamnestnance;
 
-    // Роли пользователя, теперь как перечисление
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "USER_ROLES", joinColumns = @JoinColumn(name = "USER_ID"))
-    @Enumerated(EnumType.STRING)
-    @Column(name = "ROLE")
-    private Set<ERole> roles = new HashSet<>();
+    // Конструкторы
+    public User() {}
+
+    public User(Long idUser, String jmeno, String prijmeni, String email, String telNumber, String password, Long roleIdRole, Long zakaznikIdZakazniku, Long zamnestnanecIdZamnestnance) {
+        this.idUser = idUser;
+        this.jmeno = jmeno;
+        this.prijmeni = prijmeni;
+        this.email = email;
+        this.telNumber = telNumber;
+        this.password = password;
+        this.roleIdRole = roleIdRole;
+        this.zakaznikIdZakazniku = zakaznikIdZakazniku;
+        this.zamnestnanecIdZamnestnance = zamnestnanecIdZamnestnance;
+    }
 
     // Геттеры и сеттеры
-
     public Long getIdUser() {
         return idUser;
     }
@@ -36,12 +35,36 @@ public class User {
         this.idUser = idUser;
     }
 
-    public String getUsername() {
-        return username;
+    public String getJmeno() {
+        return jmeno;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setJmeno(String jmeno) {
+        this.jmeno = jmeno;
+    }
+
+    public String getPrijmeni() {
+        return prijmeni;
+    }
+
+    public void setPrijmeni(String prijmeni) {
+        this.prijmeni = prijmeni;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getTelNumber() {
+        return telNumber;
+    }
+
+    public void setTelNumber(String telNumber) {
+        this.telNumber = telNumber;
     }
 
     public String getPassword() {
@@ -52,11 +75,32 @@ public class User {
         this.password = password;
     }
 
-    public Set<ERole> getRoles() {
-        return roles;
+    public Long getRoleIdRole() {
+        return roleIdRole;
     }
 
-    public void setRoles(Set<ERole> roles) {
-        this.roles = roles;
+    public void setRoleIdRole(Long roleIdRole) {
+        this.roleIdRole = roleIdRole;
+    }
+
+    public Long getZakaznikIdZakazniku() {
+        return zakaznikIdZakazniku;
+    }
+
+    public void setZakaznikIdZakazniku(Long zakaznikIdZakazniku) {
+        this.zakaznikIdZakazniku = zakaznikIdZakazniku;
+    }
+
+    public Long getZamnestnanecIdZamnestnance() {
+        return zamnestnanecIdZamnestnance;
+    }
+
+    public void setZamnestnanecIdZamnestnance(Long zamnestnanecIdZamnestnance) {
+        this.zamnestnanecIdZamnestnance = zamnestnanecIdZamnestnance;
+    }
+
+    // Метод для получения username (email)
+    public String getUsername() {
+        return email;
     }
 }

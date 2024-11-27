@@ -2,7 +2,7 @@ package com.bdas_dva.backend.Config;
 
 import com.bdas_dva.backend.Security.AuthEntryPointJwt;
 import com.bdas_dva.backend.Security.AuthTokenFilter;
-import com.bdas_dva.backend.Security.UserDetailsService;
+import com.bdas_dva.backend.Security.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,7 +24,7 @@ import java.util.Arrays;
 public class WebSecurityConfig {
 
     @Autowired
-    private UserDetailsService userDetailsService;
+    private CustomUserDetailsService userDetailsService;
 
     @Autowired
     private AuthEntryPointJwt unauthorizedHandler;
@@ -94,6 +94,8 @@ public class WebSecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/", "/home").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/employee/**").hasRole("EMPLOYEE")
+                        .requestMatchers("/user/**").hasRole("USER")
                         .anyRequest().authenticated()
                 );
 

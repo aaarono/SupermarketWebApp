@@ -4,40 +4,50 @@ import com.bdas_dva.backend.Model.User;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Collections;
 
-public class UserDetails implements IUserDetails {
+public class CustomUserDetails implements UserDetails {
 
     private Long id;
-
-    private String username;
+    private String email;
 
     @JsonIgnore
     private String password;
 
-    private Collection<? extends GrantedAuthority> authorities;
+    private GrantedAuthority authority;
 
-    public UserDetails(Long id, String username, String password,
-                           Collection<? extends GrantedAuthority> authorities) {
+    public CustomUserDetails(Long id, String email, String password, GrantedAuthority authority) {
         this.id = id;
-        this.username = username;
+        this.email = email;
         this.password = password;
-        this.authorities = authorities;
+        this.authority = authority;
     }
 
-    public static UserDetails build(User user) {
-        List<GrantedAuthority> authorities = user.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority(role.name()))
-                .collect(Collectors.toList());
+    public static CustomUserDetails build(User user) {
+        String roleName = getRoleNameById(user.getRoleIdRole());
+        GrantedAuthority authority = new SimpleGrantedAuthority(roleName);
 
-        return new UserDetails(
+        return new CustomUserDetails(
                 user.getIdUser(),
-                user.getUsername(),
+                user.getEmail(),
                 user.getPassword(),
-                authorities);
+                authority);
+    }
+
+    private static String getRoleNameById(Long roleId) {
+        switch (roleId.intValue()) {
+            case 1:
+                return "ROLE_USER";
+            case 2:
+                return "ROLE_EMPLOYEE";
+            case 3:
+                return "ROLE_ADMIN";
+            default:
+                return "ROLE_USER"; // По умолчанию
+        }
     }
 
     public Long getId() {
@@ -46,7 +56,7 @@ public class UserDetails implements IUserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return authorities;
+        return Collections.singleton(authority);
     }
 
     @Override
@@ -54,9 +64,10 @@ public class UserDetails implements IUserDetails {
         return password;
     }
 
+    // Используем email как username
     @Override
     public String getUsername() {
-        return username;
+        return email;
     }
 
     // Остальные методы из UserDetails
