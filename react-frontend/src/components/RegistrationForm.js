@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { register } from '../../services/authService';
 import {
   Box,
   Container,
@@ -13,7 +14,7 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
     padding: theme.spacing(4),
@@ -106,23 +107,26 @@ const RegistrationForm = () => {
 
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      console.log("Form submitted:", formData);
-      // Reset form after successful submission
-      setFormData({
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone: "",
-        password: "",
-      });
+      // Вызов функции register
+      const response = await register(formData);
+      console.log('Registration successful:', response);
+
+      // Переход на страницу входа после успешной регистрации
+      navigate('/login');
     } catch (error) {
-      console.error("Submission error:", error);
+      console.error('Ошибка при регистрации:', error);
+      setErrors((prev) => ({ ...prev, form: 'Регистрация не удалась. Попробуйте снова.' }));
     } finally {
       setLoading(false);
     }
   };
+
+  // {errors.form && (
+  //   <Alert severity="error" sx={{ mt: 2 }}>
+  //     {errors.form}
+  //   </Alert>
+  // )}
+  
 
   return (
     <FormBackground>
@@ -249,29 +253,31 @@ const RegistrationForm = () => {
               </Grid>
 
               <Grid item xs={12}>
-                <StyledButton
-                  onClick={() => navigate('/user')}
-                  fullWidth
-                  type="submit"
-                  variant="contained"
-                  size="large"
-                  disabled={loading}
-                  sx={{
-                    mt: 2,
-                    height: "56px",
-                    borderRadius: "8px",
-                    backgroundColor: "#667eea",
-                    "&:hover": {
-                      backgroundColor: "#764ba2",
-                    },
-                  }}
-                >
-                  {loading ? (
-                    <CircularProgress size={24} color="inherit" />
-                  ) : (
-                    "Register"
-                  )}
-                </StyledButton>
+                <Link to = '/login'>
+                  <StyledButton
+                    onClick={() => handleSubmit()}
+                    fullWidth
+                    type="submit"
+                    variant="contained"
+                    size="large"
+                    disabled={loading}
+                    sx={{
+                      mt: 2,
+                      height: "56px",
+                      borderRadius: "8px",
+                      backgroundColor: "#667eea",
+                      "&:hover": {
+                        backgroundColor: "#764ba2",
+                      },
+                    }}
+                  >
+                    {loading ? (
+                      <CircularProgress size={24} color="inherit" />
+                    ) : (
+                      "Register"
+                    )}
+                  </StyledButton>
+                </Link>
               </Grid>
             </Grid>
           </form>

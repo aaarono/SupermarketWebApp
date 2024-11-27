@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { login } from '../../services/authService';
 import {
   Box,
   TextField,
@@ -14,7 +15,7 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { MdEmail, MdLock, MdVisibility, MdVisibilityOff } from "react-icons/md";
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
@@ -56,7 +57,12 @@ const FormBackground = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2)
 }));
 
-const LoginForm = () => {
+const LoginForm = ({ LoginUserRole }) => {
+  
+  function linkUserRole() {
+    return '/' + LoginUserRole;
+  }
+
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
@@ -95,12 +101,29 @@ const LoginForm = () => {
     e.preventDefault();
     if (!errors.email && !errors.password && formData.email && formData.password) {
       setLoading(true);
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      setLoading(false);
-      console.log("Form submitted:", formData);
+      try {
+        // Вызов функции login
+        const response = await login(formData.email, formData.password);
+        console.log("Login successful:", response);
+  
+        // Переход на страницу пользователя после успешного входа
+        navigate(linkUserRole());
+      } catch (error) {
+        console.error('Ошибка при логине:', error);
+        setErrors((prev) => ({ ...prev, form: 'Неверный email или пароль' }));
+      } finally {
+        setLoading(false);
+      }
     }
   };
+  
+  // {errors.form && (
+  //   <Alert severity="error" sx={{ mt: 2 }}>
+  //     {errors.form}
+  //   </Alert>
+  // )}
+  
+  
 
   return (
     <FormBackground>
@@ -187,20 +210,22 @@ const LoginForm = () => {
               aria-label="Password input field"
             />
 
-            <StyledButton
-              onClick={() => navigate('/user')}
-              type="submit"
-              fullWidth
-              variant="contained"
-              disabled={loading || Boolean(errors.email) || Boolean(errors.password)}
-              aria-label="Login button"
-            >
-              {loading ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                "Login"
-              )}
-            </StyledButton>
+            <Link to = {linkUserRole()}>
+              <StyledButton
+                onClick={() => handleSubmit()}
+                type="submit"
+                fullWidth
+                variant="contained"
+                disabled={loading || Boolean(errors.email) || Boolean(errors.password)}
+                aria-label="Login button"
+              >
+                {loading ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  "Login"
+                )}
+              </StyledButton>
+            </Link>
           </StyledForm>
 
           {Object.keys(errors).length > 0 && (
