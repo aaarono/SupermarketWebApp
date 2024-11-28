@@ -1,106 +1,113 @@
-// TestOutput.js
 import React, { useState, useEffect } from "react";
 import UserNavBar from "../components/NavBarTypes/PublicNavBar";
-import TextOutput from "../components/TextOutput"; // Убедитесь, что путь корректен
 import api from "../services/api"; // Убедитесь, что путь корректен
-import { Grid2 } from "@mui/material";
 import {
     Box,
-    Card,
-    CardContent,
-    CardMedia,
-    Typography,
-    Grid,
     Container,
-    TextField,
-    Select,
-    MenuItem,
-    Pagination,
     Button,
-    FormControl,
-    InputLabel,
-    InputAdornment,
-    Zoom,
-  } from "@mui/material";
+    Grid,
+    Typography,
+} from "@mui/material";
 
 const TestOutput = () => {
-    const [products, setProducts] = useState([]);
-    const [supermarkets, setSupermarkets] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [adminMessage, setAdminMessage] = useState('');
+    const [employeeMessage, setEmployeeMessage] = useState('');
+    const [userMessage, setUserMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
 
-    // Функция для загрузки названий продуктов
-    const fetchProductNames = async () => {
+    const handleAdminAccess = async () => {
         try {
-            const productNames = await api.get('/api/produkts/names'); // Используем новый эндпоинт
-            // Предполагается, что productNames - массив строк
-            setProducts(productNames);
-            setError(null);
-        } catch (err) {
-            console.error('Ошибка при загрузке названий продуктов:', err);
-            setError('Не удалось загрузить список названий продуктов.');
-        } finally {
-            setLoading(false);
+            const response = await api.get('/api/auth/admin');
+            setAdminMessage(response.data);
+            setErrorMessage('');
+        } catch (error) {
+            setAdminMessage('');
+            handleError(error);
         }
     };
 
-    const fetchSupermarketNames = async () => {
+    const handleEmployeeAccess = async () => {
         try {
-            const supermarketNames = await api.get('/api/supermarkets/names'); // Используем новый эндпоинт
-            // Предполагается, что productNames - массив строк
-            setSupermarkets(supermarketNames);
-            setError(null);
-        } catch (err) {
-            console.error('Ошибка при загрузке названий продуктов:', err);
-            setError('Не удалось загрузить список названий продуктов.');
-        } finally {
-            setLoading(false);
+            const response = await api.get('/api/auth/employee');
+            setEmployeeMessage(response.data);
+            setErrorMessage('');
+        } catch (error) {
+            setEmployeeMessage('');
+            handleError(error);
         }
     };
 
-    // Загрузка данных при монтировании компонента
-    useEffect(() => {
-        fetchProductNames();
-        fetchSupermarketNames();
-    }, []);
+    const handleUserAccess = async () => {
+        try {
+            const response = await api.get('/api/auth/user');
+            setUserMessage(response.data);
+            setErrorMessage('');
+        } catch (error) {
+            setUserMessage('');
+            handleError(error);
+        }
+    };
 
-    if (loading) {
-        return (
-            <>
-                <UserNavBar/>
-                <div style={{ padding: '20px', textAlign: 'center' }}>Загрузка...</div>
-            </>
-        );
-    }
-
-    if (error) {
-        return (
-            <>
-                <UserNavBar/>
-                <div style={{ padding: '20px', textAlign: 'center', color: 'red' }}>{error}</div>
-            </>
-        );
-    }
+    const handleError = (error) => {
+        if (error.response) {
+            // Сервер ответил с кодом, отличным от 2xx
+            setErrorMessage(`Ошибка ${error.response.status}: ${error.response.data}`);
+        } else if (error.request) {
+            // Запрос был отправлен, но ответа не получено
+            setErrorMessage('Сервер не ответил на запрос.');
+        } else {
+            // Произошла ошибка при настройке запроса
+            setErrorMessage('Произошла ошибка при отправке запроса.');
+        }
+    };
 
     return (
         <>
             <UserNavBar/>
-            <div style={{ padding: '20px' }}>
-                <Container maxWidth="lg" sx={{ py: 4 }}>
-                    <Box sx={{ mb: 4 }}>
-                        <Grid container spacing={2} alignItems="center">
-                            <div>
-                            <h2>Список Продуктов</h2>
-                            <TextOutput products={products}/>
-                            </div>
-                            <div>
-                            <h2>СписOK</h2>
-                            <TextOutput products={supermarkets}/>
-                            </div>
+            <Container maxWidth="md" sx={{ py: 4 }}>
+                <Typography variant="h4" gutterBottom>
+                    Тестирование защищённых эндпоинтов
+                </Typography>
+                <Grid container spacing={2}>
+                    <Grid item xs={12}>
+                        <Button variant="contained" color="primary" onClick={handleAdminAccess}>
+                            Доступ для Администратора
+                        </Button>
+                        {adminMessage && (
+                            <Typography variant="body1" sx={{ mt: 2 }}>
+                                Ответ: {adminMessage}
+                            </Typography>
+                        )}
+                    </Grid>
+                    <Grid item xs={12}>
+                        <Button variant="contained" color="secondary" onClick={handleEmployeeAccess}>
+                            Доступ для Сотрудника
+                        </Button>
+                        {employeeMessage && (
+                            <Typography variant="body1" sx={{ mt: 2 }}>
+                                Ответ: {employeeMessage}
+                            </Typography>
+                        )}
+                    </Grid>
+                    <Grid item xs={12}>
+                        <Button variant="contained" color="success" onClick={handleUserAccess}>
+                            Доступ для Пользователя
+                        </Button>
+                        {userMessage && (
+                            <Typography variant="body1" sx={{ mt: 2 }}>
+                                Ответ: {userMessage}
+                            </Typography>
+                        )}
+                    </Grid>
+                    {errorMessage && (
+                        <Grid item xs={12}>
+                            <Typography variant="body1" color="error">
+                                {errorMessage}
+                            </Typography>
                         </Grid>
-                    </Box>
-                </Container>
-            </div>
+                    )}
+                </Grid>
+            </Container>
         </>
     );
 };

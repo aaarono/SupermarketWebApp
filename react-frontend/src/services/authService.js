@@ -5,7 +5,6 @@ const login = async (email, password) => {
         const response = await api.post('/api/auth/login', { email, password });
         const token = response.token;
         api.setAuthToken(token);
-        // Сохраните токен в localStorage или другом хранилище, если нужно
         localStorage.setItem('token', token);
         return response;
     } catch (error) {
