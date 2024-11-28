@@ -9,14 +9,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.Collections;
 
+
 public class CustomUserDetails implements UserDetails {
 
     private Long id;
     private String email;
-
-    @JsonIgnore
     private String password;
-
     private GrantedAuthority authority;
 
     public CustomUserDetails(Long id, String email, String password, GrantedAuthority authority) {
@@ -64,7 +62,6 @@ public class CustomUserDetails implements UserDetails {
         return password;
     }
 
-    // Используем email как username
     @Override
     public String getUsername() {
         return email;

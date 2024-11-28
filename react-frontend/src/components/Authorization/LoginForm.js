@@ -98,14 +98,14 @@ const LoginForm = ({ LoginUserRole }) => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    // e.preventDefault();
     if (!errors.email && !errors.password && formData.email && formData.password) {
       setLoading(true);
       try {
         // Вызов функции login
         const response = await login(formData.email, formData.password);
         console.log("Login successful:", response);
-  
+        
         // Переход на страницу пользователя после успешного входа
         navigate(linkUserRole());
       } catch (error) {

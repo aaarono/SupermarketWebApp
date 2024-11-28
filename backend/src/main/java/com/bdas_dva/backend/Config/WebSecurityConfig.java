@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -45,6 +46,19 @@ public class WebSecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    // Добавляем метод authenticationProvider()
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+
+        // Устанавливаем кастомный UserDetailsService
+        authProvider.setUserDetailsService(userDetailsService);
+        // Устанавливаем PasswordEncoder
+        authProvider.setPasswordEncoder(passwordEncoder());
+
+        return authProvider;
+    }
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -75,21 +89,13 @@ public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Настройка CORS с использованием кастомного источника конфигурации
+                .authenticationProvider(authenticationProvider()) // Перенесите это в самое начало
+
+                // Остальные настройки
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-                // Отключение CSRF, так как используем JWT
                 .csrf(csrf -> csrf.disable())
-
-                // Настройка обработчика исключений
-                .exceptionHandling(exception ->
-                        exception.authenticationEntryPoint(unauthorizedHandler))
-
-                // Настройка сессионной политики как STATELESS
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-                // Настройка авторизации запросов
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/", "/home").permitAll()
@@ -99,9 +105,7 @@ public class WebSecurityConfig {
                         .anyRequest().authenticated()
                 );
 
-        // Добавление фильтра JWT перед фильтром UsernamePasswordAuthenticationFilter
-        http.addFilterBefore(authenticationJwtTokenFilter(),
-                UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

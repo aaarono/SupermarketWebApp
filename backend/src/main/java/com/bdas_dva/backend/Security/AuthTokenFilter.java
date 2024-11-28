@@ -24,6 +24,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     @Autowired
     private CustomUserDetailsService userDetailsService;
 
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AuthTokenFilter.class);
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -49,7 +51,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             }
         } catch (Exception e) {
             // Логирование ошибок при аутентификации
-            logger.error("Не удалось установить аутентификацию пользователя: {}", e);
+            logger.error("Не удалось установить аутентификацию пользователя: {}", e.getMessage());
         }
 
         filterChain.doFilter(request, response);

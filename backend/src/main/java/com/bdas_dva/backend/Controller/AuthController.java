@@ -14,7 +14,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import static com.bdas_dva.backend.Util.HashingUtil.checkPassword;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -36,8 +39,8 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody Map<String, String> userMap) {
         try {
-            String jmeno = userMap.get("name");
-            String prijmeni = userMap.get("surname");
+            String jmeno = userMap.get("firstName");
+            String prijmeni = userMap.get("lastName");
             String email = userMap.get("email");
             String telNumber = userMap.get("telNumber");
             String password = userMap.get("password");
@@ -51,7 +54,7 @@ public class AuthController {
             user.setEmail(email);
             user.setTelNumber(telNumber);
             user.setPassword(encodedPassword);
-            // Установите роль по умолчанию, например, роль пользователя (ROLE_USER, roleIdRole = 1)
+            // Установите роль по умолчанию, например, ROLE_USER (roleIdRole = 1)
             user.setRoleIdRole(1L);
 
             userService.createUser(user);
@@ -62,7 +65,6 @@ public class AuthController {
         }
     }
 
-    // Точка для логина
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@RequestBody Map<String, String> loginMap) {
         try {
@@ -95,7 +97,7 @@ public class AuthController {
         return ResponseEntity.ok("Доступ только для администраторов.");
     }
 
-    // Пример защищенной точки, доступной для сотрудников
+    // Пример защищенной точки, доступной только для сотрудников
     @GetMapping("/employee")
     @PreAuthorize("hasRole('EMPLOYEE')")
     public ResponseEntity<?> employeeAccess() {
@@ -107,5 +109,23 @@ public class AuthController {
     @PreAuthorize("hasRole('USER') or hasRole('EMPLOYEE') or hasRole('ADMIN')")
     public ResponseEntity<?> userAccess() {
         return ResponseEntity.ok("Доступ для аутентифицированных пользователей.");
+    }
+
+    // Точка для поиска пользователей по фильтрам
+    @PostMapping("/search")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
+    public ResponseEntity<?> searchUsers(@RequestBody Map<String, Object> filters) {
+        try {
+            Long pIdUser = filters.containsKey("idUser") ? Long.valueOf(filters.get("idUser").toString()) : null;
+            String pEmail = filters.containsKey("email") ? filters.get("email").toString() : null;
+            Long pRoleIdRole = filters.containsKey("roleIdRole") ? Long.valueOf(filters.get("roleIdRole").toString()) : null;
+            Integer pLimit = filters.containsKey("limit") ? Integer.valueOf(filters.get("limit").toString()) : null;
+
+            List<User> users = userService.searchUsers(pIdUser, pEmail, pRoleIdRole, pLimit);
+
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Ошибка поиска: " + e.getMessage());
+        }
     }
 }

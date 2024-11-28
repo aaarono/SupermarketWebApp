@@ -75,6 +75,6 @@ public class JwtUtil {
                 .getBody();
     }
 
-    // Добавьте логгер
+    // Логгер
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(JwtUtil.class);
 }

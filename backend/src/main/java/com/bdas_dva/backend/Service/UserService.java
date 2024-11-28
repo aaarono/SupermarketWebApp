@@ -5,7 +5,6 @@ import com.bdas_dva.backend.Model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.CallableStatementCallback;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 
 import java.sql.*;
@@ -18,17 +17,17 @@ public class UserService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    // Регистрация нового пользователя (Create)
+    // Создание нового пользователя (Create)
     public void createUser(User user) {
         jdbcTemplate.update((Connection conn) -> {
-            CallableStatement cs = conn.prepareCall("{call proc_user_cud(?, ?, ?, ?, ?, ?, ?, ?)}");
+            CallableStatement cs = conn.prepareCall("{call proc_user_cud(?, ?, ?, ?, ?, ?, ?, ?, ?)}"); // 9 параметров
             cs.setString(1, "INSERT");
             cs.setObject(2, null); // p_id_user
             cs.setString(3, user.getJmeno());
             cs.setString(4, user.getPrijmeni());
             cs.setString(5, user.getEmail());
             cs.setString(6, user.getPassword()); // Пароль должен быть хеширован
-            cs.setLong(7, user.getRoleIdRole());
+            cs.setLong(7, 1); // ROLE_USER по умолчанию
             cs.setObject(8, user.getZakaznikIdZakazniku());
             cs.setObject(9, user.getZamnestnanecIdZamnestnance());
             return cs;
@@ -42,7 +41,7 @@ public class UserService {
         }
 
         jdbcTemplate.update((Connection conn) -> {
-            CallableStatement cs = conn.prepareCall("{call proc_user_cud(?, ?, ?, ?, ?, ?, ?, ?)}");
+            CallableStatement cs = conn.prepareCall("{call proc_user_cud(?, ?, ?, ?, ?, ?, ?, ?, ?)}"); // 9 параметров
             cs.setString(1, "UPDATE");
             cs.setLong(2, user.getIdUser());
             cs.setString(3, user.getJmeno());
@@ -63,7 +62,7 @@ public class UserService {
         }
 
         jdbcTemplate.update((Connection conn) -> {
-            CallableStatement cs = conn.prepareCall("{call proc_user_cud(?, ?, ?, ?, ?, ?, ?, ?)}");
+            CallableStatement cs = conn.prepareCall("{call proc_user_cud(?, ?, ?, ?, ?, ?, ?, ?, ?)}"); // 9 параметров
             cs.setString(1, "DELETE");
             cs.setLong(2, idUser);
             cs.setNull(3, Types.VARCHAR); // p_jmeno
@@ -95,6 +94,7 @@ public class UserService {
                 });
 
         for (User user : users) {
+            System.out.println("user = " + user);
             if (user.getEmail().equalsIgnoreCase(email)) {
                 return user;
             }
@@ -157,7 +157,55 @@ public class UserService {
     // Логин пользователя
     public User loginUser(String email, String password) throws ResourceNotFoundException {
         User user = getUserByEmail(email);
+
+        // Проверка пароля будет осуществляться в контроллере с использованием PasswordEncoder
         return user;
+    }
+
+    // Метод для поиска пользователей по фильтрам
+    public List<User> searchUsers(Long pIdUser, String pEmail, Long pRoleIdRole, Integer pLimit) {
+        return jdbcTemplate.execute("{call proc_user_r_filter(?, ?, ?, ?, ?)}",
+                (CallableStatementCallback<List<User>>) cs -> {
+                    // Установка входных параметров
+                    if (pIdUser != null) {
+                        cs.setLong(1, pIdUser);
+                    } else {
+                        cs.setNull(1, Types.NUMERIC);
+                    }
+
+                    if (pEmail != null && !pEmail.isEmpty()) {
+                        cs.setString(2, pEmail);
+                    } else {
+                        cs.setNull(2, Types.VARCHAR);
+                    }
+
+                    if (pRoleIdRole != null) {
+                        cs.setLong(3, pRoleIdRole);
+                    } else {
+                        cs.setNull(3, Types.NUMERIC);
+                    }
+
+                    if (pLimit != null) {
+                        cs.setInt(4, pLimit);
+                    } else {
+                        cs.setNull(4, Types.NUMERIC);
+                    }
+
+                    // Регистрация выходного параметра
+                    cs.registerOutParameter(5, Types.REF_CURSOR);
+
+                    // Выполнение процедуры
+                    cs.execute();
+
+                    // Получение результата
+                    ResultSet rs = (ResultSet) cs.getObject(5);
+                    List<User> list = new ArrayList<>();
+                    while (rs.next()) {
+                        User user = mapRowToUser(rs);
+                        list.add(user);
+                    }
+                    return list;
+                });
     }
 
     // Метод для маппинга строки ResultSet в объект User
