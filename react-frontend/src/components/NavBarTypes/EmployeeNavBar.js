@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   AppBar,
   Toolbar,
@@ -58,8 +58,26 @@ const LogoutButton = styled(Button)({
 
 const EmployeeNavBar = ({ NavBarTypeRole }) => {
   const navigate = useNavigate();
-  const [cartItems] = useState(0);
+  const [cartItems, setCartItems] = useState(0);
   const userName = "John Employee";
+
+  useEffect(() => {
+    const updateCartCount = () => {
+      const cart = JSON.parse(localStorage.getItem('cart')) || [];
+      const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
+      setCartItems(itemCount);
+    };
+
+    updateCartCount();
+
+    window.addEventListener('storage', updateCartCount);
+    window.addEventListener('cartUpdated', updateCartCount);
+
+    return () => {
+      window.removeEventListener('storage', updateCartCount);
+      window.removeEventListener('cartUpdated', updateCartCount);
+    };
+  }, []);
 
   const handleLogout = () => {
     console.log("Logging out...");

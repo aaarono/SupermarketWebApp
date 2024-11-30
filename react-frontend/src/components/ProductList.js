@@ -1,4 +1,7 @@
-import React, { useState } from "react";
+// ProductList.jsx
+
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   Box,
   Card,
@@ -43,98 +46,43 @@ const ProductList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [page, setPage] = useState(1);
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([{ value: "all", label: "All Categories" }]);
   const productsPerPage = 8;
 
-  const products = [
-    {
-      id: 1,
-      name: "Organic Coffee Beans",
-      price: 24.99,
-      category: "beverages",
-      description: "Premium organic coffee beans from sustainable farms",
-      image: "images.unsplash.com/photo-1447933601403-0c6688de566e",
-    },
-    {
-      id: 2,
-      name: "Wireless Headphones",
-      price: 199.99,
-      category: "electronics",
-      description: "High-quality wireless headphones with noise cancellation",
-      image: "images.unsplash.com/photo-1505740420928-5e560c06d30e",
-    },
-    {
-      id: 3,
-      name: "Leather Wallet",
-      price: 49.99,
-      category: "accessories",
-      description: "Genuine leather wallet with multiple card slots",
-      image: "images.unsplash.com/photo-1627123424574-724758594e93",
-    },
-    {
-      id: 4,
-      name: "Smart Watch",
-      price: 299.99,
-      category: "electronics",
-      description: "Feature-rich smartwatch with health monitoring",
-      image: "images.unsplash.com/photo-1523275335684-37898b6baf30",
-    },
-    {
-      id: 5,
-      name: "Yoga Mat",
-      price: 29.99,
-      category: "fitness",
-      description: "Non-slip yoga mat for comfortable workouts",
-      image: "images.unsplash.com/photo-1593810450967-f9c42742e326",
-    },
-    {
-      id: 6,
-      name: "Plant Pot",
-      price: 19.99,
-      category: "home",
-      description: "Ceramic plant pot with drainage holes",
-      image: "images.unsplash.com/photo-1485955900006-10f4d324d411",
-    },
-    {
-      id: 7,
-      name: "Desk Lamp",
-      price: 39.99,
-      category: "home",
-      description: "LED desk lamp with adjustable brightness",
-      image: "images.unsplash.com/photo-1507473885765-e6ed057f782c",
-    },
-    {
-      id: 8,
-      name: "Protein Powder",
-      price: 54.99,
-      category: "fitness",
-      description: "Premium whey protein powder for muscle recovery",
-      image: "images.unsplash.com/photo-1593095948071-474c5cc2989d",
-    },
-    {
-      id: 9,
-      name: "Protein Powder 2.0",
-      price: 58.99,
-      category: "fitness",
-      description: "Premium whey protein powder for muscle recovery",
-      image: "images.unsplash.com/photo-1593095948071-474c5cc2989d",
-    },
-  ];
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
-  const categories = [
-    { value: "all", label: "All Categories" },
-    { value: "electronics", label: "Electronics" },
-    { value: "accessories", label: "Accessories" },
-    { value: "fitness", label: "Fitness" },
-    { value: "home", label: "Home" },
-    { value: "beverages", label: "Beverages" },
-  ];
+  useEffect(() => {
+    fetchProducts();
+  }, [searchQuery, category]);
 
-  const filteredProducts = products
-    .filter((product) =>
-      product.name.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .filter((product) => category === "all" || product.category === category);
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get("http://localhost:8080/api/categories");
+      setCategories([{ value: "all", label: "All Categories" }, ...response.data]);
+    } catch (error) {
+      console.error("Ошибка при получении категорий:", error);
+    }
+  };
 
+  const fetchProducts = async () => {
+    try {
+      const response = await axios.get("http://localhost:8080/api/products", {
+        params: {
+          searchQuery: searchQuery,
+          category: category,
+        },
+      });
+      setProducts(response.data);
+      setPage(1); // Сбрасываем страницу при новом запросе
+    } catch (error) {
+      console.error("Ошибка при получении продуктов:", error);
+    }
+  };
+
+  const filteredProducts = products;
   const pageCount = Math.ceil(filteredProducts.length / productsPerPage);
   const displayedProducts = filteredProducts.slice(
     (page - 1) * productsPerPage,
@@ -155,6 +103,20 @@ const ProductList = () => {
     setPage(value);
   };
 
+  const handleAddToCart = (product) => {
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const existingProduct = cart.find(item => item.id === product.id);
+    if (existingProduct) {
+      existingProduct.quantity += 1;
+    } else {
+      cart.push({ ...product, quantity: 1 });
+    }
+    localStorage.setItem('cart', JSON.stringify(cart));
+    // Отправляем событие после обновления корзины
+    window.dispatchEvent(new Event('cartUpdated'));
+    console.log("Товар добавлен в корзину");
+  };
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ mb: 4 }}>
@@ -163,7 +125,7 @@ const ProductList = () => {
             <TextField
               fullWidth
               variant="outlined"
-              placeholder="Search products..."
+              placeholder="Поиск продуктов..."
               value={searchQuery}
               onChange={handleSearchChange}
               InputProps={{
@@ -173,18 +135,18 @@ const ProductList = () => {
                   </InputAdornment>
                 ),
               }}
-              aria-label="Search products"
+              aria-label="Поиск продуктов"
             />
           </Grid>
           <Grid item xs={12} md={6}>
             <FormControl fullWidth>
-              <InputLabel id="category-select-label">Category</InputLabel>
+              <InputLabel id="category-select-label">Категория</InputLabel>
               <Select
                 labelId="category-select-label"
                 value={category}
-                label="Category"
+                label="Категория"
                 onChange={handleCategoryChange}
-                aria-label="Select category"
+                aria-label="Выбор категории"
               >
                 {categories.map((cat) => (
                   <MenuItem key={cat.value} value={cat.value}>
@@ -203,7 +165,11 @@ const ProductList = () => {
             <Zoom in={true} style={{ transitionDelay: "200ms" }}>
               <StyledCard>
                 <StyledCardMedia
-                  image={`https://${product.image}`}
+                  image={
+                    product.image
+                      ? `data:image/jpeg;base64,${product.image}`
+                      : "https://via.placeholder.com/300x200.png?text=No+Image"
+                  }
                   title={product.name}
                   alt={product.name}
                 />
@@ -212,7 +178,7 @@ const ProductList = () => {
                     gutterBottom
                     variant="h6"
                     component="h2"
-                    aria-label={`Product: ${product.name}`}
+                    aria-label={`Продукт: ${product.name}`}
                   >
                     {product.name}
                   </Typography>
@@ -220,7 +186,7 @@ const ProductList = () => {
                     variant="body2"
                     color="text.secondary"
                     sx={{ mb: 2 }}
-                    aria-label={`Description: ${product.description}`}
+                    aria-label={`Описание: ${product.description}`}
                   >
                     {product.description}
                   </Typography>
@@ -234,18 +200,19 @@ const ProductList = () => {
                     <Typography
                       variant="h6"
                       color="primary"
-                      aria-label={`Price: $${product.price}`}
+                      aria-label={`Цена: ${product.price} Kč`}
                     >
-                      ${product.price}
+                      {product.price} Kč
                     </Typography>
                     <Button
-                      variant="contained"
-                      color="primary"
-                      startIcon={<FiShoppingCart />}
-                      aria-label={`Add ${product.name} to cart`}
-                    >
-                      Buy
-                    </Button>
+                    variant="contained"
+                    color="primary"
+                    startIcon={<FiShoppingCart />}
+                    aria-label={`Добавить ${product.name} в корзину`}
+                    onClick={() => handleAddToCart(product)}
+                  >
+                    Купить
+                  </Button>
                   </Box>
                 </CardContent>
               </StyledCard>
@@ -261,7 +228,7 @@ const ProductList = () => {
           onChange={handlePageChange}
           color="primary"
           size="large"
-          aria-label="Product pagination"
+          aria-label="Пагинация продуктов"
         />
       </Box>
     </Container>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Button,
@@ -60,32 +60,32 @@ const Cart = () => {
     bankAccountNumber: ""
   });
 
-  const [products, setProducts] = useState([
-    {
-      id: 1,
-      name: "Wireless Headphones",
-      price: 129.99,
-      quantity: 1,
-      image: "images.unsplash.com/photo-1505740420928-5e560c06d30e",
-    },
-    {
-      id: 2,
-      name: "Smart Watch",
-      price: 199.99,
-      quantity: 1,
-      image: "images.unsplash.com/photo-1523275335684-37898b6baf30",
-    },
-  ]);
+  const [products, setProducts] = useState([]);
+  useEffect(() => {
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+    setProducts(cart);
+  }, []);
 
+  // Обработка изменений количества и удаления товаров
   const handleQuantityChange = (id, value) => {
     const newQuantity = Math.max(1, parseInt(value) || 1);
-    setProducts(products.map(product =>
+    const updatedProducts = products.map(product =>
       product.id === id ? { ...product, quantity: newQuantity } : product
-    ));
+    );
+    setProducts(updatedProducts);
+    localStorage.setItem('cart', JSON.stringify(updatedProducts));
+
+    // Отправляем событие после обновления корзины
+    window.dispatchEvent(new Event('cartUpdated'));
   };
 
   const handleRemoveProduct = (id) => {
-    setProducts(products.filter(product => product.id !== id));
+    const updatedProducts = products.filter(product => product.id !== id);
+    setProducts(updatedProducts);
+    localStorage.setItem('cart', JSON.stringify(updatedProducts));
+
+    // Отправляем событие после обновления корзины
+    window.dispatchEvent(new Event('cartUpdated'));
   };
 
   const handleInputChange = (e) => {
@@ -107,8 +107,22 @@ const Cart = () => {
 
   const handleSubmit = async () => {
     setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setLoading(false);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Очистка корзины после успешного оформления заказа
+      localStorage.removeItem('cart');
+      setProducts([]);
+
+      // Отправляем событие после очистки корзины
+      window.dispatchEvent(new Event('cartUpdated'));
+
+      setLoading(false);
+      // Перенаправление или уведомление пользователя
+  } catch (error) {
+      console.error("Ошибка при создании заказа:", error);
+      setLoading(false);
+  }
   };
 
   return (

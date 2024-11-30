@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   AppBar,
   Toolbar,
@@ -59,8 +59,30 @@ const LogoutButton = styled(Button)({
 
 const AdminNavBar = ({ NavBarTypeRole }) => {
   const navigate = useNavigate();
-  const [cartItems] = useState(0);
+  const [cartItems, setCartItems] = useState(0);
   const userName = "John Admin";
+
+  useEffect(() => {
+    // Функция для обновления количества товаров
+    const updateCartCount = () => {
+      const cart = JSON.parse(localStorage.getItem('cart')) || [];
+      const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
+      setCartItems(itemCount);
+    };
+
+    // Вызываем при монтировании компонента
+    updateCartCount();
+
+    // Добавляем слушатель события для обновления количества товаров при изменении корзины
+    window.addEventListener('storage', updateCartCount);
+    window.addEventListener('cartUpdated', updateCartCount);
+
+    // Очистка слушателей при размонтировании компонента
+    return () => {
+      window.removeEventListener('storage', updateCartCount);
+      window.removeEventListener('cartUpdated', updateCartCount);
+    };
+  }, []);
 
   const handleLogout = () => {
     console.log("Logging out...");
