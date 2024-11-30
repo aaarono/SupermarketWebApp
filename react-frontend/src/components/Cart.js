@@ -49,6 +49,10 @@ const StyledSelect = styled(Select)({
 const Cart = () => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
     street: "",
     postCode: "",
     city: "",
@@ -59,6 +63,7 @@ const Cart = () => {
     cashCount: "",
     bankAccountNumber: ""
   });
+  
 
   const [products, setProducts] = useState([]);
   useEffect(() => {
@@ -108,22 +113,58 @@ const Cart = () => {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
+      const token = localStorage.getItem('token'); // Предполагается, что JWT хранится в localStorage
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          street: formData.street,
+          streetNumber: formData.streetNumber,
+          postCode: formData.postCode,
+          city: formData.city,
+          paymentType: formData.paymentType,
+          cardNumber: formData.paymentType === 'card' ? formData.cardNumber : null,
+          cashAmount: formData.paymentType === 'cash' ? parseFloat(formData.cashAmount) : null,
+          bankAccountNumber: formData.paymentType === 'invoice' ? formData.bankAccountNumber : null,
+          password: formData.password, // Если требуется
+          products: products.map(p => ({
+            id: p.id,
+            name: p.name,
+            price: p.price,
+            description: p.description,
+            category: p.category,
+            image: p.image,
+            quantity: p.quantity
+          }))
+        })
+      });
+  
+      if (!response.ok) {
+        throw new Error('Ошибка при создании заказа');
+      }
+  
+      const data = await response.json();
+      alert(data.message);
+  
       // Очистка корзины после успешного оформления заказа
       localStorage.removeItem('cart');
       setProducts([]);
-
-      // Отправляем событие после очистки корзины
       window.dispatchEvent(new Event('cartUpdated'));
-
       setLoading(false);
-      // Перенаправление или уведомление пользователя
-  } catch (error) {
+    } catch (error) {
       console.error("Ошибка при создании заказа:", error);
+      alert("Произошла ошибка при создании заказа. Попробуйте позже.");
       setLoading(false);
-  }
+    }
   };
+  
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -180,6 +221,48 @@ const Cart = () => {
             <CardContent>
               <Typography variant="h6" gutterBottom>Order Information</Typography>
               <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <TextField
+                    label="First Name"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleInputChange}
+                    fullWidth
+                    required
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    label="Last Name"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleInputChange}
+                    fullWidth
+                    required
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    label="Email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    fullWidth
+                    required
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    label="Phone Number"
+                    name="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    fullWidth
+                    required
+                  />
+                </Grid>
                 <Grid item xs={12}>
                   <TextField
                     label="City"

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Container,
@@ -63,68 +63,36 @@ const StatusChip = styled(Chip)(({ theme, status }) => ({
 
 const OrdersList = () => {
   const [expandedOrder, setExpandedOrder] = useState(null);
+  const [orders, setOrders] = useState([]);
 
-  const dummyOrders = [
-    {
-      id: 1,
-      products: [
-        {
-          name: "Wireless Headphones",
-          price: 129.99,
-          count: 2,
-          image: "images.unsplash.com/photo-1505740420928-5e560c06d30e"
-        },
-        {
-          name: "Smart Watch",
-          price: 199.99,
-          count: 1,
-          image: "images.unsplash.com/photo-1523275335684-37898b6baf30"
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const token = localStorage.getItem('token'); // Предполагается, что JWT хранится в localStorage
+        const response = await fetch('/api/orders', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Ошибка при получении заказов');
         }
-      ],
-      date: "2024-01-15",
-      status: "Delivered",
-      deliveryInfo: {
-        firstName: "John",
-        lastName: "Doe",
-        phone: "+1 234 567 8900",
-        email: "john.doe@example.com",
-        streetAddress: "123 Main Street",
-        streetNumber: "45A",
-        postalCode: "10001",
-        city: "New York"
+
+        const data = await response.json();
+        setOrders(data);
+      } catch (error) {
+        console.error("Ошибка при загрузке заказов:", error);
+        alert("Произошла ошибка при загрузке заказов. Попробуйте позже.");
       }
-    },
-    {
-      id: 2,
-      products: [
-        {
-          name: "Gaming Mouse",
-          price: 79.99,
-          count: 1,
-          image: "images.unsplash.com/photo-1527864550417-7fd91fc51a46"
-        }
-      ],
-      date: "2024-01-10",
-      status: "In Transit",
-      deliveryInfo: {
-        firstName: "Jane",
-        lastName: "Smith",
-        phone: "+1 234 567 8901",
-        email: "jane.smith@example.com",
-        streetAddress: "456 Oak Avenue",
-        streetNumber: "12B",
-        postalCode: "90210",
-        city: "Los Angeles"
-      }
-    }
-  ];
+    };
+
+    fetchOrders();
+  }, []);
 
   const handleExpand = (orderId) => {
     setExpandedOrder(expandedOrder === orderId ? null : orderId);
-  };
-
-  const calculateOrderTotal = (products) => {
-    return products.reduce((total, product) => total + (product.price * product.count), 0);
   };
 
   return (
@@ -137,43 +105,43 @@ const OrdersList = () => {
         <Typography variant="h5" gutterBottom sx={{ mb: 4, fontWeight: 500 }}>
           Order History
         </Typography>
-        {dummyOrders.map((order) => (
-          <StyledCard key={order.id}>
+        {orders.map((order) => (
+          <StyledCard key={order.idObjednavky}>
             <CardContent sx={{ p: { xs: 2, md: 3 } }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: { xs: "wrap", sm: "nowrap" } }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 500, minWidth: "100px" }}>
-                  Order #{order.id}
+                  Order #{order.idObjednavky}
                 </Typography>
-                <StatusChip label={order.status} status={order.status} />
+                <StatusChip label={order.stav} status={order.stav} />
                 <Typography variant="body2" color="text.secondary" sx={{ minWidth: "120px" }}>
-                  {order.date}
+                  {new Date(order.datum).toLocaleDateString()}
                 </Typography>
                 <Box sx={{ ml: { sm: "auto" }, display: "flex", alignItems: "center", gap: 2 }}>
                   <TotalCostBox>
                     <Typography variant="subtitle2" color="common.white">
-                      ${calculateOrderTotal(order.products).toFixed(2)}
+                      ${order.suma.toFixed(2)}
                     </Typography>
                   </TotalCostBox>
                   <Button
                     variant="outlined"
                     size="small"
-                    endIcon={expandedOrder === order.id ? <FaAngleUp size={16} /> : <FaAngleDown size={16} />}
-                    onClick={() => handleExpand(order.id)}
+                    endIcon={expandedOrder === order.idObjednavky ? <FaAngleUp size={16} /> : <FaAngleDown size={16} />}
+                    onClick={() => handleExpand(order.idObjednavky)}
                     sx={{ fontSize: "0.9rem" }}
                   >
-                    {expandedOrder === order.id ? "Hide Details" : "Show Details"}
+                    {expandedOrder === order.idObjednavky ? "Hide Details" : "Show Details"}
                   </Button>
                 </Box>
               </Box>
 
-              <Collapse in={expandedOrder === order.id}>
+              <Collapse in={expandedOrder === order.idObjednavky}>
                 <Divider sx={{ my: 3 }} />
                 <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 4 }}>
                   <Box sx={{ flex: 1 }}>
                     <Typography variant="subtitle1" gutterBottom sx={{ mb: 3 }}>
                       Products
                     </Typography>
-                    {order.products.map((product, index) => (
+                    {order.products && order.products.map((product, index) => (
                       <Box
                         key={index}
                         sx={{
@@ -195,7 +163,7 @@ const OrdersList = () => {
                         <Box sx={{ flex: 1, textAlign: { xs: "center", sm: "left" } }}>
                           <Typography variant="subtitle1" sx={{ mb: 1 }}>{product.name}</Typography>
                           <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                            Quantity: {product.count}
+                            Quantity: {product.quantity}
                           </Typography>
                           <Typography variant="subtitle2" color="primary.main">
                             ${product.price.toFixed(2)}
@@ -214,21 +182,21 @@ const OrdersList = () => {
                     <Box sx={{ bgcolor: "grey.50", p: 3, borderRadius: 2 }}>
                       <InfoText>
                         <FaUser />
-                        {order.deliveryInfo.firstName} {order.deliveryInfo.lastName}
+                        {order.jmeno} {order.prijmeni}
                       </InfoText>
                       <InfoText>
                         <FaMapMarkerAlt />
-                        {order.deliveryInfo.streetNumber} {order.deliveryInfo.streetAddress}
+                        {order.cisloPopisne} {order.ulice}
                         <br />
-                        {order.deliveryInfo.city}, {order.deliveryInfo.postalCode}
+                        {order.mesto}, {order.psc}
                       </InfoText>
                       <InfoText>
                         <FaPhone />
-                        {order.deliveryInfo.phone}
+                        {order.telefon}
                       </InfoText>
                       <InfoText>
                         <FaEnvelope />
-                        {order.deliveryInfo.email}
+                        {order.email}
                       </InfoText>
                     </Box>
                   </Box>
