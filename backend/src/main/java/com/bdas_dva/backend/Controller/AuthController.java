@@ -4,6 +4,7 @@ import com.bdas_dva.backend.Model.User;
 import com.bdas_dva.backend.Service.UserService;
 import com.bdas_dva.backend.Util.JwtUtil;
 import com.bdas_dva.backend.Exception.ResourceNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.*;
@@ -15,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import static com.bdas_dva.backend.Util.HashingUtil.checkPassword;
@@ -90,6 +92,8 @@ public class AuthController {
         }
     }
 
+
+
     // Пример защищенной точки, доступной только для администраторов
     @GetMapping("/admin")
     @PreAuthorize("hasRole('ADMIN')")
@@ -127,5 +131,31 @@ public class AuthController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Ошибка поиска: " + e.getMessage());
         }
+    }
+
+    @GetMapping("/role")
+    public ResponseEntity<?> getUserRole(HttpServletRequest request) {
+        String roleName = "ROLE_PUBLIC"; // Роль по умолчанию
+        try {
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+                if (jwtUtil.validateToken(token)) {
+                    String email = jwtUtil.getUserNameFromJwtToken(token);
+                    User user = userService.getUserWithRoleByEmail(email);
+                    if (user != null && user.getRoleName() != null) {
+                        roleName = user.getRoleName();
+                    }
+                    System.out.println("user.getRoleName() = " + user.getRoleName());
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("\"hui\" = " + "hui");
+        }
+        System.out.println("roleName.toLowerCase(Locale.ROOT).substring(5) = " + roleName.toLowerCase(Locale.ROOT).substring(5));
+
+        Map<String, String> response = new HashMap<>();
+        response.put("role", roleName.toLowerCase(Locale.ROOT).substring(5));
+        return ResponseEntity.ok(response);
     }
 }

@@ -221,4 +221,37 @@ public class UserService {
         user.setZamnestnanecIdZamnestnance(rs.getLong("zamnestnanec_id_zamnestnance"));
         return user;
     }
+
+    public User getUserWithRoleByEmail(String email) throws ResourceNotFoundException {
+        List<User> users = jdbcTemplate.execute("{call proc_user_with_role_by_email(?, ?)}",
+                (CallableStatementCallback<List<User>>) cs -> {
+                    cs.setString(1, email); // p_email
+                    cs.registerOutParameter(2, Types.REF_CURSOR);
+                    cs.execute();
+                    ResultSet rs = (ResultSet) cs.getObject(2);
+                    List<User> list = new ArrayList<>();
+                    while (rs.next()) {
+                        User user = mapRowToUserWithRole(rs);
+                        list.add(user);
+                    }
+                    return list;
+                });
+
+        if (users.isEmpty()) {
+            throw new ResourceNotFoundException("Пользователь с email " + email + " не найден.", "email", email);
+        }
+
+        return users.get(0);
+    }
+
+    // Метод маппинга строки ResultSet в объект User с ролью
+    private User mapRowToUserWithRole(ResultSet rs) throws SQLException {
+        User user = new User();
+        user.setIdUser(rs.getLong("id_user"));
+        user.setJmeno(rs.getString("jmeno"));
+        user.setPrijmeni(rs.getString("prijmeni"));
+        user.setEmail(rs.getString("email"));
+        user.setRoleName(rs.getString("rolename")); // Получаем название роли
+        return user;
+    }
 }
