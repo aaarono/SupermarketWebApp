@@ -10,6 +10,7 @@ public class User {
     private Long roleIdRole;
     private Long zakaznikIdZakazniku;
     private Long zamnestnanecIdZamnestnance;
+    private String roleName;
 
     // Конструкторы
     public User() {}
@@ -97,6 +98,14 @@ public class User {
 
     public void setZamnestnanecIdZamnestnance(Long zamnestnanecIdZamnestnance) {
         this.zamnestnanecIdZamnestnance = zamnestnanecIdZamnestnance;
+    }
+
+    public String getRoleName() {
+        return roleName;
+    }
+
+    public void setRoleName(String roleName) {
+        this.roleName = roleName;
     }
 
     // Метод для получения username (email)
