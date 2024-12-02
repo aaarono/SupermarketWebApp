@@ -4,6 +4,7 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import './index.css';
 import App from './App';
 import { BrowserRouter } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
 
 const theme = createTheme();
 
@@ -12,7 +13,9 @@ root.render(
   <BrowserRouter>
     <React.StrictMode>
       <ThemeProvider theme={theme}>
-        <App />
+        <AuthProvider>
+          <App />
+        </AuthProvider>
       </ThemeProvider>
     </React.StrictMode>
   </BrowserRouter>

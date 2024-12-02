@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import { login } from '../../services/authService';
+import React, { useState, useContext } from "react";
+import { login as loginService } from '../../services/authService';
+import { AuthContext } from '../../contexts/AuthContext';
 import {
   Box,
   TextField,
@@ -57,12 +58,9 @@ const FormBackground = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2)
 }));
 
-const LoginForm = ({ LoginUserRole }) => {
-  
-  function linkUserRole() {
-    return '/' + LoginUserRole;
-  }
+const LoginForm = () => {
 
+  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
@@ -103,12 +101,13 @@ const LoginForm = ({ LoginUserRole }) => {
       setLoading(true);
       try {
         // Вызов функции login
-        const response = await login(formData.email, formData.password);
-        console.log("Login successful:", response);
+        const { token, role } = await loginService(formData.email, formData.password);
+        login(token, role);
+        console.log("Login successful:", token);
         // Переход на страницу пользователя после успешного входа
-        navigate(linkUserRole());
+        navigate(`/${role}`);
       } catch (error) {
-        console.error('Ошибка при логине:', error);
+        console.error('Error during login:', error);
         setErrors((prev) => ({ ...prev, form: 'Incorrect email or password.' }));
       } finally {
         setLoading(false);
