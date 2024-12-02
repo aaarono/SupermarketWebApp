@@ -1,173 +1,428 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from "react";
 import {
-  Tabs,
-  Tab,
+  AppBar,
   Box,
+  CssBaseline,
+  Drawer,
+  IconButton,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
+  Toolbar,
+  Typography,
   Button,
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogActions,
   TextField,
-} from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
+  Avatar,
+  Menu,
+  MenuItem,
+  Tooltip,
+  InputAdornment,
+  CircularProgress,
+  Alert,
+  Snackbar
+} from "@mui/material";
+import { styled } from "@mui/system";
+import {
+  FiUsers,
+  FiSettings,
+  FiLogOut,
+  FiMenu,
+  FiSearch,
+  FiEdit2,
+  FiTrash2,
+  FiPlus
+} from "react-icons/fi";
 
-function AdminPanel() {
-  const [tables, setTables] = useState([
-    {
-      name: 'ADRESA',
-      columns: [
-        { field: 'ID_ADRESY', headerName: 'ID_ADRESY', type: 'number', width: 130 },
-        { field: 'ULICE', headerName: 'ULICE', type: 'string', width: 150 },
-        { field: 'PSC', headerName: 'PSC', type: 'number', width: 100 },
-        { field: 'MESTO', headerName: 'MESTO', type: 'string', width: 150 },
-        { field: 'CISLOPOPISNE', headerName: 'CISLOPOPISNE', type: 'number', width: 150 },
-      ],
-      rows: [],
-    },
-    // Add similar objects for other tables based on your DDL
-  ]);
+const drawerWidth = 200;
 
-  const [currentTab, setCurrentTab] = useState(0);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [dialogMode, setDialogMode] = useState('add'); // 'add' or 'edit'
-  const [formData, setFormData] = useState({});
+const Root = styled("div")({
+  display: "flex"
+});
 
-  useEffect(() => {
-    // Fetch data for each table
-    tables.forEach((table, index) => {
-      fetch(`/api/${table.name}`)
-        .then((res) => res.json())
-        .then((data) => {
-          const updatedTables = [...tables];
-          updatedTables[index].rows = data;
-          setTables(updatedTables);
-        })
-        .catch((err) => console.error(err));
-    });
-  }, []);
+const MainContent = styled("main")(({ theme }) => ({
+  flexGrow: 1,
+  padding: theme.spacing(3),
+  marginTop: 64
+}));
 
-  const handleTabChange = (event, newValue) => {
-    setCurrentTab(newValue);
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  "&:nth-of-type(odd)": {
+    backgroundColor: theme.palette.action.hover
+  }
+}));
+
+const mockData = [
+  { id: 1, name: "John Doe", email: "john@example.com", role: "Admin" },
+  { id: 2, name: "Jane Smith", email: "jane@example.com", role: "User" },
+  { id: 3, name: "Mike Johnson", email: "mike@example.com", role: "Editor" },
+  { id: 4, name: "Sarah Wilson", email: "sarah@example.com", role: "User" },
+  { id: 5, name: "Tom Brown", email: "tom@example.com", role: "Admin" }
+];
+
+const AdminPanel = () => {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
   };
 
-  const handleAdd = () => {
-    setDialogMode('add');
-    setFormData({});
-    setOpenDialog(true);
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
   };
 
-  const handleEdit = (params) => {
-    setDialogMode('edit');
-    setFormData(params.row);
-    setOpenDialog(true);
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
   };
 
-  const handleDelete = (id) => {
-    const table = tables[currentTab];
-    fetch(`/api/${table.name}/${id}`, {
-      method: 'DELETE',
-    })
-      .then(() => {
-        // Update the table data after deletion
-      })
-      .catch((err) => console.error(err));
+  const handleSearch = (event) => {
+    setSearchQuery(event.target.value);
+    setPage(0);
   };
 
-  const handleDialogSubmit = () => {
-    const table = tables[currentTab];
-    const method = dialogMode === 'add' ? 'POST' : 'PUT';
-    const url =
-      dialogMode === 'add'
-        ? `/api/${table.name}`
-        : `/api/${table.name}/${formData.ID_ADRESY}`; // Adjust ID field accordingly
-
-    fetch(url, {
-      method: method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData),
-    })
-      .then(() => {
-        // Refresh table data after submission
-        setOpenDialog(false);
-      })
-      .catch((err) => console.error(err));
+  const handleRowSelect = (id) => {
+    const newSelectedRows = selectedRows.includes(id)
+      ? selectedRows.filter((rowId) => rowId !== id)
+      : [...selectedRows, id];
+    setSelectedRows(newSelectedRows);
   };
+
+  const handleDeleteClick = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDelete = () => {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      setDeleteDialogOpen(false);
+      setSelectedRows([]);
+      setSnackbar({
+        open: true,
+        message: "Items deleted successfully",
+        severity: "success"
+      });
+    }, 1000);
+  };
+
+  const handleFormSubmit = (event) => {
+    event.preventDefault();
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      setFormDialogOpen(false);
+      setEditingUser(null);
+      setSnackbar({
+        open: true,
+        message: "User saved successfully",
+        severity: "success"
+      });
+    }, 1000);
+  };
+
+  const drawer = (
+    <div>
+      <Toolbar>
+        <Typography variant="h6" noWrap>
+          Admin Panel
+        </Typography>
+      </Toolbar>
+      <List>
+        <ListItem button>
+          <ListItemIcon>
+            <FiUsers />
+          </ListItemIcon>
+          <ListItemText primary="Users" />
+        </ListItem>
+        <ListItem button>
+          <ListItemIcon>
+            <FiSettings />
+          </ListItemIcon>
+          <ListItemText primary="Settings" />
+        </ListItem>
+      </List>
+    </div>
+  );
+
+  const filteredData = mockData.filter(
+    (user) =>
+      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.role.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <Box sx={{ width: '100%' }}>
-      <Tabs value={currentTab} onChange={handleTabChange}>
-        {tables.map((table, index) => (
-          <Tab label={table.name} key={index} />
-        ))}
-      </Tabs>
-      {tables.map(
-        (table, index) =>
-          currentTab === index && (
-            <Box key={index} sx={{ p: 2 }}>
-              <Button variant="contained" color="primary" onClick={handleAdd}>
-                Add Row
-              </Button>
-              <div style={{ height: 400, width: '100%', marginTop: '16px' }}>
-                <DataGrid
-                  columns={[
-                    ...table.columns,
-                    {
-                      field: 'actions',
-                      headerName: 'Actions',
-                      width: 150,
-                      renderCell: (params) => (
-                        <>
-                          <Button
-                            variant="outlined"
-                            color="primary"
-                            size="small"
-                            onClick={() => handleEdit(params)}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            variant="outlined"
-                            color="secondary"
-                            size="small"
-                            onClick={() => handleDelete(params.row.ID_ADRESY)} // Adjust ID field accordingly
-                            style={{ marginLeft: 8 }}
-                          >
-                            Delete
-                          </Button>
-                        </>
-                      ),
-                    },
-                  ]}
-                  rows={table.rows}
-                  getRowId={(row) => row.ID_ADRESY} // Adjust ID field accordingly
-                />
-              </div>
-              {/* Dialog for Add/Edit */}
-              <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-                <DialogTitle>{dialogMode === 'add' ? 'Add Row' : 'Edit Row'}</DialogTitle>
-                <DialogContent>
-                  {table.columns.map((column) => (
-                    <TextField
-                      key={column.field}
-                      label={column.headerName}
-                      value={formData[column.field] || ''}
+    <Root>
+      <CssBaseline />
+
+      <Box
+        component="nav"
+        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+      >
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{ keepMounted: true }}
+          sx={{
+            display: { xs: "block", sm: "none" },
+            "& .MuiDrawer-paper": {
+              boxSizing: "border-box",
+              width: drawerWidth
+            }
+          }}
+        >
+          {drawer}
+        </Drawer>
+        <Drawer
+          variant="permanent"
+          sx={{
+            display: { xs: "none", sm: "block" },
+            "& .MuiDrawer-paper": {
+              boxSizing: "border-box",
+              width: drawerWidth
+            }
+          }}
+          open
+        >
+          {drawer}
+        </Drawer>
+      </Box>
+
+      <MainContent>
+        <Paper sx={{ width: "100%", mb: 2, p: 2 }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
+            <TextField
+              placeholder="Search"
+              variant="outlined"
+              size="small"
+              value={searchQuery}
+              onChange={handleSearch}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <FiSearch />
+                  </InputAdornment>
+                )
+              }}
+            />
+            <Button
+              variant="contained"
+              startIcon={<FiPlus />}
+              onClick={() => setFormDialogOpen(true)}
+            >
+              Add User
+            </Button>
+          </Box>
+
+          <TableContainer>
+            <Table aria-label="users table">
+              <TableHead>
+                <TableRow>
+                  <TableCell padding="checkbox">
+                    <input
+                      type="checkbox"
                       onChange={(e) =>
-                        setFormData({ ...formData, [column.field]: e.target.value })
+                        setSelectedRows(
+                          e.target.checked ? mockData.map((user) => user.id) : []
+                        )
                       }
-                      fullWidth
-                      margin="normal"
+                      checked={selectedRows.length === mockData.length}
                     />
+                  </TableCell>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Role</TableCell>
+                  <TableCell>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredData
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((user) => (
+                    <StyledTableRow key={user.id}>
+                      <TableCell padding="checkbox">
+                        <input
+                          type="checkbox"
+                          onChange={() => handleRowSelect(user.id)}
+                          checked={selectedRows.includes(user.id)}
+                        />
+                      </TableCell>
+                      <TableCell>{user.name}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{user.role}</TableCell>
+                      <TableCell>
+                        <IconButton
+                          onClick={() => {
+                            setEditingUser(user);
+                            setFormDialogOpen(true);
+                          }}
+                          size="small"
+                        >
+                          <FiEdit2 />
+                        </IconButton>
+                        <IconButton
+                          onClick={() => {
+                            setSelectedRows([user.id]);
+                            setDeleteDialogOpen(true);
+                          }}
+                          size="small"
+                        >
+                          <FiTrash2 />
+                        </IconButton>
+                      </TableCell>
+                    </StyledTableRow>
                   ))}
-                  <Button variant="contained" onClick={handleDialogSubmit} sx={{ mt: 2 }}>
-                    Submit
-                  </Button>
-                </DialogContent>
-              </Dialog>
-            </Box>
-          )
-      )}
-    </Box>
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={filteredData.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
+        </Paper>
+
+        <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+          <DialogTitle>Confirm Delete</DialogTitle>
+          <DialogContent>
+            Are you sure you want to delete the selected items?
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleDelete}
+              color="error"
+              disabled={loading}
+              startIcon={loading && <CircularProgress size={20} />}
+            >
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={formDialogOpen}
+          onClose={() => {
+            setFormDialogOpen(false);
+            setEditingUser(null);
+          }}
+        >
+          <form onSubmit={handleFormSubmit}>
+            <DialogTitle>
+              {editingUser ? "Edit User" : "Add New User"}
+            </DialogTitle>
+            <DialogContent>
+              <TextField
+                autoFocus
+                margin="dense"
+                label="Name"
+                type="text"
+                fullWidth
+                required
+                defaultValue={editingUser?.name}
+              />
+              <TextField
+                margin="dense"
+                label="Email"
+                type="email"
+                fullWidth
+                required
+                defaultValue={editingUser?.email}
+              />
+              <TextField
+                margin="dense"
+                label="Role"
+                type="text"
+                fullWidth
+                required
+                defaultValue={editingUser?.role}
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button
+                onClick={() => {
+                  setFormDialogOpen(false);
+                  setEditingUser(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={loading}
+                startIcon={loading && <CircularProgress size={20} />}
+              >
+                Save
+              </Button>
+            </DialogActions>
+          </form>
+        </Dialog>
+
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={() => setAnchorEl(null)}
+        >
+          <MenuItem onClick={() => setAnchorEl(null)}>
+            <ListItemIcon>
+              <FiSettings fontSize="small" />
+            </ListItemIcon>
+            Settings
+          </MenuItem>
+          <MenuItem onClick={() => setAnchorEl(null)}>
+            <ListItemIcon>
+              <FiLogOut fontSize="small" />
+            </ListItemIcon>
+            Logout
+          </MenuItem>
+        </Menu>
+
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+        >
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity}
+            sx={{ width: "100%" }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </MainContent>
+    </Root>
   );
-}
+};
 
 export default AdminPanel;
