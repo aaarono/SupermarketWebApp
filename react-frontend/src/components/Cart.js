@@ -16,10 +16,14 @@ import {
   ListItemText,
   ListItemIcon,
   Select,
-  MenuItem
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from "@mui/material";
 import { styled } from "@mui/system";
-import { FaTrash } from "react-icons/fa";
+import { FaTrash, FaEdit } from "react-icons/fa";
 import { BsCreditCard2Front, BsCash, BsBank } from "react-icons/bs";
 import api from '../services/api';
 
@@ -47,22 +51,30 @@ const StyledSelect = styled(Select)({
   }
 });
 
+const InfoItem = styled(Box)({
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: '8px'
+});
+
 const Cart = () => {
   const [loading, setLoading] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false)
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    street: "",
-    postCode: "",
-    city: "",
-    streetNumber: "",
-    deliveryOption: "standard",
-    paymentType: "card",
-    cardNumber: "",
-    cashCount: "",
-    bankAccountNumber: ""
+    firstName: 'John',
+    lastName: 'Doe',
+    phone: '+1 234 567 8900',
+    email: 'john.doe@example.com',
+    street: '',
+    postCode: '',
+    city: '',
+    streetNumber: '',
+    deliveryOption: 'standard',
+    paymentType: 'card',
+    cardNumber: '',
+    cashCount: '',
+    bankAccountNumber: ''
   });
   
 
@@ -156,7 +168,14 @@ const Cart = () => {
         setLoading(false);
     }
 };
-  
+
+  const handleOpenDialog = () => {
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+  };
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -212,27 +231,31 @@ const Cart = () => {
           <StyledCard>
             <CardContent>
               <Typography variant="h6" gutterBottom>Order Information</Typography>
+              <Box sx={{ mb: 3 }}>
+                <InfoItem>
+                  <Typography variant="subtitle1">Personal Information</Typography>
+                  <IconButton 
+                    color="primary" 
+                    onClick={handleOpenDialog}
+                    sx={{
+                      '&:hover': {
+                        backgroundColor: 'rgba(25, 118, 210, 0.04)',
+                        transform: 'scale(1.1)',
+                        transition: 'all 0.2s'
+                      }
+                    }}
+                    aria-label="Edit personal information"
+                  >
+                    <FaEdit />
+                  </IconButton>
+                </InfoItem>
+                <Typography><strong>First Name:</strong> {formData.firstName}</Typography>
+                <Typography><strong>Last Name:</strong> {formData.lastName}</Typography>
+                <Typography><strong>Phone:</strong> {formData.phone}</Typography>
+                <Typography><strong>Email:</strong> {formData.email}</Typography>
+              </Box>
+              
               <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2" gutterBottom>First Name: Vaysa</Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2" gutterBottom>Last Name: Pupkin</Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2" gutterBottom>Email: vasyapupkin@mail.com</Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    label="Phone Number"
-                    name="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    fullWidth
-                    required
-                  />
-                </Grid>
                 <Grid item xs={12}>
                   <TextField
                     label="City"
@@ -282,19 +305,19 @@ const Cart = () => {
                       name="paymentType"
                     >
                       <MenuItem value="card">
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                           <BsCreditCard2Front size={24} />
                           <Typography>Card</Typography>
                         </Box>
                       </MenuItem>
                       <MenuItem value="cash">
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                           <BsCash size={24} />
                           <Typography>Cash</Typography>
                         </Box>
                       </MenuItem>
                       <MenuItem value="invoice">
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                           <BsBank size={24} />
                           <Typography>Invoice</Typography>
                         </Box>
@@ -302,7 +325,7 @@ const Cart = () => {
                     </StyledSelect>
                   </FormControl>
                 </Grid>
-                {formData.paymentType === "card" && (
+                {formData.paymentType === 'card' && (
                   <Grid item xs={12}>
                     <TextField
                       label="Card Number"
@@ -314,7 +337,7 @@ const Cart = () => {
                     />
                   </Grid>
                 )}
-                {formData.paymentType === "cash" && (
+                {formData.paymentType === 'cash' && (
                   <Grid item xs={12}>
                     <TextField
                       label="Cash Amount"
@@ -332,7 +355,7 @@ const Cart = () => {
                     )}
                   </Grid>
                 )}
-                {formData.paymentType === "invoice" && (
+                {formData.paymentType === 'invoice' && (
                   <Grid item xs={12}>
                     <TextField
                       label="Bank Account Number"
@@ -361,7 +384,7 @@ const Cart = () => {
                   {loading ? (
                     <CircularProgress size={24} color="inherit" />
                   ) : (
-                    "Pay Now"
+                    'Continue to Payment'
                   )}
                 </Button>
               </Box>
@@ -369,6 +392,56 @@ const Cart = () => {
           </StyledCard>
         </Grid>
       </Grid>
+      <Dialog open={openDialog} onClose={handleCloseDialog}>
+        <DialogTitle>Edit Personal Information</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12}>
+              <TextField
+                label="First Name"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleInputChange}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="Last Name"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleInputChange}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="Phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleInputChange}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="Email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                fullWidth
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleCloseDialog} variant="contained" color="primary">
+            Save Changes
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
