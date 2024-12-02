@@ -1,7 +1,6 @@
 // ProductList.jsx
 
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import {
   Box,
   Card,
@@ -22,6 +21,7 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { FiSearch, FiShoppingCart } from "react-icons/fi";
+import api from "../services/api"; // Импортируем api из файла api.js
 
 const StyledCard = styled(Card)(({ theme }) => ({
   height: "100%",
@@ -60,22 +60,32 @@ const ProductList = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get("http://localhost:8080/api/categories");
-      setCategories([{ value: "all", label: "All Categories" }, ...response.data]);
+      const response = await api.get("/api/categories");
+      setCategories([...response]);
     } catch (error) {
       console.error("Ошибка при получении категорий:", error);
     }
   };
 
+  const buildQueryParams = (params) => {
+    const query = new URLSearchParams();
+    for (const key in params) {
+      if (params[key]) {
+        query.append(key, params[key]);
+      }
+    }
+    return query.toString() ? `?${query.toString()}` : '';
+  };
+
   const fetchProducts = async () => {
     try {
-      const response = await axios.get("http://localhost:8080/api/products", {
-        params: {
-          searchQuery: searchQuery,
-          category: category,
-        },
-      });
-      setProducts(response.data);
+      const params = {
+        searchQuery: searchQuery !== '' ? searchQuery : null,
+        category: category !== 'all' ? category : null,
+      };
+      const queryString = buildQueryParams(params);
+      const response = await api.get(`/api/products${queryString}`);
+      setProducts(response);
       setPage(1); // Сбрасываем страницу при новом запросе
     } catch (error) {
       console.error("Ошибка при получении продуктов:", error);
@@ -205,14 +215,14 @@ const ProductList = () => {
                       {product.price} Kč
                     </Typography>
                     <Button
-                    variant="contained"
-                    color="primary"
-                    startIcon={<FiShoppingCart />}
-                    aria-label={`Добавить ${product.name} в корзину`}
-                    onClick={() => handleAddToCart(product)}
-                  >
-                    Купить
-                  </Button>
+                      variant="contained"
+                      color="primary"
+                      startIcon={<FiShoppingCart />}
+                      aria-label={`Добавить ${product.name} в корзину`}
+                      onClick={() => handleAddToCart(product)}
+                    >
+                      Купить
+                    </Button>
                   </Box>
                 </CardContent>
               </StyledCard>
