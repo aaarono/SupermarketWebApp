@@ -3,6 +3,7 @@ package com.bdas_dva.backend.Service;
 import com.bdas_dva.backend.Exception.ResourceNotFoundException;
 import com.bdas_dva.backend.Model.Zakaznik;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.RowMapper;
@@ -72,13 +73,14 @@ public class ZakaznikService {
 
     // Получение заказчика по ID
     public Zakaznik getZakaznikById(Long idZakazniku) throws ResourceNotFoundException {
-        List<Zakaznik> zakaznikList = jdbcTemplate.execute("{call proc_zakaznik_r(?, ?, ?)}",
+        List<Zakaznik> zakaznikList = jdbcTemplate.execute("{call proc_zakaznik_r(?, ?, ?, ?)}",
                 (CallableStatementCallback<List<Zakaznik>>) cs -> {
                     cs.setLong(1, idZakazniku); // p_id_zakazniku
                     cs.setNull(2, Types.NUMERIC); // p_telefon
-                    cs.registerOutParameter(3, Types.REF_CURSOR);
+                    cs.setNull(3, Types.NUMERIC);
+                    cs.registerOutParameter(4, Types.REF_CURSOR);
                     cs.execute();
-                    ResultSet rs = (ResultSet) cs.getObject(3);
+                    ResultSet rs = (ResultSet) cs.getObject(4);
                     List<Zakaznik> list = new ArrayList<>();
                     while (rs.next()) {
                         Zakaznik zakaznik = mapRowToZakaznik(rs);
@@ -158,6 +160,25 @@ public class ZakaznikService {
                     }
                     return list;
                 });
+    }
+
+    private Long getAdresaIdByZakaznikId(Long zakaznikId) throws ResourceNotFoundException {
+        try {
+            return jdbcTemplate.execute("{call proc_get_adresa_id_by_zakaznik_id(?, ?)}",
+                    (CallableStatementCallback<Long>) cs -> {
+                        cs.setLong(1, zakaznikId); // p_id_zakazniku
+                        cs.registerOutParameter(2, Types.NUMERIC); // p_adresa_id_adresy
+                        cs.execute();
+
+                        Long adresaId = cs.getLong(2);
+                        if (cs.wasNull()) {
+                            throw new ResourceNotFoundException("Адрес для ZAKAZNIK с ID " + zakaznikId + " не найден.", "zakaznikId", zakaznikId.toString());
+                        }
+                        return adresaId;
+                    });
+        } catch (DataAccessException e) {
+            throw new ResourceNotFoundException("ZAKAZNIK с ID " + zakaznikId + " не найден.", "zakaznikId", zakaznikId.toString());
+        }
     }
 
     // Метод для маппинга строки ResultSet в объект Zakaznik

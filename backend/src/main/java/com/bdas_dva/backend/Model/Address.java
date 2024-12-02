@@ -1,18 +1,17 @@
 package com.bdas_dva.backend.Model;
 
 public class Address {
-    private Long id;
-    private String ulice;          // Улица
-    private Integer psc;           // Почтовый индекс
-    private String mesto;          // Город
-    private Integer cisloPopisne;  // Номер дома
+    private Long idAdresy;
+    private String ulice;
+    private String psc;
+    private String mesto;
+    private String cisloPopisne;
 
     // Конструкторы
-    public Address() {
-    }
+    public Address() {}
 
-    public Address(Long id, String ulice, Integer psc, String mesto, Integer cisloPopisne) {
-        this.id = id;
+    public Address(Long idAdresy, String ulice, String psc, String mesto, String cisloPopisne) {
+        this.idAdresy = idAdresy;
         this.ulice = ulice;
         this.psc = psc;
         this.mesto = mesto;
@@ -20,12 +19,12 @@ public class Address {
     }
 
     // Геттеры и сеттеры
-    public Long getId() {
-        return id;
+    public Long getIdAdresy() {
+        return idAdresy;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setIdAdresy(Long idAdresy) {
+        this.idAdresy = idAdresy;
     }
 
     public String getUlice() {
@@ -36,11 +35,11 @@ public class Address {
         this.ulice = ulice;
     }
 
-    public Integer getPsc() {
+    public String getPsc() {
         return psc;
     }
 
-    public void setPsc(Integer psc) {
+    public void setPsc(String psc) {
         this.psc = psc;
     }
 
@@ -52,13 +51,11 @@ public class Address {
         this.mesto = mesto;
     }
 
-    public Integer getCisloPopisne() {
+    public String getCisloPopisne() {
         return cisloPopisne;
     }
 
-    public void setCisloPopisne(Integer cisloPopisne) {
+    public void setCisloPopisne(String cisloPopisne) {
         this.cisloPopisne = cisloPopisne;
     }
-
-    // Остальные геттеры и сеттеры
 }

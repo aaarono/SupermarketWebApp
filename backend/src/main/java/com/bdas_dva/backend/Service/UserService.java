@@ -1,8 +1,10 @@
 package com.bdas_dva.backend.Service;
 
 import com.bdas_dva.backend.Exception.ResourceNotFoundException;
+import com.bdas_dva.backend.Model.Address;
 import com.bdas_dva.backend.Model.User;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.stereotype.Service;
@@ -207,20 +209,6 @@ public class UserService {
                 });
     }
 
-    // Метод для маппинга строки ResultSet в объект User
-    private User mapRowToUser(ResultSet rs) throws SQLException {
-        User user = new User();
-        user.setIdUser(rs.getLong("id_user"));
-        user.setJmeno(rs.getString("jmeno"));
-        user.setPrijmeni(rs.getString("prijmeni"));
-        user.setEmail(rs.getString("email"));
-        user.setPassword(rs.getString("password"));
-        user.setRoleIdRole(rs.getLong("role_id_role"));
-        user.setZakaznikIdZakazniku(rs.getLong("zakaznik_id_zakazniku"));
-        user.setZamnestnanecIdZamnestnance(rs.getLong("zamnestnanec_id_zamnestnance"));
-        return user;
-    }
-
     public User getUserWithRoleByEmail(String email) throws ResourceNotFoundException {
         List<User> users = jdbcTemplate.execute("{call proc_user_with_role_by_email(?, ?)}",
                 (CallableStatementCallback<List<User>>) cs -> {
@@ -251,6 +239,20 @@ public class UserService {
         user.setPrijmeni(rs.getString("prijmeni"));
         user.setEmail(rs.getString("email"));
         user.setRoleName(rs.getString("rolename")); // Получаем название роли
+        return user;
+    }
+
+    // Метод для маппинга строки ResultSet в объект User
+    private User mapRowToUser(ResultSet rs) throws SQLException {
+        User user = new User();
+        user.setIdUser(rs.getLong("id_user"));
+        user.setJmeno(rs.getString("jmeno"));
+        user.setPrijmeni(rs.getString("prijmeni"));
+        user.setEmail(rs.getString("email"));
+        user.setPassword(rs.getString("password"));
+        user.setRoleIdRole(rs.getLong("role_id_role"));
+        user.setZakaznikIdZakazniku(rs.getLong("zakaznik_id_zakazniku"));
+        user.setZamnestnanecIdZamnestnance(rs.getLong("zamnestnanec_id_zamnestnance"));
         return user;
     }
 }

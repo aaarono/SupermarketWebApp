@@ -1,11 +1,14 @@
 package com.bdas_dva.backend.Model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class User {
     private Long idUser;
     private String jmeno;
     private String prijmeni;
     private String email;
     private String telNumber;
+    @JsonIgnore
     private String password;
     private Long roleIdRole;
     private Long zakaznikIdZakazniku;

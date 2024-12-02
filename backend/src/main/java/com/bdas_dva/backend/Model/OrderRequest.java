@@ -1,23 +1,35 @@
-package com.bdas_dva.backend.dto;
+package com.bdas_dva.backend.Model;
 
 import java.util.List;
 
 public class OrderRequest {
+    private Long customerId; // Добавлено поле
     private String firstName;
     private String lastName;
     private String email;
-    private Long phone;
+    private String phone;
     private String street;
-    private Integer streetNumber;
-    private Integer postCode;
+    private String streetNumber;
+    private String postCode;
     private String city;
-    private String paymentType; // 'card', 'cash', 'invoice'
+    private String paymentType;
     private String cardNumber;
     private Double cashAmount;
     private String bankAccountNumber;
-    private String password; // Хешированный пароль
-    private List<ProductDTO> products;
+    private List<ProductItem> products;
 
+    public OrderRequest() {
+    }
+
+    // Геттеры и сеттеры для всех полей
+
+    public Long getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(Long customerId) {
+        this.customerId = customerId;
+    }
 
     public String getFirstName() {
         return firstName;
@@ -43,11 +55,11 @@ public class OrderRequest {
         this.email = email;
     }
 
-    public Long getPhone() {
+    public String getPhone() {
         return phone;
     }
 
-    public void setPhone(Long phone) {
+    public void setPhone(String phone) {
         this.phone = phone;
     }
 
@@ -59,19 +71,19 @@ public class OrderRequest {
         this.street = street;
     }
 
-    public Integer getStreetNumber() {
+    public String getStreetNumber() {
         return streetNumber;
     }
 
-    public void setStreetNumber(Integer streetNumber) {
+    public void setStreetNumber(String streetNumber) {
         this.streetNumber = streetNumber;
     }
 
-    public Integer getPostCode() {
+    public String getPostCode() {
         return postCode;
     }
 
-    public void setPostCode(Integer postCode) {
+    public void setPostCode(String postCode) {
         this.postCode = postCode;
     }
 
@@ -115,19 +127,46 @@ public class OrderRequest {
         this.bankAccountNumber = bankAccountNumber;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public List<ProductDTO> getProducts() {
+    public List<ProductItem> getProducts() {
         return products;
     }
 
-    public void setProducts(List<ProductDTO> products) {
+    public void setProducts(List<ProductItem> products) {
         this.products = products;
+    }
+
+    public static class ProductItem {
+        private Long id;
+        private Integer quantity;
+        private Double price; // Добавлено поле цены продукта
+
+        public ProductItem() {
+        }
+
+        // Геттеры и сеттеры
+
+        public Long getId() {
+            return id;
+        }
+
+        public void setId(Long id) {
+            this.id = id;
+        }
+
+        public Integer getQuantity() {
+            return quantity;
+        }
+
+        public void setQuantity(Integer quantity) {
+            this.quantity = quantity;
+        }
+
+        public Double getPrice() {
+            return price;
+        }
+
+        public void setPrice(Double price) {
+            this.price = price;
+        }
     }
 }

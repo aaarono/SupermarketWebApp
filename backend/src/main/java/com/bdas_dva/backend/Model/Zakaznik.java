@@ -38,6 +38,4 @@ public class Zakaznik {
     public void setAdresaIdAdresy(Long adresaIdAdresy) {
         this.adresaIdAdresy = adresaIdAdresy;
     }
-
-    // Дополнительные методы, если необходимо
 }

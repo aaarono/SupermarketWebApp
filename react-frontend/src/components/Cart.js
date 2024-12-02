@@ -11,10 +11,6 @@ import {
   Typography,
   CircularProgress,
   FormControl,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
   Select,
   MenuItem,
   Dialog,
@@ -64,10 +60,10 @@ const Cart = () => {
   const [openAddressDialog, setOpenAddressDialog] = useState(false);
   const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
-    firstName: 'John',
-    lastName: 'Doe',
-    phone: '+1 234 567 8900',
-    email: 'john.doe@example.com',
+    firstName: '',
+    lastName: '',
+    phone: '',
+    email: '',
     street: '',
     postCode: '',
     city: '',
@@ -79,12 +75,83 @@ const Cart = () => {
     bankAccountNumber: ''
   });
   
+  const [isFormValid, setIsFormValid] = useState(false);
+  
+  const [customerId, setCustomerId] = useState(null); // ID заказчика
+  const [address, setAddress] = useState(null); // Адрес заказчика
 
   const [products, setProducts] = useState([]);
+
   useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await api.get('/api/user/customer');
+        console.log(response);
+        const userData = response.user;
+        const customerData = response.customer;
+
+        // Устанавливаем ID заказчика
+        if (customerData && customerData.idZakazniku) {
+          setCustomerId(customerData.idZakazniku);
+        }
+
+        // Обновляем formData с полученными данными
+        setFormData(prevData => ({
+          ...prevData,
+          firstName: userData.jmeno || '',
+          lastName: userData.prijmeni || '',
+          email: userData.email || '',
+          phone: customerData?.telefon || '',
+          street: '', // Будет заполнено после получения адреса
+          streetNumber: '',
+          postCode: '',
+          city: '',
+        }));
+
+        // Если есть адрес ID, получаем адрес
+        if (customerData && customerData.adresaIdAdresy) {
+          const addressResponse = await api.get(`/api/user/customer/${customerData.idZakazniku}/address`);
+          setAddress(addressResponse.data);
+
+          // Обновляем formData с адресными данными
+          setFormData(prevData => ({
+            ...prevData,
+            street: addressResponse.ulice || '',
+            streetNumber: addressResponse.cisloPopisne || '',
+            postCode: addressResponse.psc || '',
+            city: addressResponse.mesto || '',
+          }));
+        }
+      } catch (error) {
+        console.error('Ошибка при получении данных пользователя и заказчика:', error);
+      }
+    };
+
+    fetchUserData();
+
+    // Загрузка продуктов из localStorage
     const cart = JSON.parse(localStorage.getItem('cart')) || [];
     setProducts(cart);
   }, []);
+
+  useEffect(() => {
+    const handleCartUpdate = () => {
+      const cart = JSON.parse(localStorage.getItem('cart')) || [];
+      setProducts(cart);
+    };
+
+    window.addEventListener('cartUpdated', handleCartUpdate);
+    return () => {
+      window.removeEventListener('cartUpdated', handleCartUpdate);
+    };
+  }, []);
+
+  useEffect(() => {
+    const checkFormValidity = () => {
+      setIsFormValid(validatePersonalInfo() && validateAddress());
+    };
+    checkFormValidity();
+  }, [formData]);
 
   // Обработка изменений количества и удаления товаров
   const handleQuantityChange = (id, value) => {
@@ -102,16 +169,16 @@ const Cart = () => {
   const validatePersonalInfo = () => {
     const newErrors = {};
     if (!/^[A-Za-z]{2,}$/.test(formData.firstName)) {
-      newErrors.firstName = 'Enter valid first name';
+      newErrors.firstName = 'Введите корректное имя';
     }
     if (!/^[A-Za-z]{2,}$/.test(formData.lastName)) {
-      newErrors.lastName = 'Enter valid last name';
+      newErrors.lastName = 'Введите корректную фамилию';
     }
     if (!/^\+?[1-9]\d{1,14}$/.test(formData.phone)) {
-      newErrors.phone = 'Enter valid phone number';
+      newErrors.phone = 'Введите корректный номер телефона';
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Enter valid email';
+      newErrors.email = 'Введите корректный email';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -120,29 +187,31 @@ const Cart = () => {
   const validateAddress = () => {
     const newErrors = {};
     if (!/^[A-Za-z\s]{2,}$/.test(formData.city)) {
-      newErrors.city = 'Enter valid city name';
+      newErrors.city = 'Введите корректное название города';
     }
     if (!/^[A-Za-z\s]{2,}$/.test(formData.street)) {
-      newErrors.street = 'Enter valid street name';
+      newErrors.street = 'Введите корректное название улицы';
     }
     if (!/^[A-Za-z0-9\s]{1,}$/.test(formData.streetNumber)) {
-      newErrors.streetNumber = 'Enter valid street number';
+      newErrors.streetNumber = 'Введите корректный номер дома';
     }
     if (!/^[A-Za-z0-9\s]{4,}$/.test(formData.postCode)) {
-      newErrors.postCode = 'Enter valid post code';
+      newErrors.postCode = 'Введите корректный почтовый индекс';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSavePersonalInfo = () => {
-    if (validatePersonalInfo()) {
+    const isPersonalInfoValid = validatePersonalInfo();
+    if (isPersonalInfoValid) {
       setOpenDialog(false);
     }
   };
 
   const handleSaveAddress = () => {
-    if (validateAddress()) {
+    const isAddressValid = validateAddress();
+    if (isAddressValid) {
       setOpenAddressDialog(false);
     }
   };
@@ -157,10 +226,11 @@ const Cart = () => {
   };
 
   const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    setFormData(prevData => ({
+      ...prevData,
+      [name]: value,
+    }));
   };
 
   const calculateTotal = () => {
@@ -174,50 +244,54 @@ const Cart = () => {
   };
 
   const handleSubmit = async () => {
+    const isPersonalInfoValid = validatePersonalInfo();
+    const isAddressValid = validateAddress();
+
+    if (!isPersonalInfoValid || !isAddressValid) {
+      alert('Пожалуйста, исправьте ошибки в форме перед отправкой.');
+      return;
+    }
+
     setLoading(true);
     try {
-        // Формируем тело запроса
-        const requestBody = {
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            email: formData.email,
-            phone: formData.phone,
-            street: formData.street,
-            streetNumber: formData.streetNumber,
-            postCode: formData.postCode.replace(/\s+/g, ''),
-            city: formData.city,
-            paymentType: formData.paymentType,
-            cardNumber: formData.paymentType === 'card' ? formData.cardNumber : null,
-            cashAmount: formData.paymentType === 'cash' ? parseFloat(formData.cashAmount) : null,
-            bankAccountNumber: formData.paymentType === 'invoice' ? formData.bankAccountNumber : null,
-            password: formData.password, // Если требуется
-            products: products.map(p => ({
-                id: p.id,
-                name: p.name,
-                price: p.price,
-                description: p.description,
-                category: p.category,
-                image: p.image,
-                quantity: p.quantity
-            }))
-        };
+      // Формируем тело запроса
+      const requestBody = {
+        customerId: customerId,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        street: formData.street,
+        streetNumber: formData.streetNumber,
+        postCode: formData.postCode.replace(/\s+/g, ''),
+        city: formData.city,
+        paymentType: formData.paymentType,
+        cardNumber: formData.paymentType === 'card' ? formData.cardNumber : null,
+        cashAmount: formData.paymentType === 'cash' ? parseFloat(formData.cashCount) : null,
+        bankAccountNumber: formData.paymentType === 'invoice' ? formData.bankAccountNumber : null,
+        products: products.map(p => ({
+          id: p.id,
+          price: p.price,
+          quantity: p.quantity,
+        })),
+      };
 
-        // Отправляем POST-запрос с использованием ApiService
-        const data = await api.post('/api/orders', requestBody);
+      // Отправляем POST-запрос на бэкенд
+      await api.post('/api/orders', requestBody); // Убедитесь, что эндпоинт /api/orders существует
 
-        alert(data.message);
+      alert('Заказ успешно создан!');
 
-        // Очистка корзины после успешного оформления заказа
-        localStorage.removeItem('cart');
-        setProducts([]);
-        window.dispatchEvent(new Event('cartUpdated'));
+      // Очищаем корзину после успешного заказа
+      localStorage.removeItem('cart');
+      setProducts([]);
+      window.dispatchEvent(new Event('cartUpdated'));
     } catch (error) {
-        console.error("Ошибка при создании заказа:", error);
-        alert("Произошла ошибка при создании заказа. Попробуйте позже.");
+      console.error('Ошибка при создании заказа:', error);
+      alert('Произошла ошибка при создании заказа. Попробуйте позже.');
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-};
+  };
 
   const handleOpenDialog = () => {
     setOpenDialog(true);
@@ -225,6 +299,14 @@ const Cart = () => {
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
+  };
+
+  const handleOpenAddressDialog = () => {
+    setOpenAddressDialog(true);
+  };
+
+  const handleCloseAddressDialog = () => {
+    setOpenAddressDialog(false);
   };
 
   return (
@@ -286,7 +368,7 @@ const Cart = () => {
                   <Typography variant="subtitle1">Personal Information</Typography>
                   <IconButton 
                     color="primary" 
-                    onClick={() => setOpenDialog(true)}
+                    onClick={handleOpenDialog}
                     sx={{
                       '&:hover': {
                         backgroundColor: 'rgba(25, 118, 210, 0.04)',
@@ -310,7 +392,7 @@ const Cart = () => {
                   <Typography variant="subtitle1">Address Information</Typography>
                   <IconButton 
                     color="primary" 
-                    onClick={() => setOpenAddressDialog(true)}
+                    onClick={handleOpenAddressDialog}
                     sx={{
                       '&:hover': {
                         backgroundColor: 'rgba(25, 118, 210, 0.04)',
@@ -418,19 +500,20 @@ const Cart = () => {
                   fullWidth
                   size="large"
                   onClick={handleSubmit}
-                  disabled={loading}
+                  disabled={loading || !isFormValid}
                   sx={{ mt: 2 }}
                 >
                   {loading ? (
                     <CircularProgress size={24} color="inherit" />
                   ) : (
-                    'Continue to Payment'
+                    'Оформить заказ'
                   )}
                 </Button>
               </Box>
             </CardContent>
           </StyledCard>
 
+          {/* Диалог для редактирования персональной информации */}
           <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
             <DialogTitle>Edit Personal Information</DialogTitle>
             <DialogContent>
@@ -483,13 +566,14 @@ const Cart = () => {
               </Grid>
             </DialogContent>
             <DialogActions>
-              <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
+              <Button onClick={handleCloseDialog}>Cancel</Button>
               <Button onClick={handleSavePersonalInfo} variant="contained" color="primary">
                 Save Changes
               </Button>
             </DialogActions>
           </Dialog>
 
+          {/* Диалог для редактирования адресной информации */}
           <Dialog open={openAddressDialog} onClose={() => setOpenAddressDialog(false)}>
             <DialogTitle>Edit Address Information</DialogTitle>
             <DialogContent>
@@ -541,14 +625,14 @@ const Cart = () => {
               </Grid>
             </DialogContent>
             <DialogActions>
-              <Button onClick={() => setOpenAddressDialog(false)}>Cancel</Button>
+              <Button onClick={handleCloseAddressDialog}>Cancel</Button>
               <Button onClick={handleSaveAddress} variant="contained" color="primary">
                 Save Changes
               </Button>
             </DialogActions>
           </Dialog>
-          </Grid>
         </Grid>
+      </Grid>
     </Container>
   );
 };

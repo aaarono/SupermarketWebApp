@@ -1,264 +1,412 @@
 package com.bdas_dva.backend.Service;
 
-import com.bdas_dva.backend.dto.OrderRequest;
-import com.bdas_dva.backend.dto.OrderResponse;
-import com.bdas_dva.backend.dto.ProductDTO;
-import com.bdas_dva.backend.Service.OrderService;
+import com.bdas_dva.backend.Model.OrderRequest;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.CallableStatementCallback;
+import org.springframework.jdbc.core.*;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.dao.DataAccessException;
 
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.sql.Types;
+import java.sql.Timestamp;
+import java.util.Map;
 
+/**
+ * Služba pro zpracování objednávek a plateb.
+ * Všechny operace jsou prováděny v rámci jedné transakce.
+ */
 @Service
 public class OrderService {
 
+    private static final Logger logger = LoggerFactory.getLogger(OrderService.class);
+
+    private final JdbcTemplate jdbcTemplate;
+    private final ObjectMapper objectMapper;
+
+    /**
+     * Konstruktor pro injektování závislostí.
+     *
+     * @param jdbcTemplate  JdbcTemplate pro přístup k databázi.
+     * @param objectMapper  ObjectMapper pro serializaci objektů do JSON.
+     */
     @Autowired
-    private JdbcTemplate jdbcTemplate;
-
-    // Создание нового заказа
-    public OrderResponse createOrder(OrderRequest orderRequest, Long userId) throws SQLException {
-        return jdbcTemplate.execute((Connection conn) -> {
-            CallableStatement cs = conn.prepareCall("{call proc_objednavka_cud(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}");
-
-            // Установка входных параметров
-            cs.setString(1, "INSERT"); // p_operation
-            cs.setNull(2, Types.NUMERIC); // p_id_objednavky (null для INSERT)
-            cs.setString(3, orderRequest.getFirstName()); // p_jmeno
-            cs.setString(4, orderRequest.getLastName()); // p_prijmeni
-            cs.setString(5, orderRequest.getEmail()); // p_email
-            cs.setLong(6, orderRequest.getPhone()); // p_tel_number
-            cs.setString(7, orderRequest.getStreet()); // p_street
-            cs.setInt(8, orderRequest.getStreetNumber()); // p_street_number
-            cs.setInt(9, orderRequest.getPostCode()); // p_post_code
-            cs.setString(10, orderRequest.getCity()); // p_city
-            cs.setString(11, orderRequest.getPaymentType()); // p_payment_type
-            cs.setString(12, orderRequest.getCardNumber()); // p_card_number
-            cs.setDouble(13, orderRequest.getCashAmount() != null ? orderRequest.getCashAmount() : 0); // p_cash_amount
-            cs.setString(14, orderRequest.getBankAccountNumber()); // p_bank_account_number
-            cs.setString(15, orderRequest.getPassword()); // p_password
-
-            // Создание массива структур для продуктов
-            List<ProductDTO> products = orderRequest.getProducts();
-            // Поскольку мы не можем напрямую создать массив пользовательских типов в JDBC, нам нужно использовать OracleStruct и OracleArray
-            // Предполагается, что вы используете драйвер Oracle JDBC и необходимые библиотеки
-            Struct[] productStructs = products.stream().map(product -> {
-                try {
-                    Object[] attrs = new Object[] {
-                            product.getId(),
-                            product.getName(),
-                            product.getPrice(),
-                            product.getDescription(),
-                            product.getCategory(),
-                            product.getImage(),
-                            product.getQuantity()
-                    };
-                    return conn.createStruct("PRODUCT_OBJECT", attrs);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            }).toArray(Struct[]::new);
-
-            Array productArray = conn.createArrayOf("PRODUCT_OBJECT", productStructs);
-            cs.setArray(16, productArray); // p_products
-
-            // Регистрация выходного параметра (p_order_id)
-            cs.registerOutParameter(17, Types.NUMERIC); // p_order_id
-
-            cs.execute();
-
-            // Получение выходного параметра
-            Long orderId = cs.getLong(17);
-
-            cs.close();
-
-            return new OrderResponse("Заказ успешно создан с ID: " + orderId);
-        });
+    public OrderService(JdbcTemplate jdbcTemplate, ObjectMapper objectMapper) {
+        this.jdbcTemplate = jdbcTemplate;
+        this.objectMapper = objectMapper;
     }
 
-    // Получение заказов пользователя
-    public List<OrderDetails> getOrders(Long userId) throws SQLException {
-        return jdbcTemplate.execute("{call proc_objednavka_r(?, ?, ?)}",
-                (CallableStatementCallback<List<OrderDetails>>) cs -> {
-                    cs.setLong(1, userId); // p_id_user
-                    cs.setNull(2, Types.NUMERIC); // p_limit (null для дефолта)
-                    cs.registerOutParameter(3, Types.REF_CURSOR); // p_cursor
+    /**
+     * Vytvoří objednávku a zpracuje platbu.
+     * Celý proces je transakční - v případě chyby se všechny změny vrátí zpět.
+     *
+     * @param orderRequest Data objednávky.
+     * @throws Exception V případě chyby při vytváření objednávky nebo zpracování platby.
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void createOrder(OrderRequest orderRequest) throws Exception {
+        try {
+            // Převod seznamu produktů do JSON formátu
+            String productsJson = objectMapper.writeValueAsString(orderRequest.getProducts());
+            logger.info("Produkty v JSON formátu: {}", productsJson);
 
-                    cs.execute();
+            // Krok 1: Zpracování objednávky a aktualizace dat zákazníka
+            Long orderId = processOrder(orderRequest, productsJson);
 
-                    ResultSet rs = (ResultSet) cs.getObject(3);
-                    List<OrderDetails> orders = new ArrayList<>();
-                    while (rs.next()) {
-                        OrderDetails order = new OrderDetails();
-                        order.setIdObjednavky(rs.getLong("ID_OBJEDNAVKY"));
-                        order.setDatum(rs.getDate("DATUM"));
-                        order.setStav(rs.getString("STAV"));
-                        order.setMnozstvi(rs.getInt("MNOZSTVIPRODUKTU"));
-                        order.setUlice(rs.getString("ULICE"));
-                        order.setPsc(rs.getInt("PSC"));
-                        order.setMesto(rs.getString("MESTO"));
-                        order.setCisloPopisne(rs.getInt("CISLOPOPISNE"));
-                        order.setTelefon(rs.getLong("TELEFON"));
-                        order.setEmail(rs.getString("EMAIL"));
-                        order.setJmeno(rs.getString("JMENO"));
-                        order.setPrijmeni(rs.getString("PRIJMENI"));
-                        order.setSuma(rs.getDouble("SUMA"));
-                        order.setTyp(rs.getString("TYP"));
-                        String productsStr = rs.getString("PRODUCTS");
-                        if (productsStr != null && !productsStr.isEmpty()) {
-                            String[] products = productsStr.split(", ");
-                            order.setProducts(products);
-                        } else {
-                            order.setProducts(new String[0]);
-                        }
-                        orders.add(order);
-                    }
-                    return orders;
-                });
+            // Krok 2: Zpracování platby
+            processPayment(orderRequest, orderId);
+
+            logger.info("Objednávka úspěšně vytvořena. ID objednávky: {}", orderId);
+        } catch (DataAccessException dae) {
+            // Logování chyby spojené s přístupem k datům a přehazování výjimky pro rollback transakce
+            logger.error("DataAccessException při vytváření objednávky: {}", dae.getMessage(), dae);
+            throw new Exception("Chyba při vytváření objednávky: " + dae.getMessage(), dae);
+        } catch (Exception e) {
+            // Logování obecné chyby a přehazování výjimky pro rollback transakce
+            logger.error("Exception při vytváření objednávky: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
-    // Класс для деталей заказа
-    public static class OrderDetails {
-        private Long idObjednavky;
-        private Date datum;
-        private String stav;
-        private Integer mnozstvi;
-        private String ulice;
-        private Integer psc;
-        private String mesto;
-        private Integer cisloPopisne;
-        private Long telefon;
-        private String email;
-        private String jmeno;
-        private String prijmeni;
-        private Double suma;
-        private String typ;
-        private String[] products; // Список продуктов
+    /**
+     * Zpracuje vytvoření objednávky voláním uložené procedury `proc_process_order`.
+     *
+     * @param orderRequest Data objednávky.
+     * @param productsJson JSON reprezentace seznamu produktů.
+     * @return ID vytvořené objednávky.
+     * @throws Exception V případě chyby při volání procedury.
+     */
+    private Long processOrder(OrderRequest orderRequest, String productsJson) throws Exception {
+        // Konfigurace volání uložené procedury `proc_process_order`
+        SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("proc_process_order")
+                .declareParameters(
+                        new SqlParameter("p_customer_id", Types.NUMERIC),
+                        new SqlParameter("p_first_name", Types.VARCHAR),
+                        new SqlParameter("p_last_name", Types.VARCHAR),
+                        new SqlParameter("p_email", Types.VARCHAR),
+                        new SqlParameter("p_new_phone", Types.VARCHAR),
+                        new SqlParameter("p_new_street", Types.VARCHAR),
+                        new SqlParameter("p_new_street_number", Types.VARCHAR),
+                        new SqlParameter("p_new_post_code", Types.VARCHAR),
+                        new SqlParameter("p_new_city", Types.VARCHAR),
+                        new SqlParameter("p_products_json", Types.CLOB),
+                        new SqlOutParameter("p_order_id", Types.NUMERIC)
+                );
 
-        public Long getIdObjednavky() {
-            return idObjednavky;
+        // Příprava vstupních parametrů pro proceduru
+        MapSqlParameterSource inParams = new MapSqlParameterSource()
+                .addValue("p_customer_id", orderRequest.getCustomerId())
+                .addValue("p_first_name", orderRequest.getFirstName())
+                .addValue("p_last_name", orderRequest.getLastName())
+                .addValue("p_email", orderRequest.getEmail())
+                .addValue("p_new_phone", orderRequest.getPhone())
+                .addValue("p_new_street", orderRequest.getStreet())
+                .addValue("p_new_street_number", orderRequest.getStreetNumber())
+                .addValue("p_new_post_code", orderRequest.getPostCode())
+                .addValue("p_new_city", orderRequest.getCity())
+                .addValue("p_products_json", productsJson);
+
+        logger.info("Volání procedury proc_process_order s parametry: customerId={}, firstName={}, lastName={}, email={}, phone={}, street={}, streetNumber={}, postCode={}, city={}, productsJson={}",
+                orderRequest.getCustomerId(),
+                orderRequest.getFirstName(),
+                orderRequest.getLastName(),
+                orderRequest.getEmail(),
+                orderRequest.getPhone(),
+                orderRequest.getStreet(),
+                orderRequest.getStreetNumber(),
+                orderRequest.getPostCode(),
+                orderRequest.getCity(),
+                productsJson
+        );
+
+        // Volání procedury
+        Map<String, Object> out = jdbcCall.execute(inParams);
+
+        // Extrakce ID objednávky z výstupních parametrů
+        Number orderIdNumber = (Number) out.get("p_order_id");
+        if (orderIdNumber == null) {
+            logger.error("Nepodařilo se získat ID objednávky po volání procedury.");
+            throw new Exception("Nepodařilo se získat ID objednávky po volání procedury.");
         }
 
-        public void setIdObjednavky(Long idObjednavky) {
-            this.idObjednavky = idObjednavky;
+        Long orderId = orderIdNumber.longValue();
+        logger.info("Objednávka vytvořena s ID: {}", orderId);
+        return orderId;
+    }
+
+    /**
+     * Zpracuje platbu objednávky voláním uložené procedury `proc_platba_cud` a dalších procedur pro specifické typy platby.
+     *
+     * @param orderRequest Data objednávky.
+     * @param orderId      ID vytvořené objednávky.
+     * @throws Exception V případě chyby při zpracování platby.
+     */
+    private void processPayment(OrderRequest orderRequest, Long orderId) throws Exception {
+        // Výpočet celkové částky objednávky
+        Double totalAmount = calculateTotalAmount(orderRequest);
+        logger.info("Celková částka pro objednávku ID {}: {}", orderId, totalAmount);
+
+        // Volání procedury `proc_platba_cud` pro vložení nové platby
+        Long paymentId = insertPayment("INSERT", totalAmount, orderId, orderRequest.getPaymentType());
+
+        // Vkládání detailů platby do odpovídající tabulky na základě typu platby
+        switch (orderRequest.getPaymentType().toLowerCase()) {
+            case "cash":
+                insertCashPayment(paymentId, orderRequest, totalAmount);
+                break;
+            case "card":
+                insertCardPayment(paymentId, orderRequest);
+                break;
+            case "invoice":
+                insertInvoicePayment(paymentId, orderRequest);
+                break;
+            default:
+                logger.error("Neznámý typ platby: {}", orderRequest.getPaymentType());
+                throw new Exception("Neznámý typ platby: " + orderRequest.getPaymentType());
         }
 
-        public Date getDatum() {
-            return datum;
+        logger.info("Zpracování platby dokončeno úspěšně pro platbu ID: {}", paymentId);
+    }
+
+    /**
+     * Vloží záznam platby do tabulky `platba` voláním uložené procedury `proc_platba_cud`.
+     *
+     * @param action      Akce: 'INSERT', 'UPDATE', 'DELETE'.
+     * @param totalAmount Částka platby.
+     * @param orderId     ID objednávky.
+     * @param paymentType Typ platby.
+     * @return ID vytvořené platby.
+     * @throws Exception V případě chyby při volání procedury.
+     */
+    private Long insertPayment(String action, Double totalAmount, Long orderId, String paymentType) throws Exception {
+        // Konfigurace volání uložené procedury `proc_platba_cud`
+        SimpleJdbcCall paymentCall = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("proc_platba_cud")
+                .declareParameters(
+                        new SqlParameter("p_action", Types.VARCHAR),
+                        new SqlInOutParameter("p_id_platby", Types.NUMERIC),
+                        new SqlParameter("p_suma", Types.NUMERIC),
+                        new SqlParameter("p_datum", Types.TIMESTAMP),
+                        new SqlParameter("p_typ", Types.VARCHAR),
+                        new SqlParameter("p_objednavka_id_objednavky", Types.NUMERIC)
+                );
+
+        // Použití aktuálního data a času
+        Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis());
+
+        // Příprava vstupních parametrů
+        MapSqlParameterSource inParams = new MapSqlParameterSource()
+                .addValue("p_action", action)
+                .addValue("p_id_platby", null) // Pro vložení nového záznamu předáváme null
+                .addValue("p_suma", totalAmount)
+                .addValue("p_datum", currentTimestamp)
+                .addValue("p_typ", getPaymentTypeCode(paymentType))
+                .addValue("p_objednavka_id_objednavky", orderId);
+
+        logger.info("Volání procedury proc_platba_cud s parametry: action={}, suma={}, datum={}, typ={}, objednavka_id_objednavky={}",
+                action, totalAmount, currentTimestamp, getPaymentTypeCode(paymentType), orderId);
+
+        // Volání procedury
+        Map<String, Object> out = paymentCall.execute(inParams);
+
+        // Extrakce ID platby z výstupních parametrů
+        Number paymentIdNumber = (Number) out.get("p_id_platby");
+        if (paymentIdNumber == null) {
+            logger.error("Nepodařilo se získat ID platby po volání procedury.");
+            throw new Exception("Nepodařilo se získat ID platby po volání procedury.");
         }
 
-        public void setDatum(Date datum) {
-            this.datum = datum;
+        Long paymentId = paymentIdNumber.longValue();
+        logger.info("Platba vytvořena s ID: {}", paymentId);
+        return paymentId;
+    }
+
+    /**
+     * Vloží detaily platby v hotovosti voláním uložené procedury `proc_hotovost_cud`.
+     *
+     * @param paymentId    ID platby.
+     * @param orderRequest Data objednávky.
+     * @param totalAmount  Částka platby.
+     * @throws Exception V případě chyby při volání procedury.
+     */
+    private void insertCashPayment(Long paymentId, OrderRequest orderRequest, Double totalAmount) throws Exception {
+        // Konfigurace volání uložené procedury `proc_hotovost_cud`
+        SimpleJdbcCall cashCall = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("proc_hotovost_cud")
+                .declareParameters(
+                        new SqlParameter("p_action", Types.VARCHAR),
+                        new SqlParameter("p_id_platby", Types.NUMERIC),
+                        new SqlParameter("p_prijato", Types.NUMERIC),
+                        new SqlParameter("p_vraceno", Types.NUMERIC)
+                );
+
+        // Získání částky přijatých peněz
+        Double cashReceived = orderRequest.getCashAmount();
+        if (cashReceived == null) {
+            logger.error("Částka přijatých hotovosti nemůže být null.");
+            throw new Exception("Částka přijatých hotovosti nemůže být null.");
         }
 
-        public String getStav() {
-            return stav;
+        // Výpočet vrácené změny
+        Double change = cashReceived - totalAmount;
+        if (change < 0) {
+            logger.error("Přijatá částka je menší než celková částka objednávky. Přijato: {}, Celkem: {}", cashReceived, totalAmount);
+            throw new Exception("Přijatá částka je menší než celková částka objednávky.");
         }
 
-        public void setStav(String stav) {
-            this.stav = stav;
+        // Příprava vstupních parametrů
+        MapSqlParameterSource inParams = new MapSqlParameterSource()
+                .addValue("p_action", "INSERT")
+                .addValue("p_id_platby", paymentId)
+                .addValue("p_prijato", cashReceived)
+                .addValue("p_vraceno", change);
+
+        logger.info("Volání procedury proc_hotovost_cud s parametry: action=INSERT, id_platby={}, prijato={}, vraceno={}",
+                paymentId, cashReceived, change);
+
+        // Volání procedury
+        cashCall.execute(inParams);
+
+        logger.info("Platba v hotovosti úspěšně přidána pro platbu ID: {}", paymentId);
+    }
+
+    /**
+     * Vloží detaily platby kartou voláním uložené procedury `proc_karta_cud`.
+     *
+     * @param paymentId    ID platby.
+     * @param orderRequest Data objednávky.
+     * @throws Exception V případě chyby při volání procedury.
+     */
+    private void insertCardPayment(Long paymentId, OrderRequest orderRequest) throws Exception {
+        // Konfigurace volání uložené procedury `proc_karta_cud`
+        SimpleJdbcCall cardCall = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("proc_karta_cud")
+                .declareParameters(
+                        new SqlParameter("p_action", Types.VARCHAR),
+                        new SqlParameter("p_id_platby", Types.NUMERIC),
+                        new SqlParameter("p_cislo_karty", Types.VARCHAR)
+                );
+
+        // Získání čísla karty
+        String cardNumber = orderRequest.getCardNumber();
+        if (cardNumber == null || cardNumber.trim().isEmpty()) {
+            logger.error("Číslo karty nemůže být prázdné.");
+            throw new Exception("Číslo karty nemůže být prázdné.");
         }
 
-        public Integer getMnozstvi() {
-            return mnozstvi;
+        // Příprava vstupních parametrů
+        MapSqlParameterSource inParams = new MapSqlParameterSource()
+                .addValue("p_action", "INSERT")
+                .addValue("p_id_platby", paymentId)
+                .addValue("p_cislo_karty", cardNumber);
+
+        logger.info("Volání procedury proc_karta_cud s parametry: action=INSERT, id_platby={}, cislo_karty={}",
+                paymentId, cardNumber);
+
+        // Volání procedury
+        cardCall.execute(inParams);
+
+        logger.info("Platba kartou úspěšně přidána pro platbu ID: {}", paymentId);
+    }
+
+    /**
+     * Vloží detaily platby fakturou voláním uložené procedury `proc_faktura_cud`.
+     *
+     * @param paymentId    ID platby.
+     * @param orderRequest Data objednávky.
+     * @throws Exception V případě chyby při volání procedury.
+     */
+    private void insertInvoicePayment(Long paymentId, OrderRequest orderRequest) throws Exception {
+        // Kontrola existence potřebných údajů
+        String bankAccountNumber = orderRequest.getBankAccountNumber();
+        if (bankAccountNumber == null || bankAccountNumber.trim().isEmpty()) {
+            logger.error("Číslo bankovního účtu nemůže být prázdné.");
+            throw new Exception("Číslo bankovního účtu nemůže být prázdné.");
         }
 
-        public void setMnozstvi(Integer mnozstvi) {
-            this.mnozstvi = mnozstvi;
-        }
+        // Výpočet data splatnosti faktury (např. 14 dní od aktuálního data)
+        Timestamp dueDate = calculateDueDate();
+        logger.info("Vypočítané datum splatnosti faktury: {}", dueDate);
 
-        public String getUlice() {
-            return ulice;
-        }
+        // Konfigurace volání uložené procedury `proc_faktura_cud`
+        SimpleJdbcCall invoiceCall = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("proc_faktura_cud")
+                .declareParameters(
+                        new SqlParameter("p_action", Types.VARCHAR),
+                        new SqlParameter("p_id_platby", Types.NUMERIC),
+                        new SqlParameter("p_cislo_uctu", Types.VARCHAR),
+                        new SqlParameter("p_datum_splatnosti", Types.TIMESTAMP)
+                );
 
-        public void setUlice(String ulice) {
-            this.ulice = ulice;
-        }
+        // Příprava vstupních parametrů
+        MapSqlParameterSource inParams = new MapSqlParameterSource()
+                .addValue("p_action", "INSERT")
+                .addValue("p_id_platby", paymentId)
+                .addValue("p_cislo_uctu", bankAccountNumber)
+                .addValue("p_datum_splatnosti", dueDate);
 
-        public Integer getPsc() {
-            return psc;
-        }
+        logger.info("Volání procedury proc_faktura_cud s parametry: action=INSERT, id_platby={}, cislo_uctu={}, datum_splatnosti={}",
+                paymentId, bankAccountNumber, dueDate);
 
-        public void setPsc(Integer psc) {
-            this.psc = psc;
-        }
+        // Volání procedury
+        invoiceCall.execute(inParams);
 
-        public String getMesto() {
-            return mesto;
-        }
+        logger.info("Platba fakturou úspěšně přidána pro platbu ID: {}", paymentId);
+    }
 
-        public void setMesto(String mesto) {
-            this.mesto = mesto;
-        }
+    /**
+     * Vypočítá datum splatnosti faktury (např. 14 dní od aktuálního data).
+     *
+     * @return Datum splatnosti faktury jako Timestamp.
+     */
+    private Timestamp calculateDueDate() {
+        java.util.Calendar calendar = java.util.Calendar.getInstance();
+        calendar.add(java.util.Calendar.DAY_OF_MONTH, 14); // Přidání 14 dní
+        Timestamp dueDate = new Timestamp(calendar.getTimeInMillis());
+        logger.info("Vypočítané datum splatnosti: {}", dueDate);
+        return dueDate;
+    }
 
-        public Integer getCisloPopisne() {
-            return cisloPopisne;
+    /**
+     * Vrátí kód typu platby na základě vstupního řetězce.
+     *
+     * @param paymentType Typ platby jako řetězec.
+     * @return Kód typu platby nebo null, pokud je typ neznámý.
+     */
+    private String getPaymentTypeCode(String paymentType) {
+        if (paymentType == null) {
+            logger.warn("Typ platby je null.");
+            return null;
         }
-
-        public void setCisloPopisne(Integer cisloPopisne) {
-            this.cisloPopisne = cisloPopisne;
+        switch (paymentType.toLowerCase()) {
+            case "cash":
+                return "hp"; // hotovostní platba
+            case "card":
+                return "kp"; // platba kartou
+            case "invoice":
+                return "fp"; // faktura
+            default:
+                logger.warn("Neznámý typ platby: {}", paymentType);
+                return null;
         }
+    }
 
-        public Long getTelefon() {
-            return telefon;
-        }
-
-        public void setTelefon(Long telefon) {
-            this.telefon = telefon;
-        }
-
-        public String getEmail() {
-            return email;
-        }
-
-        public void setEmail(String email) {
-            this.email = email;
-        }
-
-        public String getJmeno() {
-            return jmeno;
-        }
-
-        public void setJmeno(String jmeno) {
-            this.jmeno = jmeno;
-        }
-
-        public String getPrijmeni() {
-            return prijmeni;
-        }
-
-        public void setPrijmeni(String prijmeni) {
-            this.prijmeni = prijmeni;
-        }
-
-        public Double getSuma() {
-            return suma;
-        }
-
-        public void setSuma(Double suma) {
-            this.suma = suma;
-        }
-
-        public String getTyp() {
-            return typ;
-        }
-
-        public void setTyp(String typ) {
-            this.typ = typ;
-        }
-
-        public String[] getProducts() {
-            return products;
-        }
-
-        public void setProducts(String[] products) {
-            this.products = products;
-        }
-
-        // Геттеры и сеттеры для всех полей
+    /**
+     * Vypočítá celkovou částku objednávky na základě seznamu produktů.
+     *
+     * @param orderRequest Data objednávky.
+     * @return Celková částka objednávky.
+     */
+    private Double calculateTotalAmount(OrderRequest orderRequest) {
+        Double total = orderRequest.getProducts().stream()
+                .mapToDouble(p -> p.getPrice() * p.getQuantity())
+                .sum();
+        logger.info("Vypočítaná celková částka: {}", total);
+        return total;
     }
 }

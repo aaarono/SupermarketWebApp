@@ -79,7 +79,6 @@ public class AuthController {
 
             return ResponseEntity.ok("Пользователь успешно зарегистрирован.");
         } catch (Exception e) {
-            System.out.println("e.getMessage() = " + e.getMessage());
             return ResponseEntity.badRequest().body("Ошибка регистрации: " + e.getMessage());
         }
     }
