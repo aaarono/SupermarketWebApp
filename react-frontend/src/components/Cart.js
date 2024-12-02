@@ -214,35 +214,13 @@ const Cart = () => {
               <Typography variant="h6" gutterBottom>Order Information</Typography>
               <Grid container spacing={2}>
                 <Grid item xs={12}>
-                  <TextField
-                    label="First Name"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleInputChange}
-                    fullWidth
-                    required
-                  />
+                  <Typography variant="subtitle2" gutterBottom>First Name: Vaysa</Typography>
                 </Grid>
                 <Grid item xs={12}>
-                  <TextField
-                    label="Last Name"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleInputChange}
-                    fullWidth
-                    required
-                  />
+                  <Typography variant="subtitle2" gutterBottom>Last Name: Pupkin</Typography>
                 </Grid>
                 <Grid item xs={12}>
-                  <TextField
-                    label="Email"
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    fullWidth
-                    required
-                  />
+                  <Typography variant="subtitle2" gutterBottom>Email: vasyapupkin@mail.com</Typography>
                 </Grid>
                 <Grid item xs={12}>
                   <TextField
