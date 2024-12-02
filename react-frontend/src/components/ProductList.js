@@ -61,7 +61,7 @@ const ProductList = () => {
   const fetchCategories = async () => {
     try {
       const response = await api.get("/api/categories");
-      setCategories([{ value: "all", label: "All Categories" }, ...response]);
+      setCategories([...response]);
     } catch (error) {
       console.error("Ошибка при получении категорий:", error);
     }
