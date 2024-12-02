@@ -60,7 +60,9 @@ const InfoItem = styled(Box)({
 
 const Cart = () => {
   const [loading, setLoading] = useState(false);
-  const [openDialog, setOpenDialog] = useState(false)
+  const [openDialog, setOpenDialog] = useState(false);
+  const [openAddressDialog, setOpenAddressDialog] = useState(false);
+  const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     firstName: 'John',
     lastName: 'Doe',
@@ -95,6 +97,54 @@ const Cart = () => {
 
     // Отправляем событие после обновления корзины
     window.dispatchEvent(new Event('cartUpdated'));
+  };
+
+  const validatePersonalInfo = () => {
+    const newErrors = {};
+    if (!/^[A-Za-z]{2,}$/.test(formData.firstName)) {
+      newErrors.firstName = 'Enter valid first name';
+    }
+    if (!/^[A-Za-z]{2,}$/.test(formData.lastName)) {
+      newErrors.lastName = 'Enter valid last name';
+    }
+    if (!/^\+?[1-9]\d{1,14}$/.test(formData.phone)) {
+      newErrors.phone = 'Enter valid phone number';
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Enter valid email';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateAddress = () => {
+    const newErrors = {};
+    if (!/^[A-Za-z\s]{2,}$/.test(formData.city)) {
+      newErrors.city = 'Enter valid city name';
+    }
+    if (!/^[A-Za-z\s]{2,}$/.test(formData.street)) {
+      newErrors.street = 'Enter valid street name';
+    }
+    if (!/^[A-Za-z0-9\s]{1,}$/.test(formData.streetNumber)) {
+      newErrors.streetNumber = 'Enter valid street number';
+    }
+    if (!/^[A-Za-z0-9\s]{4,}$/.test(formData.postCode)) {
+      newErrors.postCode = 'Enter valid post code';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSavePersonalInfo = () => {
+    if (validatePersonalInfo()) {
+      setOpenDialog(false);
+    }
+  };
+
+  const handleSaveAddress = () => {
+    if (validateAddress()) {
+      setOpenAddressDialog(false);
+    }
   };
 
   const handleRemoveProduct = (id) => {
@@ -236,7 +286,7 @@ const Cart = () => {
                   <Typography variant="subtitle1">Personal Information</Typography>
                   <IconButton 
                     color="primary" 
-                    onClick={handleOpenDialog}
+                    onClick={() => setOpenDialog(true)}
                     sx={{
                       '&:hover': {
                         backgroundColor: 'rgba(25, 118, 210, 0.04)',
@@ -254,48 +304,32 @@ const Cart = () => {
                 <Typography><strong>Phone:</strong> {formData.phone}</Typography>
                 <Typography><strong>Email:</strong> {formData.email}</Typography>
               </Box>
+
+              <Box sx={{ mb: 3 }}>
+                <InfoItem>
+                  <Typography variant="subtitle1">Address Information</Typography>
+                  <IconButton 
+                    color="primary" 
+                    onClick={() => setOpenAddressDialog(true)}
+                    sx={{
+                      '&:hover': {
+                        backgroundColor: 'rgba(25, 118, 210, 0.04)',
+                        transform: 'scale(1.1)',
+                        transition: 'all 0.2s'
+                      }
+                    }}
+                    aria-label="Edit address information"
+                  >
+                    <FaEdit />
+                  </IconButton>
+                </InfoItem>
+                <Typography><strong>City:</strong> {formData.city}</Typography>
+                <Typography><strong>Street:</strong> {formData.street}</Typography>
+                <Typography><strong>Street Number:</strong> {formData.streetNumber}</Typography>
+                <Typography><strong>Post Code:</strong> {formData.postCode}</Typography>
+              </Box>
               
               <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <TextField
-                    label="City"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleInputChange}
-                    fullWidth
-                    required
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    label="Street"
-                    name="street"
-                    value={formData.street}
-                    onChange={handleInputChange}
-                    fullWidth
-                    required
-                  />
-                </Grid>
-                <Grid item xs={6}>
-                  <TextField
-                    label="Street Number"
-                    name="streetNumber"
-                    value={formData.streetNumber}
-                    onChange={handleInputChange}
-                    fullWidth
-                    required
-                  />
-                </Grid>
-                <Grid item xs={6}>
-                  <TextField
-                    label="Post Code"
-                    name="postCode"
-                    value={formData.postCode}
-                    onChange={handleInputChange}
-                    fullWidth
-                    required
-                  />
-                </Grid>
                 <Grid item xs={12}>
                   <FormControl component="fieldset" fullWidth>
                     <Typography variant="subtitle1" gutterBottom>Payment Method</Typography>
@@ -334,6 +368,8 @@ const Cart = () => {
                       onChange={handleInputChange}
                       fullWidth
                       required
+                      error={!!errors.cardNumber}
+                      helperText={errors.cardNumber}
                     />
                   </Grid>
                 )}
@@ -347,6 +383,8 @@ const Cart = () => {
                       onChange={handleInputChange}
                       fullWidth
                       required
+                      error={!!errors.cashCount}
+                      helperText={errors.cashCount}
                     />
                     {formData.cashCount && (
                       <Typography variant="body1" sx={{ mt: 1 }}>
@@ -364,6 +402,8 @@ const Cart = () => {
                       onChange={handleInputChange}
                       fullWidth
                       required
+                      error={!!errors.bankAccountNumber}
+                      helperText={errors.bankAccountNumber}
                     />
                   </Grid>
                 )}
@@ -390,58 +430,125 @@ const Cart = () => {
               </Box>
             </CardContent>
           </StyledCard>
-        </Grid>
-      </Grid>
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>Edit Personal Information</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12}>
-              <TextField
-                label="First Name"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleInputChange}
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Last Name"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleInputChange}
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                fullWidth
-              />
-            </Grid>
+
+          <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+            <DialogTitle>Edit Personal Information</DialogTitle>
+            <DialogContent>
+              <Grid container spacing={2} sx={{ mt: 1 }}>
+                <Grid item xs={12}>
+                  <TextField
+                    label="First Name"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleInputChange}
+                    fullWidth
+                    error={!!errors.firstName}
+                    helperText={errors.firstName}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    label="Last Name"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleInputChange}
+                    fullWidth
+                    error={!!errors.lastName}
+                    helperText={errors.lastName}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    label="Phone"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    fullWidth
+                    error={!!errors.phone}
+                    helperText={errors.phone}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    label="Email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    fullWidth
+                    error={!!errors.email}
+                    helperText={errors.email}
+                  />
+                </Grid>
+              </Grid>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
+              <Button onClick={handleSavePersonalInfo} variant="contained" color="primary">
+                Save Changes
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          <Dialog open={openAddressDialog} onClose={() => setOpenAddressDialog(false)}>
+            <DialogTitle>Edit Address Information</DialogTitle>
+            <DialogContent>
+              <Grid container spacing={2} sx={{ mt: 1 }}>
+                <Grid item xs={12}>
+                  <TextField
+                    label="City"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleInputChange}
+                    fullWidth
+                    error={!!errors.city}
+                    helperText={errors.city}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    label="Street"
+                    name="street"
+                    value={formData.street}
+                    onChange={handleInputChange}
+                    fullWidth
+                    error={!!errors.street}
+                    helperText={errors.street}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    label="Street Number"
+                    name="streetNumber"
+                    value={formData.streetNumber}
+                    onChange={handleInputChange}
+                    fullWidth
+                    error={!!errors.streetNumber}
+                    helperText={errors.streetNumber}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    label="Post Code"
+                    name="postCode"
+                    value={formData.postCode}
+                    onChange={handleInputChange}
+                    fullWidth
+                    error={!!errors.postCode}
+                    helperText={errors.postCode}
+                  />
+                </Grid>
+              </Grid>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setOpenAddressDialog(false)}>Cancel</Button>
+              <Button onClick={handleSaveAddress} variant="contained" color="primary">
+                Save Changes
+              </Button>
+            </DialogActions>
+          </Dialog>
           </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleCloseDialog} variant="contained" color="primary">
-            Save Changes
-          </Button>
-        </DialogActions>
-      </Dialog>
+        </Grid>
     </Container>
   );
 };
