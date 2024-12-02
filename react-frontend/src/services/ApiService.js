@@ -35,15 +35,27 @@ class ApiService {
 
         try {
             const response = await fetch(url, options);
+            // Check response status
+            const contentType = response.headers.get('content-type');
 
             // Проверка успешности ответа
             if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Ошибка ${response.status}: ${errorText}`);
-            }
+                // Attempt to parse error details from the response
+                let errorDetails = '';
+                if (contentType && contentType.includes('application/json')) {
+                  const errorData = await response.json();
+                  errorDetails = errorData.message || JSON.stringify(errorData);
+                } else {
+                  errorDetails = await response.text();
+                }
+        
+                // Throw an error with status code and details
+                const error = new Error(`Ошибка ${response.status}: ${errorDetails}`);
+                error.status = response.status;
+                throw error;
+              }
 
             // Определение типа контента ответа
-            const contentType = response.headers.get('content-type');
             if (contentType && contentType.includes('application/json')) {
                 return await response.json();
             } else if (contentType && contentType.includes('text/')) {

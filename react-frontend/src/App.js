@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { AuthContext } from './contexts/AuthContext';
 import { Routes, Route } from 'react-router-dom';
 import LoginForm from './components/Authorization/LoginForm';
 import RegistrationForm from './components/Authorization/RegistrationForm';
@@ -11,8 +12,10 @@ import OrdersPage from './pages/OrdersPage';
 import ManageOrdersPage from './pages/ManageOrdersPage';
 import OrderSupplierPage from './pages/OrderSupplierPage';
 import AdminPanelPage from './pages/AdminPanelPage';
+import EmployeeInfoPage from './pages/EmployeeInfoPage';
 
 function App() {
+  const { authData } = useContext(AuthContext);
 
   const USER_ROLE = {
     PUBLIC: 'public',
@@ -20,7 +23,7 @@ function App() {
     EMPLOYEE: 'employee',
     ADMIN: 'admin',
   }
-  const CURRENT_USER_ROLE = USER_ROLE.ADMIN;
+  const CURRENT_USER_ROLE = authData.role || USER_ROLE.PUBLIC;
 
   return (
     <Routes>
@@ -43,9 +46,12 @@ function App() {
       <Route path="/employee/order-supplier" element={<EmployeeElement> <OrderSupplierPage OrderSupplierRole = { CURRENT_USER_ROLE } /> </EmployeeElement>} />
       <Route path="/admin/order-supplier" element={<AdminElement> <OrderSupplierPage OrderSupplierRole = { CURRENT_USER_ROLE } /> </AdminElement>} />
 
+      <Route path="/employee/employee-info" element={<EmployeeElement> <EmployeeInfoPage EmployeeInfoRole = { CURRENT_USER_ROLE }/> </EmployeeElement>} />
+      <Route path="/admin/employee-info" element={<AdminElement> <EmployeeInfoPage EmployeeInfoRole = { CURRENT_USER_ROLE }/> </AdminElement>} />
+
       <Route path="/admin/admin-panel" element={<AdminElement> <AdminPanelPage AdminPanelRole = { CURRENT_USER_ROLE } /> </AdminElement>} />
 
-      <Route path="/login" element={<PublicElement> <LoginForm LoginUserRole = { CURRENT_USER_ROLE } /> </PublicElement>} />
+      <Route path="/login" element={<PublicElement> <LoginForm /> </PublicElement>} />
       <Route path="/registration" element={<PublicElement> <RegistrationForm /> </PublicElement>} />
 
       <Route path="/test" element={<TestOutput />}/>

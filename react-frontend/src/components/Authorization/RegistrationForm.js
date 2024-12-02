@@ -11,6 +11,7 @@ import {
   Paper,
   InputAdornment,
   IconButton,
+  Alert,
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
@@ -114,19 +115,14 @@ const RegistrationForm = () => {
       // Переход на страницу входа после успешной регистрации
       navigate('/login');
     } catch (error) {
-      console.error('Ошибка при регистрации:', error);
-      setErrors((prev) => ({ ...prev, form: 'Регистрация не удалась. Попробуйте снова.' }));
+      console.error('Registration failed: ', error);
+      alert("This email is already registered.");
+      setErrors((prev) => ({ ...prev, form: 'Registration failed. Please try again.' }));
     } finally {
       setLoading(false);
     }
   };
 
-  // {errors.form && (
-  //   <Alert severity="error" sx={{ mt: 2 }}>
-  //     {errors.form}
-  //   </Alert>
-  // )}
-  
 
   return (
     <FormBackground>
@@ -148,7 +144,7 @@ const RegistrationForm = () => {
             Create Account
           </Typography>
 
-          <form onSubmit={handleSubmit} noValidate>
+          <form onSubmit={handleSubmit}>
             <Grid container spacing={3}>
               <Grid item xs={12} sm={6}>
                 <TextField
@@ -253,14 +249,13 @@ const RegistrationForm = () => {
               </Grid>
 
               <Grid item xs={12}>
-                <Link to = '/login'>
                   <StyledButton
                     onClick={() => handleSubmit()}
                     fullWidth
                     type="submit"
                     variant="contained"
                     size="large"
-                    disabled={loading}
+                    disabled={loading || Boolean(errors.email) || Boolean(errors.password) || Boolean(errors.firstName) || Boolean(errors.lastName) || Boolean(errors.phone)}
                     sx={{
                       mt: 2,
                       height: "56px",
@@ -277,10 +272,14 @@ const RegistrationForm = () => {
                       "Register"
                     )}
                   </StyledButton>
-                </Link>
               </Grid>
             </Grid>
           </form>
+          {errors.form && (
+              <Alert severity="error" sx={{ mt: 2 }}>
+                {errors.form}
+              </Alert>
+            )}
         </StyledPaper>
       </Container>
     </FormBackground>

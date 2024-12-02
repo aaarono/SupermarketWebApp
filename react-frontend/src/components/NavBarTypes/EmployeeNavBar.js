@@ -19,6 +19,7 @@ import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import LocalMallIcon from '@mui/icons-material/LocalMall';
 import { Link, useNavigate } from 'react-router-dom';
+import ContactsIcon from '@mui/icons-material/Contacts';
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   background: "linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)",
@@ -135,6 +136,16 @@ const EmployeeNavBar = ({ NavBarTypeRole }) => {
                 onClick={() => navigate('/' + NavBarTypeRole + '/order-supplier')}
               >
                 Order Supplier
+              </StyledButton>
+            </Tooltip>
+
+            <Tooltip title="Employee Info">
+              <StyledButton
+                startIcon={<ContactsIcon />}
+                aria-label="Employee Info"
+                onClick={() => navigate('/' + NavBarTypeRole + '/employee-info')}
+              >
+                Employee Info
               </StyledButton>
             </Tooltip>
 
