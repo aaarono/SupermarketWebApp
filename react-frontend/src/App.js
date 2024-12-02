@@ -11,6 +11,7 @@ import OrdersPage from './pages/OrdersPage';
 import ManageOrdersPage from './pages/ManageOrdersPage';
 import OrderSupplierPage from './pages/OrderSupplierPage';
 import AdminPanelPage from './pages/AdminPanelPage';
+import EmployeeInfoPage from './pages/EmployeeInfoPage';
 
 function App() {
 
@@ -42,6 +43,9 @@ function App() {
 
       <Route path="/employee/order-supplier" element={<EmployeeElement> <OrderSupplierPage OrderSupplierRole = { CURRENT_USER_ROLE } /> </EmployeeElement>} />
       <Route path="/admin/order-supplier" element={<AdminElement> <OrderSupplierPage OrderSupplierRole = { CURRENT_USER_ROLE } /> </AdminElement>} />
+
+      <Route path="/employee/employee-info" element={<EmployeeElement> <EmployeeInfoPage EmployeeInfoRole = { CURRENT_USER_ROLE }/> </EmployeeElement>} />
+      <Route path="/admin/employee-info" element={<AdminElement> <EmployeeInfoPage EmployeeInfoRole = { CURRENT_USER_ROLE }/> </AdminElement>} />
 
       <Route path="/admin/admin-panel" element={<AdminElement> <AdminPanelPage AdminPanelRole = { CURRENT_USER_ROLE } /> </AdminElement>} />
 
