@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { FaAngleDown, FaAngleUp, FaTruck, FaMapMarkerAlt, FaPhone, FaEnvelope, FaUser } from "react-icons/fa";
-
+import api from "../services/api"
 const StyledCard = styled(Card)(({ theme }) => ({
   marginBottom: "1.5rem",
   transition: "all 0.3s ease",
@@ -68,19 +68,7 @@ const OrdersList = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const token = localStorage.getItem('token'); // Предполагается, что JWT хранится в localStorage
-        const response = await fetch('/api/orders', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error('Ошибка при получении заказов');
-        }
-
-        const data = await response.json();
+        const data = await api.get('/api/orders');
         setOrders(data);
       } catch (error) {
         console.error("Ошибка при загрузке заказов:", error);

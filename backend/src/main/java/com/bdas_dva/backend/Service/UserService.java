@@ -18,7 +18,7 @@ public class UserService {
     private JdbcTemplate jdbcTemplate;
 
     // Создание нового пользователя (Create)
-    public void createUser(User user) {
+    public void createUserZak(User user) {
         jdbcTemplate.update((Connection conn) -> {
             CallableStatement cs = conn.prepareCall("{call proc_user_cud(?, ?, ?, ?, ?, ?, ?, ?, ?)}"); // 9 параметров
             cs.setString(1, "INSERT");
@@ -28,8 +28,8 @@ public class UserService {
             cs.setString(5, user.getEmail());
             cs.setString(6, user.getPassword()); // Пароль должен быть хеширован
             cs.setLong(7, 1); // ROLE_USER по умолчанию
-            cs.setObject(8, user.getZakaznikIdZakazniku());
-            cs.setObject(9, user.getZamnestnanecIdZamnestnance());
+            cs.setLong(8, user.getZakaznikIdZakazniku());
+            cs.setObject(9, null); // p_zamnestnanec_id_zamnestnance
             return cs;
         });
     }
@@ -94,7 +94,6 @@ public class UserService {
                 });
 
         for (User user : users) {
-            System.out.println("user = " + user);
             if (user.getEmail().equalsIgnoreCase(email)) {
                 return user;
             }

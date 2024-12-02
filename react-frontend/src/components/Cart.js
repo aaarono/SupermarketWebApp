@@ -21,6 +21,7 @@ import {
 import { styled } from "@mui/system";
 import { FaTrash } from "react-icons/fa";
 import { BsCreditCard2Front, BsCash, BsBank } from "react-icons/bs";
+import api from '../services/api';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   marginBottom: "1rem",
@@ -113,57 +114,48 @@ const Cart = () => {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token'); // Предполагается, что JWT хранится в localStorage
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phone: formData.phone,
-          street: formData.street,
-          streetNumber: formData.streetNumber,
-          postCode: formData.postCode,
-          city: formData.city,
-          paymentType: formData.paymentType,
-          cardNumber: formData.paymentType === 'card' ? formData.cardNumber : null,
-          cashAmount: formData.paymentType === 'cash' ? parseFloat(formData.cashAmount) : null,
-          bankAccountNumber: formData.paymentType === 'invoice' ? formData.bankAccountNumber : null,
-          password: formData.password, // Если требуется
-          products: products.map(p => ({
-            id: p.id,
-            name: p.name,
-            price: p.price,
-            description: p.description,
-            category: p.category,
-            image: p.image,
-            quantity: p.quantity
-          }))
-        })
-      });
-  
-      if (!response.ok) {
-        throw new Error('Ошибка при создании заказа');
-      }
-  
-      const data = await response.json();
-      alert(data.message);
-  
-      // Очистка корзины после успешного оформления заказа
-      localStorage.removeItem('cart');
-      setProducts([]);
-      window.dispatchEvent(new Event('cartUpdated'));
-      setLoading(false);
+        // Формируем тело запроса
+        const requestBody = {
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            phone: formData.phone,
+            street: formData.street,
+            streetNumber: formData.streetNumber,
+            postCode: formData.postCode.replace(/\s+/g, ''),
+            city: formData.city,
+            paymentType: formData.paymentType,
+            cardNumber: formData.paymentType === 'card' ? formData.cardNumber : null,
+            cashAmount: formData.paymentType === 'cash' ? parseFloat(formData.cashAmount) : null,
+            bankAccountNumber: formData.paymentType === 'invoice' ? formData.bankAccountNumber : null,
+            password: formData.password, // Если требуется
+            products: products.map(p => ({
+                id: p.id,
+                name: p.name,
+                price: p.price,
+                description: p.description,
+                category: p.category,
+                image: p.image,
+                quantity: p.quantity
+            }))
+        };
+
+        // Отправляем POST-запрос с использованием ApiService
+        const data = await api.post('/api/orders', requestBody);
+
+        alert(data.message);
+
+        // Очистка корзины после успешного оформления заказа
+        localStorage.removeItem('cart');
+        setProducts([]);
+        window.dispatchEvent(new Event('cartUpdated'));
     } catch (error) {
-      console.error("Ошибка при создании заказа:", error);
-      alert("Произошла ошибка при создании заказа. Попробуйте позже.");
-      setLoading(false);
+        console.error("Ошибка при создании заказа:", error);
+        alert("Произошла ошибка при создании заказа. Попробуйте позже.");
+    } finally {
+        setLoading(false);
     }
-  };
+};
   
 
   return (

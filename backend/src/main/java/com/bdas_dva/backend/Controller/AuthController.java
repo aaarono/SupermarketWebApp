@@ -1,7 +1,9 @@
 package com.bdas_dva.backend.Controller;
 
 import com.bdas_dva.backend.Model.User;
+import com.bdas_dva.backend.Model.Zakaznik;
 import com.bdas_dva.backend.Service.UserService;
+import com.bdas_dva.backend.Service.ZakaznikService;
 import com.bdas_dva.backend.Util.JwtUtil;
 import com.bdas_dva.backend.Exception.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,37 +34,52 @@ public class AuthController {
     private UserService userService;
 
     @Autowired
+    private ZakaznikService zakaznikService;
+
+    @Autowired
     private JwtUtil jwtUtil;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    // Точка для регистрации
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody Map<String, String> userMap) {
         try {
             String jmeno = userMap.get("firstName");
             String prijmeni = userMap.get("lastName");
             String email = userMap.get("email");
-            String telNumber = userMap.get("telNumber");
+            String telNumber = userMap.get("phone");
             String password = userMap.get("password");
+
+            try {
+                User existingUser = userService.getUserByEmail(email);
+                return ResponseEntity.badRequest().body("Пользователь с таким email уже существует.");
+            } catch (ResourceNotFoundException ex) {}
 
             // Хеширование пароля
             String encodedPassword = passwordEncoder.encode(password);
 
+            // Создаем объект Zakaznik
+            Zakaznik zakaznik = new Zakaznik();
+            zakaznik.setTelefon(Long.parseLong(telNumber));
+
+            // Создаем заказчика и получаем его ID
+            Long zakaznikId = zakaznikService.createZakaznik(zakaznik);
+
+            // Создаем объект User
             User user = new User();
             user.setJmeno(jmeno);
             user.setPrijmeni(prijmeni);
             user.setEmail(email);
-            user.setTelNumber(telNumber);
             user.setPassword(encodedPassword);
-            // Установите роль по умолчанию, например, ROLE_USER (roleIdRole = 1)
             user.setRoleIdRole(1L);
+            user.setZakaznikIdZakazniku(zakaznikId);
 
-            userService.createUser(user);
+            userService.createUserZak(user);
 
             return ResponseEntity.ok("Пользователь успешно зарегистрирован.");
         } catch (Exception e) {
+            System.out.println("e.getMessage() = " + e.getMessage());
             return ResponseEntity.badRequest().body("Ошибка регистрации: " + e.getMessage());
         }
     }
@@ -91,8 +108,6 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Ошибка логина: " + e.getMessage());
         }
     }
-
-
 
     // Пример защищенной точки, доступной только для администраторов
     @GetMapping("/admin")
@@ -150,7 +165,6 @@ public class AuthController {
                 }
             }
         } catch (Exception e) {
-            System.out.println("\"hui\" = " + "hui");
         }
         System.out.println("roleName.toLowerCase(Locale.ROOT).substring(5) = " + roleName.toLowerCase(Locale.ROOT).substring(5));
 
