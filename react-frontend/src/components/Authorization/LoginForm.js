@@ -105,25 +105,17 @@ const LoginForm = ({ LoginUserRole }) => {
         // Вызов функции login
         const response = await login(formData.email, formData.password);
         console.log("Login successful:", response);
-        
         // Переход на страницу пользователя после успешного входа
         navigate(linkUserRole());
       } catch (error) {
         console.error('Ошибка при логине:', error);
-        setErrors((prev) => ({ ...prev, form: 'Неверный email или пароль' }));
+        setErrors((prev) => ({ ...prev, form: 'Incorrect email or password.' }));
       } finally {
         setLoading(false);
       }
     }
   };
-  
-  // {errors.form && (
-  //   <Alert severity="error" sx={{ mt: 2 }}>
-  //     {errors.form}
-  //   </Alert>
-  // )}
-  
-  
+   
 
   return (
     <FormBackground>
@@ -210,7 +202,6 @@ const LoginForm = ({ LoginUserRole }) => {
               aria-label="Password input field"
             />
 
-            <Link to = {linkUserRole()}>
               <StyledButton
                 onClick={() => handleSubmit()}
                 type="submit"
@@ -225,17 +216,10 @@ const LoginForm = ({ LoginUserRole }) => {
                   "Login"
                 )}
               </StyledButton>
-            </Link>
           </StyledForm>
-
-          {Object.keys(errors).length > 0 && (
-            <Alert
-              severity="error"
-              sx={{ mt: 2, width: "100%" }}
-              role="alert"
-              aria-live="polite"
-            >
-              Please fix the errors before submitting
+          {errors.form && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {errors.form}
             </Alert>
           )}
         </StyledPaper>
