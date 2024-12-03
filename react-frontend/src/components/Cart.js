@@ -31,12 +31,12 @@ const StyledCard = styled(Card)(({ theme }) => ({
   },
 }));
 
-const ProductImage = styled("img")({
-  width: "100%",
-  height: "120px",
-  objectFit: "cover",
-  borderRadius: "4px",
-});
+// const ProductImage = styled("img")({
+//   width: "100%",
+//   height: "120px",
+//   objectFit: "cover",
+//   borderRadius: "4px",
+// });
 
 const StyledSelect = styled(Select)({
   width: "100%",
@@ -53,6 +53,57 @@ const InfoItem = styled(Box)({
   alignItems: 'center',
   marginBottom: '8px'
 });
+
+const fetchImage = async (productId) => {
+  try {
+    const response = await api.get(`/api/products/image/${productId}`);
+    return response; // Возвращаем Base64 строку
+  } catch (error) {
+    console.error(`Error fetching image for product ${productId}:`, error);
+    return null; // Возвращаем null в случае ошибки
+  }
+};
+
+const ProductImage = ({ productId, altText }) => {
+  const [imageSrc, setImageSrc] = useState(""); // Base64 строка
+  const [error, setError] = useState(false); // Состояние для ошибок
+
+  useEffect(() => {
+    let isMounted = true; // Для предотвращения обновления состояния после размонтирования
+
+    const loadImage = async () => {
+      const base64Image = await fetchImage(productId);
+      if (isMounted) {
+        if (base64Image) {
+          setImageSrc(`data:image/jpeg;base64,${base64Image}`); // Устанавливаем Base64 изображение
+          setError(false); // Сбрасываем ошибки
+        } else {
+          setImageSrc("");
+          setError(true); // Устанавливаем ошибку
+        }
+      }
+    };
+
+    loadImage();
+
+    return () => {
+      isMounted = false; // Флаг для предотвращения утечек
+    };
+  }, [productId]);
+
+  return (
+    <img
+      src={imageSrc}
+      alt={altText || "Product Image"}
+      onError={(e) => {
+        e.target.src =
+          "https://images.unsplash.com/photo-1560393464-5c69a73c5770"; // Изображение по умолчанию
+      }}
+      loading="lazy"
+      style={{ width: "100%", height: "auto" }}
+    />
+  );
+};
 
 const Cart = () => {
   const [loading, setLoading] = useState(false);
@@ -86,7 +137,6 @@ const Cart = () => {
     const fetchUserData = async () => {
       try {
         const response = await api.get('/api/user/customer');
-        console.log(response);
         const userData = response.user;
         const customerData = response.customer;
 
@@ -277,7 +327,7 @@ const Cart = () => {
       };
 
       // Отправляем POST-запрос на бэкенд
-      await api.post('/api/orders', requestBody); // Убедитесь, что эндпоинт /api/orders существует
+      await api.post('/api/products/orders', requestBody); // Убедитесь, что эндпоинт /api/orders существует
 
       alert('Заказ успешно создан!');
 
@@ -320,13 +370,7 @@ const Cart = () => {
               <CardContent>
                 <Grid container spacing={2} alignItems="center">
                   <Grid item xs={12} sm={3}>
-                    <ProductImage
-                      src={`https://${product.image}`}
-                      alt={product.name}
-                      onError={(e) => {
-                        e.target.src = "https://images.unsplash.com/photo-1560393464-5c69a73c5770";
-                      }}
-                    />
+                    <ProductImage productId={product.id} altText={product.name} />
                   </Grid>
                   <Grid item xs={12} sm={4}>
                     <Typography variant="h6">{product.name}</Typography>

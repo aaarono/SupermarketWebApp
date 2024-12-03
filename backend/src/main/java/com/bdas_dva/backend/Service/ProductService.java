@@ -1,6 +1,7 @@
 // ProductService.java
 package com.bdas_dva.backend.Service;
 
+import com.bdas_dva.backend.Model.ImageData;
 import com.bdas_dva.backend.Model.Product;
 import org.hibernate.dialect.OracleTypes;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,42 @@ public class ProductService {
         List<Product> products = (List<Product>) out.get("p_products");
 
         return products;
+    }
+
+    // Method to retrieve image data for a product
+    public ImageData getProductImage(Long productId) {
+        SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("proc_obrazek_r")
+                .declareParameters(
+                        new SqlParameter("p_produkt_id_produktu", Types.NUMERIC),
+                        new SqlOutParameter("p_cursor", OracleTypes.CURSOR)
+                )
+                .returningResultSet("p_cursor", (rs, rowNum) -> {
+                    Blob imageBlob = rs.getBlob("OBRAZEK");
+                    String imageType = rs.getString("TYP"); // Assuming TYP stores the MIME type
+                    ImageData imageData = new ImageData();
+                    if (imageBlob != null) {
+                        byte[] imageBytes = imageBlob.getBytes(1, (int) imageBlob.length());
+                        String base64Image = java.util.Base64.getEncoder().encodeToString(imageBytes);
+                        imageData.setImage(base64Image);
+                    }
+                    imageData.setImageType(imageType);
+                    return imageData;
+                });
+
+        Map<String, Object> inParams = new HashMap<>();
+        inParams.put("p_produkt_id_produktu", productId);
+
+        Map<String, Object> out = jdbcCall.execute(inParams);
+
+        @SuppressWarnings("unchecked")
+        List<ImageData> images = (List<ImageData>) out.get("p_cursor");
+
+        if (images != null && !images.isEmpty()) {
+            return images.get(0);
+        } else {
+            return null;
+        }
     }
 
     private RowMapper<Product> productRowMapper = (rs, rowNum) -> {
