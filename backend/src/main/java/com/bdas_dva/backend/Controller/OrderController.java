@@ -4,6 +4,7 @@ import com.bdas_dva.backend.Model.OrderRequest;
 import com.bdas_dva.backend.Service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.dao.DataAccessException;
 
@@ -14,6 +15,7 @@ public class OrderController {
     @Autowired
     private OrderService orderService;
 
+    @PreAuthorize("hasRole('USER') or hasRole('EMPLOYEE') or hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<?> createOrder(@RequestBody OrderRequest orderRequest) {
         try {
@@ -29,4 +31,9 @@ public class OrderController {
             return ResponseEntity.status(500).body("An error occurred while creating the order.");
         }
     }
+
+//    @GetMapping
+//    public ResponseEntity<?> getOrders(@RequestBody request){
+//
+//    }
 }

@@ -2,13 +2,14 @@
 package com.bdas_dva.backend.Service;
 
 import com.bdas_dva.backend.Model.Product;
+import org.hibernate.dialect.OracleTypes;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.*;
+import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Service;
 
 import java.sql.*;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class ProductService {
@@ -16,31 +17,39 @@ public class ProductService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    // Получение списка продуктов
+    // Getting the list of products
     public List<Product> getProducts(String searchQuery, String category) {
-        String sql = "SELECT * FROM PRODUCT_VIEW WHERE LOWER(NAME) LIKE LOWER(?)";
-        Object[] params;
+        SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("proc_product_r")
+                .declareParameters(
+                        new SqlParameter("p_search_query", Types.VARCHAR),
+                        new SqlParameter("p_category", Types.VARCHAR),
+                        new SqlOutParameter("p_products", OracleTypes.CURSOR)
+                )
+                .returningResultSet("p_products", productRowMapper);
 
-        if (!"all".equalsIgnoreCase(category)) {
-            sql += " AND CATEGORY = ?";
-            params = new Object[]{"%" + (searchQuery != null ? searchQuery : "") + "%", category};
-        } else {
-            params = new Object[]{"%" + (searchQuery != null ? searchQuery : "") + "%"};
-        }
+        Map<String, Object> inParams = new HashMap<>();
+        inParams.put("p_search_query", searchQuery != null && !searchQuery.isEmpty() ? searchQuery : null);
+        inParams.put("p_category", category != null && !category.isEmpty() ? category : null);
 
-        return jdbcTemplate.query(sql, params, productRowMapper);
+        Map<String, Object> out = jdbcCall.execute(inParams);
+
+        @SuppressWarnings("unchecked")
+        List<Product> products = (List<Product>) out.get("p_products");
+
+        return products;
     }
 
     private RowMapper<Product> productRowMapper = (rs, rowNum) -> {
         Product product = new Product();
-        product.setId(rs.getLong("ID"));
-        product.setName(rs.getString("NAME"));
-        product.setPrice(rs.getDouble("PRICE"));
-        product.setDescription(rs.getString("DESCRIPTION"));
-        product.setCategory(rs.getString("CATEGORY"));
+        product.setId(rs.getLong("id"));
+        product.setName(rs.getString("name"));
+        product.setPrice(rs.getDouble("price"));
+        product.setDescription(rs.getString("description"));
+        product.setCategory(rs.getString("category"));
 
-        // Обработка изображения
-        Blob imageBlob = rs.getBlob("IMAGE");
+        // Handling the image
+        Blob imageBlob = rs.getBlob("image");
         if (imageBlob != null) {
             byte[] imageBytes = imageBlob.getBytes(1, (int) imageBlob.length());
             String base64Image = java.util.Base64.getEncoder().encodeToString(imageBytes);

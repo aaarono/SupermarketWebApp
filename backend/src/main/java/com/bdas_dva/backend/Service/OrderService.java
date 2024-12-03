@@ -14,6 +14,8 @@ import org.springframework.dao.DataAccessException;
 
 import java.sql.Types;
 import java.sql.Timestamp;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Map;
 
 /**
@@ -184,7 +186,11 @@ public class OrderService {
      * @throws Exception V případě chyby při volání procedury.
      */
     private Long insertPayment(String action, Double totalAmount, Long orderId, String paymentType) throws Exception {
-        // Konfigurace volání uložené procedury `proc_platba_cud`
+        ZonedDateTime currentTime = ZonedDateTime.now();
+        System.out.println("Aktuální čas backendu: " + currentTime);
+
+        ZoneId currentZone = ZoneId.systemDefault();
+        System.out.println("Časové pásmo backendu: " + currentZone);
         SimpleJdbcCall paymentCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("proc_platba_cud")
                 .declareParameters(
@@ -197,7 +203,7 @@ public class OrderService {
                 );
 
         // Použití aktuálního data a času
-        Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis());
+        Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis() - 1000);
 
         // Příprava vstupních parametrů
         MapSqlParameterSource inParams = new MapSqlParameterSource()
@@ -387,7 +393,7 @@ public class OrderService {
             case "cash":
                 return "hp"; // hotovostní platba
             case "card":
-                return "kp"; // platba kartou
+                return "cc"; // platba kartou
             case "invoice":
                 return "fp"; // faktura
             default:
