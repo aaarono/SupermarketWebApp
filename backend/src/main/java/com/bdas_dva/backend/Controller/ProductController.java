@@ -1,4 +1,3 @@
-// ProductController.java
 package com.bdas_dva.backend.Controller;
 
 import com.bdas_dva.backend.Model.ImageData;
@@ -9,11 +8,11 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.web.header.Header;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.sql.Blob;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/products")
@@ -22,6 +21,15 @@ public class ProductController {
 
     @Autowired
     private ProductService productService;
+
+    private final Map<String, Integer> formatMapping = Map.of(
+            "jpg", 1,
+            "png", 2,
+            "gif", 3,
+            "bmp", 4,
+            "tiff", 5,
+            "webp", 6
+    );
 
     @GetMapping
     public List<Product> getProducts(
@@ -50,6 +58,85 @@ public class ProductController {
             }
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @PostMapping("/image")
+    public ResponseEntity<String> addProductImage(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("productId") Long productId,
+            @RequestParam("name") String name
+    ) {
+        try {
+            // Определяем тип файла
+            String fileType = file.getContentType();
+            String extension = fileType != null ? fileType.split("/")[1] : null;
+
+            // Проверяем, поддерживается ли формат
+            if (extension == null || !formatMapping.containsKey(extension)) {
+                return ResponseEntity.badRequest().body("Unsupported file format.");
+            }
+
+            Integer formatId = formatMapping.get(extension);
+
+            // Сохраняем изображение
+            productService.addProductImage(
+                    productId,
+                    file.getBytes(),
+                    name,
+                    fileType,
+                    formatId
+            );
+
+            return ResponseEntity.ok("Image added successfully.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error adding image.");
+        }
+    }
+
+    @PutMapping("/image")
+    public ResponseEntity<String> updateProductImage(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("productId") Long productId,
+            @RequestParam("name") String name
+    ) {
+        try {
+            // Определяем тип файла
+            String fileType = file.getContentType();
+            String extension = fileType != null ? fileType.split("/")[1] : null;
+
+            // Проверяем, поддерживается ли формат
+            if (extension == null || !formatMapping.containsKey(extension)) {
+                return ResponseEntity.badRequest().body("Unsupported file format.");
+            }
+
+            Integer formatId = formatMapping.get(extension);
+
+            // Обновляем изображение
+            productService.updateProductImage(
+                    productId,
+                    file.getBytes(),
+                    name,
+                    fileType,
+                    formatId
+            );
+
+            return ResponseEntity.ok("Image updated successfully.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating image.");
+        }
+    }
+
+    @DeleteMapping("/image/{productId}")
+    public ResponseEntity<String> deleteProductImage(@PathVariable Long productId) {
+        try {
+            productService.deleteProductImage(productId);
+            return ResponseEntity.ok("Image deleted successfully.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error deleting image.");
         }
     }
 }
