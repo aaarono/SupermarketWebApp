@@ -8,7 +8,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -16,6 +18,55 @@ public class SupermarketService {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    /**
+     * Получение всех супермаркетов
+     */
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getAllSupermarkets() {
+        String sql = "SELECT sm.id_supermarketu, sm.nazev, sm.telefon, sm.email, " +
+                "a.ulice, a.psc, a.mesto, a.cislopopisne " +
+                "FROM supermarket sm " +
+                "LEFT JOIN adresa a ON sm.adresa_id_adresy = a.id_adresy";
+        return jdbcTemplate.queryForList(sql);
+    }
+
+    /**
+     * Получение супермаркета по ID
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> getSupermarketById(Long supermarketId) {
+        String sql = "SELECT sm.id_supermarketu, sm.nazev, sm.telefon, sm.email, " +
+                "a.ulice, a.psc, a.mesto, a.cislopopisne " +
+                "FROM supermarket sm " +
+                "LEFT JOIN adresa a ON sm.adresa_id_adresy = a.id_adresy " +
+                "WHERE sm.id_supermarketu = ?";
+        return jdbcTemplate.queryForMap(sql, supermarketId);
+    }
+
+    /**
+     * Фильтрация супермаркетов по имени и городу
+     */
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getFilteredSupermarkets(String name, String city) {
+        StringBuilder sqlBuilder = new StringBuilder(
+                "SELECT sm.id_supermarketu, sm.nazev, sm.telefon, sm.email, " +
+                        "a.ulice, a.psc, a.mesto, a.cislopopisne " +
+                        "FROM supermarket sm " +
+                        "LEFT JOIN adresa a ON sm.adresa_id_adresy = a.id_adresy WHERE 1=1");
+
+        List<Object> params = new ArrayList<>();
+        if (name != null && !name.isEmpty()) {
+            sqlBuilder.append(" AND LOWER(sm.nazev) LIKE ?");
+            params.add("%" + name.toLowerCase() + "%");
+        }
+        if (city != null && !city.isEmpty()) {
+            sqlBuilder.append(" AND LOWER(a.mesto) LIKE ?");
+            params.add("%" + city.toLowerCase() + "%");
+        }
+
+        return jdbcTemplate.queryForList(sqlBuilder.toString(), params.toArray());
+    }
 
     @Transactional(rollbackFor = Exception.class)
     public void addSupermarket(String name, Long phone, String email, Long addressId,
