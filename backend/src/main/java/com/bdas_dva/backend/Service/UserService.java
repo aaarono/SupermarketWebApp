@@ -3,6 +3,7 @@ package com.bdas_dva.backend.Service;
 import com.bdas_dva.backend.Exception.ResourceNotFoundException;
 import com.bdas_dva.backend.Model.Address;
 import com.bdas_dva.backend.Model.User;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -20,6 +21,7 @@ public class UserService {
     private JdbcTemplate jdbcTemplate;
 
     // Создание нового пользователя (Create)
+    @Transactional
     public void createUserZak(User user) {
         jdbcTemplate.update((Connection conn) -> {
             CallableStatement cs = conn.prepareCall("{call proc_user_cud(?, ?, ?, ?, ?, ?, ?, ?, ?)}"); // 9 параметров
@@ -37,6 +39,7 @@ public class UserService {
     }
 
     // Обновление существующего пользователя (Update)
+    @Transactional
     public void updateUser(User user) throws ResourceNotFoundException {
         if (user.getIdUser() == null) {
             throw new IllegalArgumentException("ID пользователя не может быть null для обновления.");
@@ -58,6 +61,7 @@ public class UserService {
     }
 
     // Удаление пользователя (Delete)
+    @Transactional
     public void deleteUser(Long idUser) throws ResourceNotFoundException {
         if (idUser == null) {
             throw new IllegalArgumentException("ID пользователя не может быть null для удаления.");

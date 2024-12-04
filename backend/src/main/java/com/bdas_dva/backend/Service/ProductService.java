@@ -41,6 +41,78 @@ public class ProductService {
         return products;
     }
 
+    // Adding a new product
+    public void addProduct(String name, Double price, String description, Integer categoryId, Integer warehouseId) {
+        SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("proc_produkt_cud")
+                .declareParameters(
+                        new SqlParameter("p_action", Types.VARCHAR),
+                        new SqlParameter("p_id_produktu", Types.NUMERIC),
+                        new SqlParameter("p_nazev", Types.VARCHAR),
+                        new SqlParameter("p_cena", Types.NUMERIC),
+                        new SqlParameter("p_popis", Types.CLOB),
+                        new SqlParameter("p_kat_prod_id_kategorie", Types.NUMERIC),
+                        new SqlParameter("p_sklad_id_skladu", Types.NUMERIC)
+                );
+
+        Map<String, Object> inParams = new HashMap<>();
+        inParams.put("p_action", "INSERT");
+        inParams.put("p_nazev", name);
+        inParams.put("p_cena", price);
+        inParams.put("p_popis", description);
+        inParams.put("p_kat_prod_id_kategorie", categoryId);
+        inParams.put("p_sklad_id_skladu", warehouseId);
+
+        jdbcCall.execute(inParams);
+    }
+
+    // Updating an existing product
+    public void updateProduct(Long productId, String name, Double price, String description, Integer categoryId, Integer warehouseId) {
+        SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("proc_produkt_cud")
+                .declareParameters(
+                        new SqlParameter("p_action", Types.VARCHAR),
+                        new SqlParameter("p_id_produktu", Types.NUMERIC),
+                        new SqlParameter("p_nazev", Types.VARCHAR),
+                        new SqlParameter("p_cena", Types.NUMERIC),
+                        new SqlParameter("p_popis", Types.CLOB),
+                        new SqlParameter("p_kat_prod_id_kategorie", Types.NUMERIC),
+                        new SqlParameter("p_sklad_id_skladu", Types.NUMERIC)
+                );
+
+        Map<String, Object> inParams = new HashMap<>();
+        inParams.put("p_action", "UPDATE");
+        inParams.put("p_id_produktu", productId);
+        inParams.put("p_nazev", name);
+        inParams.put("p_cena", price);
+        inParams.put("p_popis", description);
+        inParams.put("p_kat_prod_id_kategorie", categoryId);
+        inParams.put("p_sklad_id_skladu", warehouseId);
+
+        jdbcCall.execute(inParams);
+    }
+
+    // Deleting a product
+    public void deleteProduct(Long productId) {
+        SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("proc_produkt_cud")
+                .declareParameters(
+                        new SqlParameter("p_action", Types.VARCHAR),
+                        new SqlParameter("p_id_produktu", Types.NUMERIC),
+                        new SqlParameter("p_nazev", Types.VARCHAR),
+                        new SqlParameter("p_cena", Types.NUMERIC),
+                        new SqlParameter("p_popis", Types.CLOB),
+                        new SqlParameter("p_kat_prod_id_kategorie", Types.NUMERIC),
+                        new SqlParameter("p_sklad_id_skladu", Types.NUMERIC)
+                );
+
+        Map<String, Object> inParams = new HashMap<>();
+        inParams.put("p_action", "DELETE");
+        inParams.put("p_id_produktu", productId);
+
+        jdbcCall.execute(inParams);
+    }
+
     // Method to retrieve image data for a product
     public ImageData getProductImage(Long productId) {
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)

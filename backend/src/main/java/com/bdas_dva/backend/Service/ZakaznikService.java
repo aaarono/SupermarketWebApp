@@ -27,7 +27,6 @@ public class ZakaznikService {
             cs.setLong(3, zakaznik.getTelefon());
             cs.setObject(4, zakaznik.getAdresaIdAdresy() != 0L ? zakaznik.getAdresaIdAdresy() : null);
             cs.execute();
-            System.out.println("GOOL");
             // Получаем сгенерированный ID
             Long generatedId = cs.getLong(2); // Получаем значение из выходного параметра p_id_zakazniku
             // Проверяем, не является ли полученное значение null
