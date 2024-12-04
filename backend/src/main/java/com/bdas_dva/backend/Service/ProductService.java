@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.*;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.*;
 import java.util.*;
@@ -19,6 +20,7 @@ public class ProductService {
     private JdbcTemplate jdbcTemplate;
 
     // Getting the list of products
+    @Transactional(rollbackFor = Exception.class)
     public List<Product> getProducts(String searchQuery, String category) {
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("proc_product_r")
@@ -42,6 +44,7 @@ public class ProductService {
     }
 
     // Adding a new product
+    @Transactional(rollbackFor = Exception.class)
     public void addProduct(String name, Double price, String description, Integer categoryId, Integer warehouseId) {
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("proc_produkt_cud")
@@ -67,6 +70,7 @@ public class ProductService {
     }
 
     // Updating an existing product
+    @Transactional(rollbackFor = Exception.class)
     public void updateProduct(Long productId, String name, Double price, String description, Integer categoryId, Integer warehouseId) {
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("proc_produkt_cud")
@@ -93,6 +97,7 @@ public class ProductService {
     }
 
     // Deleting a product
+    @Transactional(rollbackFor = Exception.class)
     public void deleteProduct(Long productId) {
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("proc_produkt_cud")
@@ -114,6 +119,7 @@ public class ProductService {
     }
 
     // Method to retrieve image data for a product
+    @Transactional(rollbackFor = Exception.class)
     public ImageData getProductImage(Long productId) {
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("proc_obrazek_r")
@@ -150,6 +156,7 @@ public class ProductService {
     }
 
     // Adding a new image
+    @Transactional(rollbackFor = Exception.class)
     public void addProductImage(Long productId, byte[] imageBytes, String name, String type, Integer formatId) {
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("proc_obrazek_cud")
@@ -175,6 +182,7 @@ public class ProductService {
     }
 
     // Updating an existing image
+    @Transactional(rollbackFor = Exception.class)
     public void updateProductImage(Long productId, byte[] imageBytes, String name, String type, Integer formatId) {
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("proc_obrazek_cud")
@@ -200,6 +208,7 @@ public class ProductService {
     }
 
     // Deleting an image
+    @Transactional(rollbackFor = Exception.class)
     public void deleteProductImage(Long productId) {
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("proc_obrazek_cud")

@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ public class CategoryService {
     private JdbcTemplate jdbcTemplate;
 
     // Получение списка категорий
+    @Transactional(rollbackFor = Exception.class)
     public List<Category> getCategories() {
         List<Category> categories = jdbcTemplate.execute("{call proc_kategorie_produktu_r(?, ?, ?)}",
                 (CallableStatementCallback<List<Category>>) cs -> {
@@ -48,6 +50,7 @@ public class CategoryService {
         return categories;
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public List<Category> getCategories(Long pIdKategorie, Integer pLimit) {
         List<Category> categories = jdbcTemplate.execute("{call proc_kategorie_produktu_r(?, ?, ?)}",
                 (CallableStatementCallback<List<Category>>) cs -> {

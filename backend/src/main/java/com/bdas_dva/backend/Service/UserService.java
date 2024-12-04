@@ -3,12 +3,12 @@ package com.bdas_dva.backend.Service;
 import com.bdas_dva.backend.Exception.ResourceNotFoundException;
 import com.bdas_dva.backend.Model.Address;
 import com.bdas_dva.backend.Model.User;
-import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -21,7 +21,7 @@ public class UserService {
     private JdbcTemplate jdbcTemplate;
 
     // Создание нового пользователя (Create)
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void createUserZak(User user) {
         jdbcTemplate.update((Connection conn) -> {
             CallableStatement cs = conn.prepareCall("{call proc_user_cud(?, ?, ?, ?, ?, ?, ?, ?, ?)}"); // 9 параметров
@@ -39,7 +39,7 @@ public class UserService {
     }
 
     // Обновление существующего пользователя (Update)
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void updateUser(User user) throws ResourceNotFoundException {
         if (user.getIdUser() == null) {
             throw new IllegalArgumentException("ID пользователя не может быть null для обновления.");
@@ -61,7 +61,7 @@ public class UserService {
     }
 
     // Удаление пользователя (Delete)
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteUser(Long idUser) throws ResourceNotFoundException {
         if (idUser == null) {
             throw new IllegalArgumentException("ID пользователя не может быть null для удаления.");
@@ -83,6 +83,7 @@ public class UserService {
     }
 
     // Получение пользователя по email
+    @Transactional(rollbackFor = Exception.class)
     public User getUserByEmail(String email) throws ResourceNotFoundException {
         List<User> users = jdbcTemplate.execute("{call proc_user_r(?, ?, ?)}",
                 (CallableStatementCallback<List<User>>) cs -> {
@@ -108,6 +109,7 @@ public class UserService {
     }
 
     // Получение пользователя по ID
+    @Transactional(rollbackFor = Exception.class)
     public User getUserById(Long idUser) throws ResourceNotFoundException {
         List<User> users = jdbcTemplate.execute("{call proc_user_r(?, ?, ?)}",
                 (CallableStatementCallback<List<User>>) cs -> {
@@ -132,6 +134,7 @@ public class UserService {
     }
 
     // Получение всех пользователей с ограничением
+    @Transactional(rollbackFor = Exception.class)
     public List<User> getAllUsers(Long startingId, Integer limit) {
         return jdbcTemplate.execute("{call proc_user_r(?, ?, ?)}",
                 (CallableStatementCallback<List<User>>) cs -> {
@@ -160,6 +163,7 @@ public class UserService {
     }
 
     // Логин пользователя
+    @Transactional(rollbackFor = Exception.class)
     public User loginUser(String email, String password) throws ResourceNotFoundException {
         User user = getUserByEmail(email);
 
@@ -168,6 +172,7 @@ public class UserService {
     }
 
     // Метод для поиска пользователей по фильтрам
+    @Transactional(rollbackFor = Exception.class)
     public List<User> searchUsers(Long pIdUser, String pEmail, Long pRoleIdRole, Integer pLimit) {
         return jdbcTemplate.execute("{call proc_user_r_filter(?, ?, ?, ?, ?)}",
                 (CallableStatementCallback<List<User>>) cs -> {
@@ -213,6 +218,7 @@ public class UserService {
                 });
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public User getUserWithRoleByEmail(String email) throws ResourceNotFoundException {
         List<User> users = jdbcTemplate.execute("{call proc_user_with_role_by_email(?, ?)}",
                 (CallableStatementCallback<List<User>>) cs -> {

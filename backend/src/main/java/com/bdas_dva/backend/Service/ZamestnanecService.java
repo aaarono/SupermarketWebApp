@@ -14,6 +14,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Service;
 import org.springframework.dao.DataAccessException;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -41,6 +42,7 @@ public class ZamestnanecService {
      * @return Seznam zaměstnanců.
      * @throws Exception V případě chyby při volání procedury nebo mapování dat.
      */
+    @Transactional(rollbackFor = Exception.class)
     public List<ZamestnanecResponse> getZamestnanci(ZamestnanecRequest request) throws Exception {
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("proc_zamnestnanec_r")
@@ -82,6 +84,7 @@ public class ZamestnanecService {
      * @param request Data pro vytvoření zaměstnance.
      * @throws Exception V případě chyby při volání procedury.
      */
+    @Transactional(rollbackFor = Exception.class)
     public void createZamestnanec(ZamestnanecRequest request) throws Exception {
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("proc_zamnestnanec_cud")
@@ -126,6 +129,7 @@ public class ZamestnanecService {
      * @param request Data pro aktualizaci zaměstnance.
      * @throws Exception V případě chyby při volání procedury.
      */
+    @Transactional(rollbackFor = Exception.class)
     public void updateZamestnanec(Long idZamestnance, ZamestnanecRequest request) throws Exception {
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("proc_zamnestnanec_cud")
@@ -169,6 +173,7 @@ public class ZamestnanecService {
      * @param request Data pro propojení.
      * @throws Exception V případě chyby při volání procedury.
      */
+    @Transactional(rollbackFor = Exception.class)
     public void linkZamestnanecUser(ZamestnanecUserLinkRequest request) throws Exception {
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("proc_zamestnanec_user_link")
@@ -193,6 +198,7 @@ public class ZamestnanecService {
      * @return ID uživatele a ID zaměstnance.
      * @throws Exception V případě chyby při volání procedury.
      */
+    @Transactional(rollbackFor = Exception.class)
     public Map<String, Long> registerZamestnanec(ZamestnanecRegisterRequest request) throws Exception {
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("proc_zamestnanec_register")

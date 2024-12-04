@@ -5,6 +5,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Types;
 import java.util.HashMap;
@@ -16,6 +17,7 @@ public class SupermarketService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Transactional(rollbackFor = Exception.class)
     public void addSupermarket(String name, Long phone, String email, Long addressId,
                                String street, Integer postalCode, String city, Integer buildingNumber) {
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
@@ -48,6 +50,7 @@ public class SupermarketService {
         jdbcCall.execute(inParams);
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public void updateSupermarket(Long supermarketId, String name, Long phone, String email, Long addressId,
                                   String street, Integer postalCode, String city, Integer buildingNumber) {
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
@@ -80,6 +83,7 @@ public class SupermarketService {
         jdbcCall.execute(inParams);
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public void deleteSupermarket(Long supermarketId) {
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("proc_supermarket_cud")

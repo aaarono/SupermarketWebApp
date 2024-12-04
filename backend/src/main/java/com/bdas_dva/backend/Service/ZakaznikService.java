@@ -8,6 +8,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ public class ZakaznikService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Transactional(rollbackFor = Exception.class)
     public Long createZakaznik(Zakaznik zakaznik) {
         return jdbcTemplate.execute((Connection conn) -> {
             CallableStatement cs = conn.prepareCall("{call proc_zakaznik_cud(?, ?, ?, ?)}"); // 4 параметра
@@ -39,6 +41,7 @@ public class ZakaznikService {
     }
 
     // Обновление существующего заказчика (Update)
+    @Transactional(rollbackFor = Exception.class)
     public void updateZakaznik(Zakaznik zakaznik) throws ResourceNotFoundException {
         if (zakaznik.getIdZakazniku() == null) {
             throw new IllegalArgumentException("ID заказчика не может быть null для обновления.");
@@ -55,6 +58,7 @@ public class ZakaznikService {
     }
 
     // Удаление заказчика (Delete)
+    @Transactional(rollbackFor = Exception.class)
     public void deleteZakaznik(Long idZakazniku) throws ResourceNotFoundException {
         if (idZakazniku == null) {
             throw new IllegalArgumentException("ID заказчика не может быть null для удаления.");
@@ -71,6 +75,7 @@ public class ZakaznikService {
     }
 
     // Получение заказчика по ID
+    @Transactional(rollbackFor = Exception.class)
     public Zakaznik getZakaznikById(Long idZakazniku) throws ResourceNotFoundException {
         List<Zakaznik> zakaznikList = jdbcTemplate.execute("{call proc_zakaznik_r(?, ?, ?, ?)}",
                 (CallableStatementCallback<List<Zakaznik>>) cs -> {
@@ -95,6 +100,7 @@ public class ZakaznikService {
         return zakaznikList.get(0);
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public Zakaznik getZakaznikByTelefon(Long telefon) throws ResourceNotFoundException {
         List<Zakaznik> zakaznikList = jdbcTemplate.execute("{call proc_zakaznik_r(?, ?, ?, ?)}",
                 (CallableStatementCallback<List<Zakaznik>>) cs -> {
@@ -120,6 +126,7 @@ public class ZakaznikService {
     }
 
     // Получение ограниченного количества заказчиков
+    @Transactional(rollbackFor = Exception.class)
     public List<Zakaznik> getZakaznikWithLimit(Integer limit) {
         return jdbcTemplate.execute("{call proc_zakaznik_r(?, ?, ?)}",
                 (CallableStatementCallback<List<Zakaznik>>) cs -> {
@@ -143,6 +150,7 @@ public class ZakaznikService {
     }
 
     // Получение всех заказчиков
+    @Transactional(rollbackFor = Exception.class)
     public List<Zakaznik> getAllZakaznik() {
         return jdbcTemplate.execute("{call proc_zakaznik_r(?, ?, ?)}",
                 (CallableStatementCallback<List<Zakaznik>>) cs -> {
@@ -161,6 +169,7 @@ public class ZakaznikService {
                 });
     }
 
+    @Transactional(rollbackFor = Exception.class)
     private Long getAdresaIdByZakaznikId(Long zakaznikId) throws ResourceNotFoundException {
         try {
             return jdbcTemplate.execute("{call proc_get_adresa_id_by_zakaznik_id(?, ?)}",
