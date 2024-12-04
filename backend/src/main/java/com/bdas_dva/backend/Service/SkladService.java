@@ -8,14 +8,62 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 
 @Service
 public class SkladService {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    /**
+     * Получение всех складов
+     */
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getAllSklady() {
+        String sql = "SELECT s.id_skladu, s.nazev, s.telefon, s.email, a.ulice, a.psc, a.mesto, a.cislopopisne " +
+                "FROM sklad s " +
+                "LEFT JOIN adresa a ON s.adresa_id_adresy = a.id_adresy";
+        return jdbcTemplate.queryForList(sql);
+    }
+
+    /**
+     * Получение склада по ID
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> getSkladById(Long skladId) {
+        String sql = "SELECT s.id_skladu, s.nazev, s.telefon, s.email, a.ulice, a.psc, a.mesto, a.cislopopisne " +
+                "FROM sklad s " +
+                "LEFT JOIN adresa a ON s.adresa_id_adresy = a.id_adresy " +
+                "WHERE s.id_skladu = ?";
+        return jdbcTemplate.queryForMap(sql, skladId);
+    }
+
+    /**
+     * Фильтрация складов по имени и городу
+     */
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getFilteredSklady(String name, String city) {
+        StringBuilder sqlBuilder = new StringBuilder(
+                "SELECT s.id_skladu, s.nazev, s.telefon, s.email, a.ulice, a.psc, a.mesto, a.cislopopisne " +
+                        "FROM sklad s " +
+                        "LEFT JOIN adresa a ON s.adresa_id_adresy = a.id_adresy WHERE 1=1");
+
+        List<Object> params = new ArrayList<>();
+        if (name != null && !name.isEmpty()) {
+            sqlBuilder.append(" AND LOWER(s.nazev) LIKE ?");
+            params.add("%" + name.toLowerCase() + "%");
+        }
+        if (city != null && !city.isEmpty()) {
+            sqlBuilder.append(" AND LOWER(a.mesto) LIKE ?");
+            params.add("%" + city.toLowerCase() + "%");
+        }
+
+        return jdbcTemplate.queryForList(sqlBuilder.toString(), params.toArray());
+    }
 
     @Transactional(rollbackFor = Exception.class)
     public void addSklad(String name, Long phone, String email, Long addressId,

@@ -6,6 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/sklads")
 @CrossOrigin(origins = "http://localhost:3000")
@@ -49,5 +52,25 @@ public class SkladController {
     public ResponseEntity<String> deleteSklad(@PathVariable("id") Long id) {
         skladService.deleteSklad(id);
         return ResponseEntity.ok("Sklad deleted successfully.");
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Map<String, Object>>> getAllSklady() {
+        List<Map<String, Object>> sklady = skladService.getAllSklady();
+        return ResponseEntity.ok(sklady);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> getSkladById(@PathVariable("id") Long id) {
+        Map<String, Object> sklad = skladService.getSkladById(id);
+        return ResponseEntity.ok(sklad);
+    }
+
+    @GetMapping("/filter")
+    public ResponseEntity<List<Map<String, Object>>> getFilteredSklady(
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "city", required = false) String city) {
+        List<Map<String, Object>> sklady = skladService.getFilteredSklady(name, city);
+        return ResponseEntity.ok(sklady);
     }
 }
