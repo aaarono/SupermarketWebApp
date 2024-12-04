@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { AuthContext } from './contexts/AuthContext';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Switch } from 'react-router-dom';
 import LoginForm from './components/Authorization/LoginForm';
 import RegistrationForm from './components/Authorization/RegistrationForm';
 import MainPage from './pages/MainPage';

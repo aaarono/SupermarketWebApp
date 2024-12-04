@@ -1,18 +1,17 @@
 // src/pages/AdminPanelPage.js
 
 import React, { useState } from 'react';
+import WarehousePanel from '../components/Panels/WarehousePanel';
 import ProductPanel from '../components/Panels/ProductPanel';
 import OrderPanel from '../components/Panels/OrderPanel';
 import AddressPanel from '../components/Panels/AddressPanel';
 import CategoryPanel from '../components/Panels/CategoryPanel';
-import WarehousePanel from '../components/Panels/WarehousePanel';
 import SupermarketPanel from '../components/Panels/SupermarketPanel';
 import PaymentPanel from '../components/Panels/PaymentPanel';
 import EmployeePanel from '../components/Panels/EmployeePanel';
-import NavBar from '../components/NavBar';
 
-function AdminPanelPage({ AdminPanelRole }) {
-  const [activePanel, setActivePanel] = useState('product'); // Начальная панель
+function AdminPanelPage() {
+  const [activePanel, setActivePanel] = useState('warehouse'); // Начальная панель
 
   const renderActivePanel = () => {
     switch (activePanel) {
@@ -33,16 +32,11 @@ function AdminPanelPage({ AdminPanelRole }) {
       case 'employee':
         return <EmployeePanel setActivePanel={setActivePanel} />;
       default:
-        return <ProductPanel setActivePanel={setActivePanel} />;
+        return <WarehousePanel setActivePanel={setActivePanel} />;
     }
   };
 
-  return (
-    <>
-      <NavBar NavBarUserRole = { AdminPanelRole } />
-      {renderActivePanel()}
-    </>
-  );
+  return <div>{renderActivePanel()}</div>;
 }
 
 export default AdminPanelPage;
