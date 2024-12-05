@@ -6,7 +6,25 @@ public class Product {
     private Double price;
     private String description;
     private String category;
+    private Long categoryId;
+    private Long skladId;
     private String image;
+
+    public Long getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(Long categoryId) {
+        this.categoryId = categoryId;
+    }
+
+    public Long getSkladId() {
+        return skladId;
+    }
+
+    public void setSkladId(Long skladId) {
+        this.skladId = skladId;
+    }
 
     public Long getId() {
         return id;
@@ -55,4 +73,5 @@ public class Product {
     public void setImage(String image) {
         this.image = image;
     }
+
 }

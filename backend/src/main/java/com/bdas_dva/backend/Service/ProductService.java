@@ -19,33 +19,44 @@ public class ProductService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    // Getting the list of products
+    // Получение всех продуктов из таблицы PRODUKT
     @Transactional(rollbackFor = Exception.class)
     public List<Product> getProducts(String searchQuery, String category) {
-        SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
-                .withProcedureName("proc_product_r")
-                .declareParameters(
-                        new SqlParameter("p_search_query", Types.VARCHAR),
-                        new SqlParameter("p_category", Types.VARCHAR),
-                        new SqlOutParameter("p_products", OracleTypes.CURSOR)
-                )
-                .returningResultSet("p_products", productRowMapper);
+        String sql = "SELECT ID_PRODUKTU, NAZEV, CENA, POPIS, KAT_PROD_ID_KATEGORIE, SKLAD_ID_SKLADU FROM PRODUKT";
 
-        Map<String, Object> inParams = new HashMap<>();
-        inParams.put("p_search_query", searchQuery != null && !searchQuery.isEmpty() ? searchQuery : null);
-        inParams.put("p_category", category != null && !category.isEmpty() ? category : null);
+        List<Object> params = new ArrayList<>();
+        List<Integer> paramTypes = new ArrayList<>();
 
-        Map<String, Object> out = jdbcCall.execute(inParams);
+        if (searchQuery != null && !searchQuery.isEmpty()) {
+            sql += " WHERE LOWER(NAZEV) LIKE LOWER(?)";
+            params.add("%" + searchQuery + "%");
+            paramTypes.add(Types.VARCHAR);
+        }
 
-        @SuppressWarnings("unchecked")
-        List<Product> products = (List<Product>) out.get("p_products");
+        if (category != null && !category.equals("all")) {
+            sql += params.isEmpty() ? " WHERE " : " AND ";
+            sql += "KAT_PROD_ID_KATEGORIE = ?";
+            params.add(Integer.parseInt(category));
+            paramTypes.add(Types.NUMERIC);
+        }
 
-        return products;
+        return jdbcTemplate.query(sql, params.toArray(), (rs, rowNum) -> {
+            Product product = new Product();
+            product.setId(rs.getLong("ID_PRODUKTU"));
+            product.setName(rs.getString("NAZEV"));
+            product.setPrice(rs.getDouble("CENA"));
+            product.setDescription(rs.getString("POPIS"));
+            product.setCategoryId(rs.getLong("KAT_PROD_ID_KATEGORIE"));
+            product.setSkladId(rs.getLong("SKLAD_ID_SKLADU"));
+            return product;
+        });
     }
+
+
 
     // Adding a new product
     @Transactional(rollbackFor = Exception.class)
-    public void addProduct(String name, Double price, String description, Integer categoryId, Integer warehouseId) {
+    public void addProduct(String name, Double price, String description, Integer categoryId, Integer skladId) {
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("proc_produkt_cud")
                 .declareParameters(
@@ -60,18 +71,19 @@ public class ProductService {
 
         Map<String, Object> inParams = new HashMap<>();
         inParams.put("p_action", "INSERT");
+        inParams.put("p_id_produktu", null);
         inParams.put("p_nazev", name);
         inParams.put("p_cena", price);
         inParams.put("p_popis", description);
         inParams.put("p_kat_prod_id_kategorie", categoryId);
-        inParams.put("p_sklad_id_skladu", warehouseId);
+        inParams.put("p_sklad_id_skladu", skladId);
 
         jdbcCall.execute(inParams);
     }
 
     // Updating an existing product
     @Transactional(rollbackFor = Exception.class)
-    public void updateProduct(Long productId, String name, Double price, String description, Integer categoryId, Integer warehouseId) {
+    public void updateProduct(Long productId, String name, Double price, String description, Integer categoryId, Integer skladId) {
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("proc_produkt_cud")
                 .declareParameters(
@@ -91,7 +103,7 @@ public class ProductService {
         inParams.put("p_cena", price);
         inParams.put("p_popis", description);
         inParams.put("p_kat_prod_id_kategorie", categoryId);
-        inParams.put("p_sklad_id_skladu", warehouseId);
+        inParams.put("p_sklad_id_skladu", skladId);
 
         jdbcCall.execute(inParams);
     }
@@ -114,6 +126,11 @@ public class ProductService {
         Map<String, Object> inParams = new HashMap<>();
         inParams.put("p_action", "DELETE");
         inParams.put("p_id_produktu", productId);
+        inParams.put("p_nazev", null);
+        inParams.put("p_cena", null);
+        inParams.put("p_popis", null);
+        inParams.put("p_kat_prod_id_kategorie", null);
+        inParams.put("p_sklad_id_skladu", null);
 
         jdbcCall.execute(inParams);
     }
