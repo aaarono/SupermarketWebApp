@@ -25,9 +25,9 @@ public class SupermarketService {
     @Transactional(readOnly = true)
     public List<Map<String, Object>> getAllSupermarkets() {
         String sql = "SELECT sm.id_supermarketu, sm.nazev, sm.telefon, sm.email, " +
-                "a.ulice, a.psc, a.mesto, a.cislopopisne " +
-                "FROM supermarket sm " +
-                "LEFT JOIN adresa a ON sm.adresa_id_adresy = a.id_adresy";
+                "sm.adresa_id_adresy FROM supermarket sm";
+//                "FROM supermarket sm " +
+//                "LEFT JOIN adresa a ON sm.adresa_id_adresy = a.id_adresy";
         return jdbcTemplate.queryForList(sql);
     }
 
@@ -37,9 +37,9 @@ public class SupermarketService {
     @Transactional(readOnly = true)
     public Map<String, Object> getSupermarketById(Long supermarketId) {
         String sql = "SELECT sm.id_supermarketu, sm.nazev, sm.telefon, sm.email, " +
-                "a.ulice, a.psc, a.mesto, a.cislopopisne " +
-                "FROM supermarket sm " +
-                "LEFT JOIN adresa a ON sm.adresa_id_adresy = a.id_adresy " +
+                "sm.adresa_id_adresy FROM supermarket sm" +
+//                "FROM supermarket sm " +
+//                "LEFT JOIN adresa a ON sm.adresa_id_adresy = a.id_adresy " +
                 "WHERE sm.id_supermarketu = ?";
         return jdbcTemplate.queryForMap(sql, supermarketId);
     }
@@ -51,9 +51,10 @@ public class SupermarketService {
     public List<Map<String, Object>> getFilteredSupermarkets(String name, String city) {
         StringBuilder sqlBuilder = new StringBuilder(
                 "SELECT sm.id_supermarketu, sm.nazev, sm.telefon, sm.email, " +
-                        "a.ulice, a.psc, a.mesto, a.cislopopisne " +
-                        "FROM supermarket sm " +
-                        "LEFT JOIN adresa a ON sm.adresa_id_adresy = a.id_adresy WHERE 1=1");
+                        "sm.adresa_id_adresy FROM supermarket sm" +
+//                        "FROM supermarket sm " +
+//                        "LEFT JOIN adresa a ON sm.adresa_id_adresy = a.id_adresy" +
+                        "WHERE 1=1");
 
         List<Object> params = new ArrayList<>();
         if (name != null && !name.isEmpty()) {

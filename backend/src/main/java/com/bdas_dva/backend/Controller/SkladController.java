@@ -18,59 +18,41 @@ public class SkladController {
     private SkladService skladService;
 
     @PostMapping
-    public ResponseEntity<String> addSklad(@RequestBody Sklad skladDTO) {
+    public ResponseEntity<String> addSklad(@RequestBody Map<String, Object> skladDTO) {
         skladService.addSklad(
-                skladDTO.getName(),
-                skladDTO.getPhone(),
-                skladDTO.getEmail(),
-                skladDTO.getAddressId(),
-                skladDTO.getStreet(),
-                skladDTO.getPostalCode(),
-                skladDTO.getCity(),
-                skladDTO.getBuildingNumber()
+                (String) skladDTO.get("NAZEV"),
+                skladDTO.get("TELEFON") != null ? Long.parseLong(skladDTO.get("TELEFON").toString()) : null,
+                (String) skladDTO.get("EMAIL"),
+                skladDTO.get("ADRESA_ID_ADRESY") != null ? Long.parseLong(skladDTO.get("ADRESA_ID_ADRESY").toString()) : null
         );
-        return ResponseEntity.ok("Sklad added successfully.");
+        return ResponseEntity.ok("Склад успешно добавлен.");
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<String> updateSklad(@PathVariable("id") Long id, @RequestBody Sklad skladDTO) {
+    public ResponseEntity<String> updateSklad(@PathVariable("id") Long id, @RequestBody Map<String, Object> skladDTO) {
         skladService.updateSklad(
                 id,
-                skladDTO.getName(),
-                skladDTO.getPhone(),
-                skladDTO.getEmail(),
-                skladDTO.getAddressId(),
-                skladDTO.getStreet(),
-                skladDTO.getPostalCode(),
-                skladDTO.getCity(),
-                skladDTO.getBuildingNumber()
+                (String) skladDTO.get("NAZEV"),
+                skladDTO.get("TELEFON") != null ? Long.parseLong(skladDTO.get("TELEFON").toString()) : null,
+                (String) skladDTO.get("EMAIL"),
+                skladDTO.get("ADRESA_ID_ADRESY") != null ? Long.parseLong(skladDTO.get("ADRESA_ID_ADRESY").toString()) : null
         );
-        return ResponseEntity.ok("Sklad updated successfully.");
+        return ResponseEntity.ok("Склад успешно обновлен.");
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteSklad(@PathVariable("id") Long id) {
         skladService.deleteSklad(id);
-        return ResponseEntity.ok("Sklad deleted successfully.");
+        return ResponseEntity.ok("Склад успешно удален.");
     }
 
     @GetMapping
     public ResponseEntity<List<Map<String, Object>>> getAllSklady() {
-        List<Map<String, Object>> sklady = skladService.getAllSklady();
-        return ResponseEntity.ok(sklady);
+        return ResponseEntity.ok(skladService.getAllSklady());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getSkladById(@PathVariable("id") Long id) {
-        Map<String, Object> sklad = skladService.getSkladById(id);
-        return ResponseEntity.ok(sklad);
-    }
-
-    @GetMapping("/filter")
-    public ResponseEntity<List<Map<String, Object>>> getFilteredSklady(
-            @RequestParam(value = "name", required = false) String name,
-            @RequestParam(value = "city", required = false) String city) {
-        List<Map<String, Object>> sklady = skladService.getFilteredSklady(name, city);
-        return ResponseEntity.ok(sklady);
+        return ResponseEntity.ok(skladService.getSkladById(id));
     }
 }

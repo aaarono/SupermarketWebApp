@@ -1,5 +1,3 @@
-// src/components/Panels/SupermarketPanel.js
-
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -34,7 +32,7 @@ function SupermarketPanel({ setActivePanel }) {
   const [selectedSupermarket, setSelectedSupermarket] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: '', addressId: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', addressId: '' });
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   // Пагинация
@@ -49,7 +47,6 @@ function SupermarketPanel({ setActivePanel }) {
   const fetchSupermarkets = async () => {
     try {
       const response = await api.get('/api/supermarkets');
-      console.log(response);
       setSupermarkets(response);
     } catch (error) {
       console.error('Ошибка при загрузке супермаркетов:', error);
@@ -70,8 +67,13 @@ function SupermarketPanel({ setActivePanel }) {
     setSelectedSupermarket(supermarket);
     setFormData(
       supermarket
-        ? { NAZEV: supermarket.NAZEV, EMAIL: supermarket.EMAIL, addressId: supermarket.idAdresy }
-        : { name: '', addressId: '' }
+        ? {
+            name: supermarket.NAZEV,
+            telefon: supermarket.TELEFON,
+            email: supermarket.EMAIL,
+            addressId: supermarket.ADRESA_ID_ADRESY,
+          }
+        : { name: '', email: '', addressId: '' }
     );
     setFormOpen(true);
   };
@@ -79,7 +81,7 @@ function SupermarketPanel({ setActivePanel }) {
   const handleFormClose = () => {
     setFormOpen(false);
     setSelectedSupermarket(null);
-    setFormData({ name: '', addressId: '' });
+    setFormData({ name: '', email: '', addressId: '' });
   };
 
   const handleFormSubmit = async (e) => {
@@ -134,10 +136,8 @@ function SupermarketPanel({ setActivePanel }) {
 
   return (
     <div style={{ display: 'flex' }}>
-      {/* Навигация */}
       <AdminNavigation setActivePanel={setActivePanel} />
 
-      {/* Содержимое панели супермаркетов */}
       <div style={{ flexGrow: 1, padding: '16px' }}>
         <Typography variant="h4" gutterBottom>
           Supermarkets
@@ -154,16 +154,18 @@ function SupermarketPanel({ setActivePanel }) {
                 <TableRow>
                   <TableCell>Название</TableCell>
                   <TableCell>EMAIL</TableCell>
+                  <TableCell>TELEFON</TableCell>
                   <TableCell>Адрес</TableCell>
                   <TableCell align="right">Действия</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {supermarkets.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((supermarket) => (
-                  <TableRow hover key={supermarket.id}>
+                  <TableRow hover key={supermarket.ID_SUPERMARKETU}>
                     <TableCell>{supermarket.NAZEV}</TableCell>
                     <TableCell>{supermarket.EMAIL}</TableCell>
-                    <TableCell>{supermarket.address}</TableCell>
+                    <TableCell>{supermarket.TELEFON}</TableCell>
+                    <TableCell>{addresses.find((a) => a.idAdresy === supermarket.ADRESA_ID_ADRESY)?.mesto}</TableCell>
                     <TableCell align="right">
                       <IconButton onClick={() => handleFormOpen(supermarket)}>
                         <FiEdit2 />
@@ -174,13 +176,6 @@ function SupermarketPanel({ setActivePanel }) {
                     </TableCell>
                   </TableRow>
                 ))}
-                {supermarkets.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={3} align="center">
-                      Нет данных
-                    </TableCell>
-                  </TableRow>
-                )}
               </TableBody>
             </Table>
           </TableContainer>
@@ -195,7 +190,6 @@ function SupermarketPanel({ setActivePanel }) {
           />
         </Paper>
 
-        {/* Диалоговая форма добавления/редактирования */}
         <Dialog open={formOpen} onClose={handleFormClose}>
           <DialogTitle>{selectedSupermarket ? 'Редактировать супермаркет' : 'Добавить супермаркет'}</DialogTitle>
           <form onSubmit={handleFormSubmit}>
@@ -207,7 +201,7 @@ function SupermarketPanel({ setActivePanel }) {
                 type="text"
                 fullWidth
                 required
-                value={formData.NAZEV}
+                value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
               <TextField
@@ -217,24 +211,27 @@ function SupermarketPanel({ setActivePanel }) {
                 type="text"
                 fullWidth
                 required
-                value={formData.EMAIL}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                value={formData.telefon}
+                onChange={(e) => setFormData({ ...formData, telefon: e.target.value })}
               />
-              <Select
+              <TextField
                 margin="dense"
-                label="Адрес"
+                label="Email"
+                type="text"
                 fullWidth
                 required
-                value={formData.idAdresy}
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
+              <Select
+                fullWidth
+                value={formData.addressId}
                 onChange={(e) => setFormData({ ...formData, addressId: e.target.value })}
-                displayEmpty
               >
-                <MenuItem value="" disabled>
-                  Выберите адрес
-                </MenuItem>
+                <MenuItem value="">Выберите адрес</MenuItem>
                 {addresses.map((address) => (
-                  <MenuItem key={address.id} value={address.id}>
-                    {`${address.street}, ${address.city}`}
+                  <MenuItem key={address.idAdresy} value={address.idAdresy}>
+                    {address.mesto}
                   </MenuItem>
                 ))}
               </Select>
@@ -247,31 +244,6 @@ function SupermarketPanel({ setActivePanel }) {
             </DialogActions>
           </form>
         </Dialog>
-
-        {/* Диалог подтверждения удаления */}
-        <Dialog open={deleteConfirmOpen} onClose={handleDeleteConfirmClose}>
-          <DialogTitle>Удалить супермаркет?</DialogTitle>
-          <DialogContent>
-            <Typography>Вы уверены, что хотите удалить супермаркет "{selectedSupermarket?.NAZEV}"?</Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleDeleteConfirmClose}>Отмена</Button>
-            <Button onClick={handleDelete} color="secondary">
-              Удалить
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Уведомления */}
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-        >
-          <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity}>
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
       </div>
     </div>
   );

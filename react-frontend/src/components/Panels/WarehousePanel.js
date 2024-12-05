@@ -36,7 +36,7 @@ function WarehousePanel({ setActivePanel }) {
 
   // Пагинация
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
     fetchWarehouses();
@@ -54,14 +54,16 @@ function WarehousePanel({ setActivePanel }) {
 
   const handleFormOpen = (warehouse = null) => {
     setSelectedWarehouse(warehouse);
-    setFormData(warehouse ? { NAZEV: warehouse.NAZEV, EMAIL: warehouse.EMAIL, address: warehouse.address } : { NAZEV: '', address: '' });
+    setFormData(warehouse ? 
+      { NAZEV: warehouse.NAZEV, EMAIL: warehouse.EMAIL, TELEFON: warehouse.TELEFON, ADRESA_ID_ADRESY: warehouse.ADRESA_ID_ADRESY } : 
+      { NAZEV: '', EMAIL: '', TELEFON: '', ADRESA_ID_ADRESY: '' });
     setFormOpen(true);
   };
 
   const handleFormClose = () => {
     setFormOpen(false);
     setSelectedWarehouse(null);
-    setFormData({ name: '', address: '' });
+    setFormData({ NAZEV: '', EMAIL: '', TELEFON: '', ADRESA_ID_ADRESY: '' });
   };
 
   const handleFormSubmit = async (e) => {
@@ -134,17 +136,22 @@ function WarehousePanel({ setActivePanel }) {
             <Table stickyHeader aria-label="warehouses table">
               <TableHead>
                 <TableRow>
+                  <TableCell>ID</TableCell>
                   <TableCell>Название</TableCell>
-                  <TableCell>Адрес</TableCell>
+                  <TableCell>EMAIL</TableCell>
+                  <TableCell>TELEFON</TableCell>
+                  <TableCell>ADRESA_ID_ADRESY</TableCell>
                   <TableCell align="right">Действия</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {warehouses.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((warehouse) => (
                   <TableRow hover key={warehouse.ID_SKLADU}>
+                    <TableCell>{warehouse.ID_SKLADU}</TableCell>
                     <TableCell>{warehouse.NAZEV}</TableCell>
                     <TableCell>{warehouse.EMAIL}</TableCell>
-                    <TableCell>{warehouse.address}</TableCell>
+                    <TableCell>{warehouse.TELEFON}</TableCell>
+                    <TableCell>{warehouse.ADRESA_ID_ADRESY}</TableCell>
                     <TableCell align="right">
                       <IconButton onClick={() => handleFormOpen(warehouse)}>
                         <FiEdit2 />
@@ -189,7 +196,7 @@ function WarehousePanel({ setActivePanel }) {
                 fullWidth
                 required
                 value={formData.NAZEV}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, NAZEV: e.target.value })}
               />
               <TextField
                 autoFocus
@@ -199,7 +206,17 @@ function WarehousePanel({ setActivePanel }) {
                 fullWidth
                 required
                 value={formData.EMAIL}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, EMAIL: e.target.value })}
+              />
+              <TextField
+                autoFocus
+                margin="dense"
+                label="TELEFON"
+                type="text"
+                fullWidth
+                required
+                value={formData.TELEFON}
+                onChange={(e) => setFormData({ ...formData, TELEFON: e.target.value })}
               />
               <TextField
                 margin="dense"
@@ -207,8 +224,8 @@ function WarehousePanel({ setActivePanel }) {
                 type="text"
                 fullWidth
                 required
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                value={formData.ADRESA_ID_ADRESY}
+                onChange={(e) => setFormData({ ...formData, ADRESA_ID_ADRESY: e.target.value })}
               />
             </DialogContent>
             <DialogActions>
@@ -224,7 +241,7 @@ function WarehousePanel({ setActivePanel }) {
         <Dialog open={deleteConfirmOpen} onClose={handleDeleteConfirmClose}>
           <DialogTitle>Удалить склад?</DialogTitle>
           <DialogContent>
-            <Typography>Вы уверены, что хотите удалить склад "{selectedWarehouse?.name}"?</Typography>
+            <Typography>Вы уверены, что хотите удалить склад "{selectedWarehouse?.NAZEV}"?</Typography>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleDeleteConfirmClose}>Отмена</Button>

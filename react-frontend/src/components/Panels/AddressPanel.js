@@ -41,7 +41,7 @@ function AddressPanel({ setActivePanel }) {
 
   // Пагинация
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
 
   useEffect(() => {
     fetchAddresses();
@@ -148,6 +148,7 @@ function AddressPanel({ setActivePanel }) {
             <Table stickyHeader aria-label="addresses table">
               <TableHead>
                 <TableRow>
+                  <TableCell>id</TableCell>
                   <TableCell>Улица</TableCell>
                   <TableCell>Город</TableCell>
                   <TableCell>Почтовый индекс</TableCell>
@@ -158,6 +159,7 @@ function AddressPanel({ setActivePanel }) {
               <TableBody>
                 {addresses.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((address) => (
                   <TableRow hover key={address.idAdresy}>
+                    <TableCell>{address.idAdresy}</TableCell>
                     <TableCell>{address.ulice}</TableCell>
                     <TableCell>{address.mesto}</TableCell>
                     <TableCell>{address.psc}</TableCell>
