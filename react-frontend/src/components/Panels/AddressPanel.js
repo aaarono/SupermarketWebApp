@@ -32,11 +32,10 @@ function AddressPanel({ setActivePanel }) {
   const [formOpen, setFormOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [formData, setFormData] = useState({
-    street: '',
-    city: '',
-    state: '',
-    postalCode: '',
-    country: '',
+    ulice: '',
+    mesto: '',
+    psc: '',
+    cisloPopisne: '',
   });
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
@@ -50,8 +49,9 @@ function AddressPanel({ setActivePanel }) {
 
   const fetchAddresses = async () => {
     try {
-      const response = await api.get('/addresses');
-      setAddresses(response.data);
+      const response = await api.get('/api/addresses');
+      console.log(response);
+      setAddresses(response);
     } catch (error) {
       console.error('Ошибка при загрузке адресов:', error);
     }
@@ -62,13 +62,12 @@ function AddressPanel({ setActivePanel }) {
     setFormData(
       address
         ? {
-            street: address.street,
-            city: address.city,
-            state: address.state,
-            postalCode: address.postalCode,
-            country: address.country,
+            ulice: address.ulice,
+            mesto: address.mesto,
+            psc: address.psc,
+            cisloPopisne: address.cisloPopisne,
           }
-        : { street: '', city: '', state: '', postalCode: '', country: '' }
+        : { ulice: '', mesto: '', psc: '', cisloPopisne: '' }
     );
     setFormOpen(true);
   };
@@ -76,17 +75,17 @@ function AddressPanel({ setActivePanel }) {
   const handleFormClose = () => {
     setFormOpen(false);
     setSelectedAddress(null);
-    setFormData({ street: '', city: '', state: '', postalCode: '', country: '' });
+    setFormData({ ulice: '', mesto: '', psc: '', cisloPopisne: '' });
   };
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     try {
       if (selectedAddress) {
-        await api.put(`/addresses/${selectedAddress.id}`, formData);
+        await api.put(`/api/addresses/${selectedAddress.idAdresy}`, formData);
         setSnackbar({ open: true, message: 'Адрес обновлен успешно', severity: 'success' });
       } else {
-        await api.post('/addresses', formData);
+        await api.post('/api/addresses', formData);
         setSnackbar({ open: true, message: 'Адрес добавлен успешно', severity: 'success' });
       }
       fetchAddresses();
@@ -109,7 +108,7 @@ function AddressPanel({ setActivePanel }) {
 
   const handleDelete = async () => {
     try {
-      await api.delete(`/addresses/${selectedAddress.id}`);
+      await api.delete(`/api/addresses/${selectedAddress.idAdresy}`);
       setSnackbar({ open: true, message: 'Адрес удален успешно', severity: 'success' });
       fetchAddresses();
       handleDeleteConfirmClose();
@@ -151,20 +150,18 @@ function AddressPanel({ setActivePanel }) {
                 <TableRow>
                   <TableCell>Улица</TableCell>
                   <TableCell>Город</TableCell>
-                  <TableCell>Штат/Область</TableCell>
                   <TableCell>Почтовый индекс</TableCell>
-                  <TableCell>Страна</TableCell>
+                  <TableCell>cislo Popisne</TableCell>
                   <TableCell align="right">Действия</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {addresses.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((address) => (
-                  <TableRow hover key={address.id}>
-                    <TableCell>{address.street}</TableCell>
-                    <TableCell>{address.city}</TableCell>
-                    <TableCell>{address.state}</TableCell>
-                    <TableCell>{address.postalCode}</TableCell>
-                    <TableCell>{address.country}</TableCell>
+                  <TableRow hover key={address.idAdresy}>
+                    <TableCell>{address.ulice}</TableCell>
+                    <TableCell>{address.mesto}</TableCell>
+                    <TableCell>{address.psc}</TableCell>
+                    <TableCell>{address.cisloPopisne}</TableCell>
                     <TableCell align="right">
                       <IconButton onClick={() => handleFormOpen(address)}>
                         <FiEdit2 />
@@ -208,8 +205,8 @@ function AddressPanel({ setActivePanel }) {
                 type="text"
                 fullWidth
                 required
-                value={formData.street}
-                onChange={(e) => setFormData({ ...formData, street: e.target.value })}
+                value={formData.ulice}
+                onChange={(e) => setFormData({ ...formData, ulice: e.target.value })}
               />
               <TextField
                 margin="dense"
@@ -217,17 +214,8 @@ function AddressPanel({ setActivePanel }) {
                 type="text"
                 fullWidth
                 required
-                value={formData.city}
-                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-              />
-              <TextField
-                margin="dense"
-                label="Штат/Область"
-                type="text"
-                fullWidth
-                required
-                value={formData.state}
-                onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                value={formData.mesto}
+                onChange={(e) => setFormData({ ...formData, mesto: e.target.value })}
               />
               <TextField
                 margin="dense"
@@ -235,17 +223,17 @@ function AddressPanel({ setActivePanel }) {
                 type="text"
                 fullWidth
                 required
-                value={formData.postalCode}
-                onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
+                value={formData.psc}
+                onChange={(e) => setFormData({ ...formData, psc: e.target.value })}
               />
               <TextField
                 margin="dense"
-                label="Страна"
+                label="cisloPopisne"
                 type="text"
                 fullWidth
                 required
-                value={formData.country}
-                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                value={formData.cisloPopisne}
+                onChange={(e) => setFormData({ ...formData, cisloPopisne: e.target.value })}
               />
             </DialogContent>
             <DialogActions>
@@ -262,7 +250,7 @@ function AddressPanel({ setActivePanel }) {
           <DialogTitle>Удалить адрес?</DialogTitle>
           <DialogContent>
             <Typography>
-              Вы уверены, что хотите удалить адрес "{selectedAddress?.street}, {selectedAddress?.city}"?
+              Вы уверены, что хотите удалить адрес "{selectedAddress?.ulice}, {selectedAddress?.mesto}"?
             </Typography>
           </DialogContent>
           <DialogActions>
