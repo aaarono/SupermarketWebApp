@@ -48,8 +48,9 @@ function SupermarketPanel({ setActivePanel }) {
 
   const fetchSupermarkets = async () => {
     try {
-      const response = await api.get('/supermarkets');
-      setSupermarkets(response.data);
+      const response = await api.get('/api/supermarkets');
+      console.log(response);
+      setSupermarkets(response);
     } catch (error) {
       console.error('Ошибка при загрузке супермаркетов:', error);
     }
@@ -57,8 +58,9 @@ function SupermarketPanel({ setActivePanel }) {
 
   const fetchAddresses = async () => {
     try {
-      const response = await api.get('/addresses');
-      setAddresses(response.data);
+      const response = await api.get('/api/addresses');
+      console.log(response);
+      setAddresses(response);
     } catch (error) {
       console.error('Ошибка при загрузке адресов:', error);
     }
@@ -68,7 +70,7 @@ function SupermarketPanel({ setActivePanel }) {
     setSelectedSupermarket(supermarket);
     setFormData(
       supermarket
-        ? { name: supermarket.name, addressId: supermarket.addressId }
+        ? { NAZEV: supermarket.NAZEV, EMAIL: supermarket.EMAIL, addressId: supermarket.idAdresy }
         : { name: '', addressId: '' }
     );
     setFormOpen(true);
@@ -84,10 +86,10 @@ function SupermarketPanel({ setActivePanel }) {
     e.preventDefault();
     try {
       if (selectedSupermarket) {
-        await api.put(`/supermarkets/${selectedSupermarket.id}`, formData);
+        await api.put(`/api/supermarkets/${selectedSupermarket.ID_SUPERMARKETU}`, formData);
         setSnackbar({ open: true, message: 'Супермаркет обновлен успешно', severity: 'success' });
       } else {
-        await api.post('/supermarkets', formData);
+        await api.post('/api/supermarkets', formData);
         setSnackbar({ open: true, message: 'Супермаркет добавлен успешно', severity: 'success' });
       }
       fetchSupermarkets();
@@ -110,7 +112,7 @@ function SupermarketPanel({ setActivePanel }) {
 
   const handleDelete = async () => {
     try {
-      await api.delete(`/supermarkets/${selectedSupermarket.id}`);
+      await api.delete(`/api/supermarkets/${selectedSupermarket.ID_SUPERMARKETU}`);
       setSnackbar({ open: true, message: 'Супермаркет удален успешно', severity: 'success' });
       fetchSupermarkets();
       handleDeleteConfirmClose();
@@ -151,6 +153,7 @@ function SupermarketPanel({ setActivePanel }) {
               <TableHead>
                 <TableRow>
                   <TableCell>Название</TableCell>
+                  <TableCell>EMAIL</TableCell>
                   <TableCell>Адрес</TableCell>
                   <TableCell align="right">Действия</TableCell>
                 </TableRow>
@@ -158,7 +161,8 @@ function SupermarketPanel({ setActivePanel }) {
               <TableBody>
                 {supermarkets.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((supermarket) => (
                   <TableRow hover key={supermarket.id}>
-                    <TableCell>{supermarket.name}</TableCell>
+                    <TableCell>{supermarket.NAZEV}</TableCell>
+                    <TableCell>{supermarket.EMAIL}</TableCell>
                     <TableCell>{supermarket.address}</TableCell>
                     <TableCell align="right">
                       <IconButton onClick={() => handleFormOpen(supermarket)}>
@@ -203,7 +207,17 @@ function SupermarketPanel({ setActivePanel }) {
                 type="text"
                 fullWidth
                 required
-                value={formData.name}
+                value={formData.NAZEV}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              />
+              <TextField
+                autoFocus
+                margin="dense"
+                label="Название"
+                type="text"
+                fullWidth
+                required
+                value={formData.EMAIL}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
               <Select
@@ -211,7 +225,7 @@ function SupermarketPanel({ setActivePanel }) {
                 label="Адрес"
                 fullWidth
                 required
-                value={formData.addressId}
+                value={formData.idAdresy}
                 onChange={(e) => setFormData({ ...formData, addressId: e.target.value })}
                 displayEmpty
               >
@@ -238,7 +252,7 @@ function SupermarketPanel({ setActivePanel }) {
         <Dialog open={deleteConfirmOpen} onClose={handleDeleteConfirmClose}>
           <DialogTitle>Удалить супермаркет?</DialogTitle>
           <DialogContent>
-            <Typography>Вы уверены, что хотите удалить супермаркет "{selectedSupermarket?.name}"?</Typography>
+            <Typography>Вы уверены, что хотите удалить супермаркет "{selectedSupermarket?.NAZEV}"?</Typography>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleDeleteConfirmClose}>Отмена</Button>

@@ -44,8 +44,9 @@ function EmployeePanel({ setActivePanel }) {
 
   const fetchEmployees = async () => {
     try {
-      const response = await api.get('/employees');
-      setEmployees(response.data);
+      const response = await api.get('/api/zamestnanci');
+      console.log(response);
+      setEmployees(response);
     } catch (error) {
       console.error('Ошибка при загрузке сотрудников:', error);
     }
@@ -71,10 +72,10 @@ function EmployeePanel({ setActivePanel }) {
     e.preventDefault();
     try {
       if (selectedEmployee) {
-        await api.put(`/employees/${selectedEmployee.id}`, formData);
+        await api.put(`/api/zamestnanci/${selectedEmployee.id}`, formData);
         setSnackbar({ open: true, message: 'Сотрудник обновлен успешно', severity: 'success' });
       } else {
-        await api.post('/employees', formData);
+        await api.post('/api/zamestnanci', formData);
         setSnackbar({ open: true, message: 'Сотрудник добавлен успешно', severity: 'success' });
       }
       fetchEmployees();
@@ -97,7 +98,7 @@ function EmployeePanel({ setActivePanel }) {
 
   const handleDelete = async () => {
     try {
-      await api.delete(`/employees/${selectedEmployee.id}`);
+      await api.delete(`/api/zamestnanci/${selectedEmployee.id}`);
       setSnackbar({ open: true, message: 'Сотрудник удален успешно', severity: 'success' });
       fetchEmployees();
       handleDeleteConfirmClose();

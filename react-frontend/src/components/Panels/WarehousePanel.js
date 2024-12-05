@@ -31,7 +31,7 @@ function WarehousePanel({ setActivePanel }) {
   const [selectedWarehouse, setSelectedWarehouse] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: '', address: '' });
+  const [formData, setFormData] = useState({ NAZEV: '', EMAIL: '', address: '' });
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   // Пагинация
@@ -44,8 +44,9 @@ function WarehousePanel({ setActivePanel }) {
 
   const fetchWarehouses = async () => {
     try {
-      const response = await api.get('/warehouses');
-      setWarehouses(response.data);
+      const response = await api.get('/api/sklads');
+      console.log(response)
+      setWarehouses(response);
     } catch (error) {
       console.error('Ошибка при загрузке складов:', error);
     }
@@ -53,7 +54,7 @@ function WarehousePanel({ setActivePanel }) {
 
   const handleFormOpen = (warehouse = null) => {
     setSelectedWarehouse(warehouse);
-    setFormData(warehouse ? { name: warehouse.name, address: warehouse.address } : { name: '', address: '' });
+    setFormData(warehouse ? { NAZEV: warehouse.NAZEV, EMAIL: warehouse.EMAIL, address: warehouse.address } : { NAZEV: '', address: '' });
     setFormOpen(true);
   };
 
@@ -67,10 +68,10 @@ function WarehousePanel({ setActivePanel }) {
     e.preventDefault();
     try {
       if (selectedWarehouse) {
-        await api.put(`/warehouses/${selectedWarehouse.id}`, formData);
+        await api.put(`/api/sklads/${selectedWarehouse.ID_SKLADU}`, formData);
         setSnackbar({ open: true, message: 'Склад обновлен успешно', severity: 'success' });
       } else {
-        await api.post('/warehouses', formData);
+        await api.post('/api/sklads', formData);
         setSnackbar({ open: true, message: 'Склад добавлен успешно', severity: 'success' });
       }
       fetchWarehouses();
@@ -93,7 +94,7 @@ function WarehousePanel({ setActivePanel }) {
 
   const handleDelete = async () => {
     try {
-      await api.delete(`/warehouses/${selectedWarehouse.id}`);
+      await api.delete(`/api/sklads/${selectedWarehouse.ID_SKLADU}`);
       setSnackbar({ open: true, message: 'Склад удален успешно', severity: 'success' });
       fetchWarehouses();
       handleDeleteConfirmClose();
@@ -140,8 +141,9 @@ function WarehousePanel({ setActivePanel }) {
               </TableHead>
               <TableBody>
                 {warehouses.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((warehouse) => (
-                  <TableRow hover key={warehouse.id}>
-                    <TableCell>{warehouse.name}</TableCell>
+                  <TableRow hover key={warehouse.ID_SKLADU}>
+                    <TableCell>{warehouse.NAZEV}</TableCell>
+                    <TableCell>{warehouse.EMAIL}</TableCell>
                     <TableCell>{warehouse.address}</TableCell>
                     <TableCell align="right">
                       <IconButton onClick={() => handleFormOpen(warehouse)}>
@@ -186,7 +188,17 @@ function WarehousePanel({ setActivePanel }) {
                 type="text"
                 fullWidth
                 required
-                value={formData.name}
+                value={formData.NAZEV}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              />
+              <TextField
+                autoFocus
+                margin="dense"
+                label="EMAIL"
+                type="text"
+                fullWidth
+                required
+                value={formData.EMAIL}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
               <TextField
