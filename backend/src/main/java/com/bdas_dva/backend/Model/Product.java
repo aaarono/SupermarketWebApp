@@ -5,8 +5,17 @@ public class Product {
     private String name;
     private Double price;
     private String description;
-    private String category;
+    private Long category;
     private String image;
+    private Long sklad_id;
+
+    public Long getSklad_id() {
+        return sklad_id;
+    }
+
+    public void setSklad_id(Long sklad_id) {
+        this.sklad_id = sklad_id;
+    }
 
     public Long getId() {
         return id;
@@ -40,11 +49,11 @@ public class Product {
         this.description = description;
     }
 
-    public String getCategory() {
+    public Long getCategory() {
         return category;
     }
 
-    public void setCategory(String category) {
+    public void setCategory(Long category) {
         this.category = category;
     }
 
