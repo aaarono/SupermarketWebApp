@@ -19,4 +19,19 @@ public class CategoryController {
     public List<Category> getCategories() {
         return categoryService.getCategories();
     }
+
+    @PostMapping
+    public void insertCategory(@RequestBody Category category) {
+        categoryService.insertCategory(category.getValue());
+    }
+
+    @PutMapping("/{id}")
+    public void updateCategory(@PathVariable Long id, @RequestBody Category category) {
+        categoryService.updateCategory(id, category.getValue());
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteCategory(@PathVariable Long id) {
+        categoryService.deleteCategory(id);
+    }
 }
