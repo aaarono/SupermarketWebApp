@@ -235,8 +235,7 @@ public class ProductService {
         product.setName(rs.getString("name"));
         product.setPrice(rs.getDouble("price"));
         product.setDescription(rs.getString("description"));
-        product.setCategory(rs.getLong("category"));
-        product.setSklad_id(rs.getLong("sklad_id"));
+        product.setCategory(rs.getString("category"));
 
         // Handling the image
         Blob imageBlob = rs.getBlob("image");
