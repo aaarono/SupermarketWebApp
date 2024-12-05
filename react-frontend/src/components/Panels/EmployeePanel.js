@@ -1,5 +1,3 @@
-// src/components/Panels/EmployeePanel.js
-
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -18,6 +16,8 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  Select,
+  MenuItem,
   IconButton,
   Snackbar,
   Alert,
@@ -28,27 +28,93 @@ import api from '../../services/api';
 
 function EmployeePanel({ setActivePanel }) {
   const [employees, setEmployees] = useState([]);
+  const [managers, setManagers] = useState([]);
+  const [warehouses, setWarehouses] = useState([]);
+  const [supermarkets, setSupermarkets] = useState([]);
+  const [addresses, setAddresses] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '' });
+  const [positions, setPositions] = useState([]);
+  const [formData, setFormData] = useState({
+    jmeno: '',
+    prijmeni: '',
+    skladIdSkladu: '',
+    supermarketIdSupermarketu: '',
+    mzda: '',
+    pracovnidoba: '',
+    poziceIdPozice: '',
+    datumZamestnani: '',
+    zamestnanecIdZamestnance: '',
+    adresaIdAdresy: ''
+  });
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  // Пагинация
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
 
   useEffect(() => {
     fetchEmployees();
+    fetchWarehouses();
+    fetchSupermarkets();
+    fetchManagers();
+    fetchPositions();
+    fetchAddresses();
   }, []);
 
   const fetchEmployees = async () => {
     try {
       const response = await api.get('/api/zamestnanci');
-      console.log(response);
+      console.log(response)
       setEmployees(response);
     } catch (error) {
       console.error('Ошибка при загрузке сотрудников:', error);
+    }
+  };
+
+  const fetchWarehouses = async () => {
+    try {
+      const response = await api.get('/api/sklads');
+      setWarehouses(response);
+    } catch (error) {
+      console.error('Ошибка при загрузке складов:', error);
+    }
+  };
+
+  const fetchSupermarkets = async () => {
+    try {
+      const response = await api.get('/api/supermarkets');
+      setSupermarkets(response);
+    } catch (error) {
+      console.error('Ошибка при загрузке супермаркетов:', error);
+    }
+  };
+
+  const fetchPositions = async () => {
+    try {
+      const response = await api.get('/api/zamestnanci/pozice');
+      console.log(response);
+      setPositions(response);
+    } catch (error) {
+      console.error('Ошибка при загрузке позиций:', error);
+    }
+  };
+
+  const fetchManagers = async () => {
+    try {
+      const response = await api.get('/api/zamestnanci'); // Предположим, что менеджеры — это те же сотрудники
+      setManagers(response);
+    } catch (error) {
+      console.error('Ошибка при загрузке менеджеров:', error);
+    }
+  };
+
+  const fetchAddresses = async () => {
+    try {
+      const response = await api.get('/api/addresses');
+      setAddresses(response);
+    } catch (error) {
+      console.error('Ошибка при загрузке адресов:', error);
     }
   };
 
@@ -56,8 +122,31 @@ function EmployeePanel({ setActivePanel }) {
     setSelectedEmployee(employee);
     setFormData(
       employee
-        ? { firstName: employee.firstName, lastName: employee.lastName, email: employee.email }
-        : { firstName: '', lastName: '', email: '' }
+        ? {
+            jmeno: employee.jmeno,
+            prijmeni: employee.prijmeni,
+            skladIdSkladu: employee.skladIdSkladu,
+            supermarketIdSupermarketu: employee.supermarketIdSupermarketu,
+            mzda: employee.mzda,
+            pracovnidoba: employee.pracovnidoba,
+            poziceIdPozice: employee.poziceIdPozice,
+            datumZamestnani: employee.datumZamestnani,
+            zamestnanecIdZamestnance: employee.zamestnanecIdZamestnance,
+            adresaIdAdresy: employee.adresaIdAdresy,
+          }
+        : {
+            jmeno: '',
+            prijmeni: '',
+            email: '',
+            skladIdSkladu: '',
+            supermarketIdSupermarketu: '',
+            mzda: '',
+            pracovnidoba: '',
+            poziceIdPozice: '',
+            datumZamestnani: '',
+            zamestnanecIdZamestnance: '',
+            adresaIdAdresy: '',
+          }
     );
     setFormOpen(true);
   };
@@ -65,17 +154,39 @@ function EmployeePanel({ setActivePanel }) {
   const handleFormClose = () => {
     setFormOpen(false);
     setSelectedEmployee(null);
-    setFormData({ firstName: '', lastName: '', email: '' });
+    setFormData({
+      jmeno: '',
+      prijmeni: '',
+      email: '',
+      skladIdSkladu: '',
+      supermarketIdSupermarketu: '',
+      mzda: '',
+      pracovnidoba: '',
+      poziceIdPozice: '',
+      datumZamestnani: '',
+      zamestnanecIdZamestnance: '',
+      idAdresy: ''
+    });
   };
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    // Преобразование необходимых полей в числа
+    const payload = {
+      ...formData,
+      skladIdSkladu: formData.skladIdSkladu !== null ? Number(formData.skladIdSkladu) : null,
+      supermarketIdSupermarketu: formData.supermarketIdSupermarketu !== null ? Number(formData.supermarketIdSupermarketu) : null,
+      zamestnanecIdZamestnance: formData.zamestnanecIdZamestnance !== null ? Number(formData.zamestnanecIdZamestnance) : null,
+      adresaIdAdresy: formData.adresaIdAdresy !== null ? Number(formData.adresaIdAdresy) : null,
+    };
+  
     try {
       if (selectedEmployee) {
-        await api.put(`/api/zamestnanci/${selectedEmployee.id}`, formData);
+        console.log(payload);
+        await api.put(`/api/zamestnanci/${selectedEmployee.idZamestnance}`, payload);
         setSnackbar({ open: true, message: 'Сотрудник обновлен успешно', severity: 'success' });
       } else {
-        await api.post('/api/zamestnanci', formData);
+        await api.post('/api/zamestnanci', payload);
         setSnackbar({ open: true, message: 'Сотрудник добавлен успешно', severity: 'success' });
       }
       fetchEmployees();
@@ -98,7 +209,7 @@ function EmployeePanel({ setActivePanel }) {
 
   const handleDelete = async () => {
     try {
-      await api.delete(`/api/zamestnanci/${selectedEmployee.id}`);
+      await api.delete(`/api/employees/${selectedEmployee.idZamestnance}`);
       setSnackbar({ open: true, message: 'Сотрудник удален успешно', severity: 'success' });
       fetchEmployees();
       handleDeleteConfirmClose();
@@ -108,7 +219,6 @@ function EmployeePanel({ setActivePanel }) {
     }
   };
 
-  // Обработчики пагинации
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -120,10 +230,8 @@ function EmployeePanel({ setActivePanel }) {
 
   return (
     <div style={{ display: 'flex' }}>
-      {/* Навигация */}
       <AdminNavigation setActivePanel={setActivePanel} />
 
-      {/* Содержимое панели сотрудников */}
       <div style={{ flexGrow: 1, padding: '16px' }}>
         <Typography variant="h4" gutterBottom>
           Employees
@@ -140,16 +248,30 @@ function EmployeePanel({ setActivePanel }) {
                 <TableRow>
                   <TableCell>Имя</TableCell>
                   <TableCell>Фамилия</TableCell>
-                  <TableCell>Email</TableCell>
+                  <TableCell>Склад</TableCell>
+                  <TableCell>Супермаркет</TableCell>
+                  <TableCell>Менеджер</TableCell>
+                  <TableCell>Позиция</TableCell>
+                  <TableCell>Зарплата</TableCell>
+                  <TableCell>Рабочие часы</TableCell>
+                  <TableCell>адрес</TableCell>
                   <TableCell align="right">Действия</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {employees.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((employee) => (
-                  <TableRow hover key={employee.id}>
-                    <TableCell>{employee.firstName}</TableCell>
-                    <TableCell>{employee.lastName}</TableCell>
-                    <TableCell>{employee.email}</TableCell>
+                  <TableRow hover key={employee.idZamestnance}>
+                    <TableCell>{employee.jmeno}</TableCell>
+                    <TableCell>{employee.prijmeni}</TableCell>
+                    <TableCell>{warehouses.find((w) => w.ID_SKLADU === employee.skladIdSkladu)?.NAZEV || 'Не указано'}</TableCell>
+                    <TableCell>{supermarkets.find((s) => s.ID_SUPERMARKETU === employee.supermarketIdSupermarketu)?.NAZEV || 'Не указано'}</TableCell>
+                    <TableCell>{managers.find((m) => m.idZamestnance === employee.zamestnanecIdZamestnance)?.jmeno || 'Не указано'}</TableCell>
+                    <TableCell>
+                    {positions.find((p) => p.ID_POZICE === employee.poziceIdPozice)?.NAZEV || 'Не указано'}
+                    </TableCell>
+                    <TableCell>{employee.mzda}</TableCell>
+                    <TableCell>{employee.pracovnidoba}</TableCell>
+                    <TableCell>{employee.adresaIdAdresy}</TableCell>
                     <TableCell align="right">
                       <IconButton onClick={() => handleFormOpen(employee)}>
                         <FiEdit2 />
@@ -160,13 +282,6 @@ function EmployeePanel({ setActivePanel }) {
                     </TableCell>
                   </TableRow>
                 ))}
-                {employees.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={4} align="center">
-                      Нет данных
-                    </TableCell>
-                  </TableRow>
-                )}
               </TableBody>
             </Table>
           </TableContainer>
@@ -181,20 +296,18 @@ function EmployeePanel({ setActivePanel }) {
           />
         </Paper>
 
-        {/* Диалоговая форма добавления/редактирования */}
         <Dialog open={formOpen} onClose={handleFormClose}>
           <DialogTitle>{selectedEmployee ? 'Редактировать сотрудника' : 'Добавить сотрудника'}</DialogTitle>
           <form onSubmit={handleFormSubmit}>
             <DialogContent>
               <TextField
-                autoFocus
                 margin="dense"
                 label="Имя"
                 type="text"
                 fullWidth
                 required
-                value={formData.firstName}
-                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                value={formData.jmeno}
+                onChange={(e) => setFormData({ ...formData, jmeno: e.target.value })}
               />
               <TextField
                 margin="dense"
@@ -202,17 +315,99 @@ function EmployeePanel({ setActivePanel }) {
                 type="text"
                 fullWidth
                 required
-                value={formData.lastName}
-                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                value={formData.prijmeni}
+                onChange={(e) => setFormData({ ...formData, prijmeni: e.target.value })}
               />
+              <Select
+                fullWidth
+                value={formData.skladIdSkladu}
+                onChange={(e) => setFormData({ ...formData, skladIdSkladu: e.target.value })}
+              >
+                <MenuItem value="">Выберите склад</MenuItem>
+                {warehouses.map((warehouse) => (
+                  <MenuItem key={warehouse.ID_SKLADU} value={warehouse.ID_SKLADU}>
+                    {warehouse.NAZEV}
+                  </MenuItem>
+                ))}
+              </Select>
+              <Select
+                fullWidth
+                value={formData.supermarketIdSupermarketu}
+                onChange={(e) => setFormData({ ...formData, supermarketIdSupermarketu: e.target.value })}
+              >
+                <MenuItem value="">Выберите супермаркет</MenuItem>
+                {supermarkets.map((supermarket) => (
+                  <MenuItem key={supermarket.ID_SUPERMARKETU} value={supermarket.ID_SUPERMARKETU}>
+                    {supermarket.NAZEV}
+                  </MenuItem>
+                ))}
+              </Select>
+              <Select
+                fullWidth
+                value={formData.zamestnanecIdZamestnance}
+                onChange={(e) => setFormData({ ...formData, zamestnanecIdZamestnance: e.target.value })}
+              >
+                <MenuItem value="">Выберите менеджера</MenuItem>
+                {managers.map((manager) => (
+                  <MenuItem key={manager.idZamestnance} value={manager.idZamestnance}>
+                    {manager.jmeno} {manager.prijmeni}
+                  </MenuItem>
+                ))}
+              </Select>
               <TextField
                 margin="dense"
-                label="Email"
-                type="email"
+                label="Зарплата"
+                type="number"
                 fullWidth
                 required
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                value={formData.mzda}
+                onChange={(e) => setFormData({ ...formData, mzda: e.target.value })}
+              />
+              <Select
+                fullWidth
+                value={formData.poziceIdPozice}
+                onChange={(e) => setFormData({ ...formData, poziceIdPozice: e.target.value })}
+              >
+                <MenuItem value="">Выберите позицию</MenuItem>
+                {positions.map((position) => (
+                  <MenuItem key={position.ID_POZICE} value={position.ID_POZICE}>
+                    {position.NAZEV}
+                  </MenuItem>
+                ))}
+              </Select>
+
+              <TextField
+                margin="dense"
+                label="Рабочие часы"
+                type="number"
+                fullWidth
+                required
+                value={formData.pracovnidoba}
+                onChange={(e) => setFormData({ ...formData, pracovnidoba: e.target.value })}
+              />
+              <Select
+              value={formData.adresaIdAdresy}
+              onChange={(e) => setFormData({ ...formData, adresaIdAdresy: e.target.value })}
+              fullWidth
+            >
+              <MenuItem value="">Выберите адрес</MenuItem>
+              {addresses.map((address) => (
+                <MenuItem key={address.idAdresy} value={address.idAdresy}>
+                  {`${address.ulice}, ${address.mesto}`}
+                </MenuItem>
+              ))}
+            </Select>
+              <TextField
+                margin="dense"
+                label="Дата начала работы"
+                type="date"
+                fullWidth
+                required
+                value={formData.datumZamestnani}
+                onChange={(e) => setFormData({ ...formData, datumZamestnani: e.target.value })}
+                InputLabelProps={{
+                  shrink: true,
+                }}
               />
             </DialogContent>
             <DialogActions>
@@ -223,33 +418,6 @@ function EmployeePanel({ setActivePanel }) {
             </DialogActions>
           </form>
         </Dialog>
-
-        {/* Диалог подтверждения удаления */}
-        <Dialog open={deleteConfirmOpen} onClose={handleDeleteConfirmClose}>
-          <DialogTitle>Удалить сотрудника?</DialogTitle>
-          <DialogContent>
-            <Typography>
-              Вы уверены, что хотите удалить сотрудника "{selectedEmployee?.firstName} {selectedEmployee?.lastName}"?
-            </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleDeleteConfirmClose}>Отмена</Button>
-            <Button onClick={handleDelete} color="secondary">
-              Удалить
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Уведомления */}
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-        >
-          <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity}>
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
       </div>
     </div>
   );

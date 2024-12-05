@@ -15,7 +15,9 @@ import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Service;
 import org.springframework.dao.DataAccessException;
 import org.springframework.transaction.annotation.Transactional;
+import java.sql.Date;
 
+import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
@@ -87,7 +89,7 @@ public class ZamestnanecService {
     @Transactional(rollbackFor = Exception.class)
     public void createZamestnanec(ZamestnanecRequest request) throws Exception {
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
-                .withProcedureName("proc_zamnestnanec_cud")
+                .withProcedureName("PROC_ZAMNESTNANEC_CUD")
                 .declareParameters(
                         new SqlParameter("p_action", Types.VARCHAR),
                         new SqlParameter("p_id_zamnestnance", Types.NUMERIC),
@@ -100,12 +102,12 @@ public class ZamestnanecService {
                         new SqlParameter("p_jmeno", Types.VARCHAR),
                         new SqlParameter("p_prijmeni", Types.VARCHAR),
                         new SqlParameter("p_mzda", Types.NUMERIC),
-                        new SqlParameter("p_manager_flag", Types.NUMERIC) // BOOLEAN převedeno na NUMBER
+                        new SqlParameter("p_manager_flag", Types.BOOLEAN)
                 );
 
         MapSqlParameterSource inParams = new MapSqlParameterSource()
                 .addValue("p_action", "INSERT")
-                .addValue("p_id_zamnestnance", null) // NULL pro INSERT
+                .addValue("p_id_zamnestnance", null)
                 .addValue("p_datumzamestnani", request.getDatumZamestnani())
                 .addValue("p_pracovnidoba", request.getPracovnidoba())
                 .addValue("p_supermarket_id_supermarketu", request.getSupermarketIdSupermarketu())
@@ -114,11 +116,10 @@ public class ZamestnanecService {
                 .addValue("p_adresa_id_adresy", request.getAdresaIdAdresy())
                 .addValue("p_jmeno", request.getJmeno())
                 .addValue("p_prijmeni", request.getPrijmeni())
-                .addValue("p_mzda", request.getMzda())
-                .addValue("p_manager_flag", request.getPoziceIdPozice() != null && (request.getPoziceIdPozice() == 2 || request.getPoziceIdPozice() == 3) ? 1 : 0); // 1 = manager, 0 = not
+                .addValue("p_mzda", BigDecimal.valueOf(request.getMzda()))
+                .addValue("p_manager_flag", request.getPoziceIdPozice() != null && (request.getPoziceIdPozice() == 2 || request.getPoziceIdPozice() == 3));
 
-        logger.info("Volání procedury proc_zamnestnanec_cud pro INSERT s parametry: {}", inParams);
-
+        logger.info("Вызов процедуры PROC_ZAMNESTNANEC_CUD с параметрами: {}", inParams);
         jdbcCall.execute(inParams);
     }
 
@@ -145,23 +146,22 @@ public class ZamestnanecService {
                         new SqlParameter("p_jmeno", Types.VARCHAR),
                         new SqlParameter("p_prijmeni", Types.VARCHAR),
                         new SqlParameter("p_mzda", Types.NUMERIC),
-                        new SqlParameter("p_manager_flag", Types.NUMERIC) // BOOLEAN převedeno na NUMBER
+                        new SqlParameter("p_manager_flag", Types.NUMERIC) // Используем NUMERIC
                 );
 
         MapSqlParameterSource inParams = new MapSqlParameterSource()
                 .addValue("p_action", "UPDATE")
                 .addValue("p_id_zamnestnance", idZamestnance)
-                .addValue("p_datumzamestnani", request.getDatumZamestnani())
+                .addValue("p_datumzamestnani", request.getDatumZamestnani() != null ? new Date(request.getDatumZamestnani().getTime()) : null) // Преобразование в java.sql.Date
                 .addValue("p_pracovnidoba", request.getPracovnidoba())
-                .addValue("p_supermarket_id_supermarketu", request.getSupermarketIdSupermarketu())
-                .addValue("p_sklad_id_skladu", request.getSkladIdSkladu())
-                .addValue("p_zamnestnanec_id_zamnestnance", request.getZamestnanecIdZamestnance())
-                .addValue("p_adresa_id_adresy", request.getAdresaIdAdresy())
+                .addValue("p_supermarket_id_supermarketu", request.getSupermarketIdSupermarketu() != null && request.getSupermarketIdSupermarketu() != 0 ? request.getSupermarketIdSupermarketu() : null)
+                .addValue("p_sklad_id_skladu", request.getSkladIdSkladu() != null && request.getSkladIdSkladu() != 0 ? request.getSkladIdSkladu() : null)
+                .addValue("p_zamnestnanec_id_zamnestnance", request.getZamestnanecIdZamestnance() != null && request.getZamestnanecIdZamestnance() != 0 ? request.getZamestnanecIdZamestnance() : null)
+                .addValue("p_adresa_id_adresy", request.getAdresaIdAdresy() != null && request.getAdresaIdAdresy() != 0 ? request.getAdresaIdAdresy() : null)
                 .addValue("p_jmeno", request.getJmeno())
                 .addValue("p_prijmeni", request.getPrijmeni())
                 .addValue("p_mzda", request.getMzda())
                 .addValue("p_manager_flag", request.getPoziceIdPozice() != null && (request.getPoziceIdPozice() == 2 || request.getPoziceIdPozice() == 3) ? 1 : 0); // 1 = manager, 0 = not
-
         logger.info("Volání procedury proc_zamnestnanec_cud pro UPDATE s parametry: {}", inParams);
 
         jdbcCall.execute(inParams);
@@ -254,6 +254,12 @@ public class ZamestnanecService {
         logger.info("Zaměstnanec registrován s ID_USER: {} a ID_ZAMESTNANCENE: {}", idUser, idZamestnance);
 
         return result;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getAllPozice() {
+        String sql = "SELECT ID_POZICE, NAZEV FROM POZICE";
+        return jdbcTemplate.queryForList(sql);
     }
 
     /**

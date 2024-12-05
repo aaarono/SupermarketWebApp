@@ -156,4 +156,23 @@ public class ZamestnanecController {
             return ResponseEntity.status(500).body("Chyba při registraci zaměstnance: " + e.getMessage());
         }
     }
+
+    /**
+     * Получение списка всех позиций (pozice).
+     *
+     * @return Список позиций.
+     */
+    @GetMapping("/pozice")
+    public ResponseEntity<?> getAllPozice() {
+        try {
+            List<Map<String, Object>> pozice = zamestnanecService.getAllPozice();
+            return ResponseEntity.ok(pozice);
+        } catch (DataAccessException dae) {
+            dae.printStackTrace();
+            return ResponseEntity.status(500).body("Ошибка базы данных при получении списка позиций.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Ошибка при получении списка позиций: " + e.getMessage());
+        }
+    }
 }
