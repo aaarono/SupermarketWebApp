@@ -19,6 +19,29 @@ public class ProductService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Transactional(rollbackFor = Exception.class)
+    public List<Product> getProductsImage(String searchQuery, String category) {
+        SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("proc_product_r")
+                .declareParameters(
+                        new SqlParameter("p_search_query", Types.VARCHAR),
+                        new SqlParameter("p_category", Types.VARCHAR),
+                        new SqlOutParameter("p_products", OracleTypes.CURSOR)
+                )
+                .returningResultSet("p_products", productRowMapper);
+
+        Map<String, Object> inParams = new HashMap<>();
+        inParams.put("p_search_query", searchQuery != null && !searchQuery.isEmpty() ? searchQuery : null);
+        inParams.put("p_category", category != null && !category.isEmpty() ? category : null);
+
+        Map<String, Object> out = jdbcCall.execute(inParams);
+
+        @SuppressWarnings("unchecked")
+        List<Product> products = (List<Product>) out.get("p_products");
+
+        return products;
+    }
+
     // Получение всех продуктов из таблицы PRODUKT
     @Transactional(rollbackFor = Exception.class)
     public List<Product> getProducts(String searchQuery, String category) {

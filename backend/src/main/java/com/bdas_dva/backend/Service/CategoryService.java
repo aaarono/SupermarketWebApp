@@ -32,6 +32,7 @@ public class CategoryService {
                     List<Category> categoryList = new ArrayList<>();
                     while (rs.next()) {
                         Category category = new Category();
+                        category.setId(rs.getLong("id_kategorie")); // Добавляем ID категории
                         category.setValue(rs.getString("nazev"));
                         category.setLabel(rs.getString("nazev"));
                         categoryList.add(category);
@@ -44,49 +45,43 @@ public class CategoryService {
         allCategory.setValue("all");
         allCategory.setLabel("All Categories");
         categories.add(0, allCategory);
-        System.out.println("categories.get(2).getLabel() = " + categories.get(2).getLabel());
-        System.out.println("categories.get(2).getValue() = " + categories.get(2).getValue());
 
         return categories;
     }
 
+    // Вставка новой категории
     @Transactional(rollbackFor = Exception.class)
-    public List<Category> getCategories(Long pIdKategorie, Integer pLimit) {
-        List<Category> categories = jdbcTemplate.execute("{call proc_kategorie_produktu_r(?, ?, ?)}",
-                (CallableStatementCallback<List<Category>>) cs -> {
-                    if (pIdKategorie != null) {
-                        cs.setLong(1, pIdKategorie); // p_id_kategorie
-                    } else {
-                        cs.setNull(1, Types.NUMERIC);
-                    }
-
-                    if (pLimit != null) {
-                        cs.setInt(2, pLimit); // p_limit
-                    } else {
-                        cs.setNull(2, Types.NUMERIC);
-                    }
-
-                    cs.registerOutParameter(3, Types.REF_CURSOR); // p_cursor
-                    cs.execute();
-
-                    ResultSet rs = (ResultSet) cs.getObject(3);
-                    List<Category> categoryList = new ArrayList<>();
-                    while (rs.next()) {
-                        Category category = new Category();
-                        category.setValue(rs.getString("id_kategorie"));
-                        category.setLabel(rs.getString("nazev"));
-                        categoryList.add(category);
-                    }
-                    return categoryList;
-                });
-
-        // Добавляем категорию "all" в начало списка
-        Category allCategory = new Category();
-        allCategory.setValue("all");
-        allCategory.setLabel("All Categories");
-        categories.add(0, allCategory);
-
-        return categories;
+    public void insertCategory(String name) {
+        jdbcTemplate.execute("{call proc_kategorie_produktu_cud(?, ?, ?)}", (CallableStatementCallback<Void>) cs -> {
+            cs.setString(1, "INSERT");
+            cs.setNull(2, Types.NUMERIC); // p_id_kategorie
+            cs.setString(3, name); // p_nazev
+            cs.execute();
+            return null;
+        });
     }
 
+    // Обновление существующей категории
+    @Transactional(rollbackFor = Exception.class)
+    public void updateCategory(Long id, String name) {
+        jdbcTemplate.execute("{call proc_kategorie_produktu_cud(?, ?, ?)}", (CallableStatementCallback<Void>) cs -> {
+            cs.setString(1, "UPDATE");
+            cs.setLong(2, id); // p_id_kategorie
+            cs.setString(3, name); // p_nazev
+            cs.execute();
+            return null;
+        });
+    }
+
+    // Удаление категории
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteCategory(Long id) {
+        jdbcTemplate.execute("{call proc_kategorie_produktu_cud(?, ?, ?)}", (CallableStatementCallback<Void>) cs -> {
+            cs.setString(1, "DELETE");
+            cs.setLong(2, id); // p_id_kategorie
+            cs.setNull(3, Types.VARCHAR); // p_nazev
+            cs.execute();
+            return null;
+        });
+    }
 }

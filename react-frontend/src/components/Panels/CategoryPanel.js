@@ -1,8 +1,5 @@
-// src/components/Panels/CategoryPanel.js
-
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
   Paper,
   Typography,
   Table,
@@ -31,12 +28,12 @@ function CategoryPanel({ setActivePanel }) {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: '' });
+  const [formData, setFormData] = useState({ id: null, name: '' });
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   // Пагинация
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
 
   useEffect(() => {
     fetchCategories();
@@ -44,33 +41,34 @@ function CategoryPanel({ setActivePanel }) {
 
   const fetchCategories = async () => {
     try {
-      const response = await api.get('/categories');
-      setCategories(response.data);
+      const response = await api.get('/api/categories');
+      setCategories(response);
     } catch (error) {
       console.error('Ошибка при загрузке категорий:', error);
+      setSnackbar({ open: true, message: 'Ошибка при загрузке категорий', severity: 'error' });
     }
   };
 
   const handleFormOpen = (category = null) => {
     setSelectedCategory(category);
-    setFormData(category ? { name: category.name } : { name: '' });
+    setFormData(category ? { id: category.id, name: category.label } : { id: null, name: '' });
     setFormOpen(true);
   };
 
   const handleFormClose = () => {
     setFormOpen(false);
     setSelectedCategory(null);
-    setFormData({ name: '' });
+    setFormData({ id: null, name: '' });
   };
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     try {
       if (selectedCategory) {
-        await api.put(`/categories/${selectedCategory.id}`, formData);
+        await api.put(`/api/categories/${formData.id}`, { value: formData.name });
         setSnackbar({ open: true, message: 'Категория обновлена успешно', severity: 'success' });
       } else {
-        await api.post('/categories', formData);
+        await api.post('/api/categories', { value: formData.name });
         setSnackbar({ open: true, message: 'Категория добавлена успешно', severity: 'success' });
       }
       fetchCategories();
@@ -93,7 +91,7 @@ function CategoryPanel({ setActivePanel }) {
 
   const handleDelete = async () => {
     try {
-      await api.delete(`/categories/${selectedCategory.id}`);
+      await api.delete(`/api/categories/${selectedCategory.id}`);
       setSnackbar({ open: true, message: 'Категория удалена успешно', severity: 'success' });
       fetchCategories();
       handleDeleteConfirmClose();
@@ -121,7 +119,7 @@ function CategoryPanel({ setActivePanel }) {
       {/* Содержимое панели категорий */}
       <div style={{ flexGrow: 1, padding: '16px' }}>
         <Typography variant="h4" gutterBottom>
-          Categories
+          Категории
         </Typography>
 
         <Button variant="contained" color="primary" startIcon={<FiPlus />} onClick={() => handleFormOpen()}>
@@ -140,7 +138,7 @@ function CategoryPanel({ setActivePanel }) {
               <TableBody>
                 {categories.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((category) => (
                   <TableRow hover key={category.id}>
-                    <TableCell>{category.name}</TableCell>
+                    <TableCell>{category.label}</TableCell>
                     <TableCell align="right">
                       <IconButton onClick={() => handleFormOpen(category)}>
                         <FiEdit2 />
@@ -201,7 +199,7 @@ function CategoryPanel({ setActivePanel }) {
         <Dialog open={deleteConfirmOpen} onClose={handleDeleteConfirmClose}>
           <DialogTitle>Удалить категорию?</DialogTitle>
           <DialogContent>
-            <Typography>Вы уверены, что хотите удалить категорию "{selectedCategory?.name}"?</Typography>
+            <Typography>Вы уверены, что хотите удалить категорию "{selectedCategory?.label}"?</Typography>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleDeleteConfirmClose}>Отмена</Button>

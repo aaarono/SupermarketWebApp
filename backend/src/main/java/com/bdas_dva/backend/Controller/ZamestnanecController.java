@@ -24,41 +24,13 @@ public class ZamestnanecController {
 
     /**
      * Získá seznam zaměstnanců s možností filtrování.
-     *
-     * @param idZamestnance ID zaměstnance (volitelný).
-     * @param jmeno         Jméno zaměstnance (volitelné, částečné shody).
-     * @param prijmeni      Příjmení zaměstnance (volitelné, částečné shody).
-     * @param supermarketId Supermarket ID (volitelné).
-     * @param skladId       Sklad ID (volitelné).
-     * @param poziceId      Pozice ID (volitelné).
-     * @param managerFlag   Flag pro manažera (1 = ano, 0 = ne, volitelné).
-     * @param limit         Limita počtu výsledků (volitelná).
      * @return Seznam zaměstnanců ve formátu JSON.
      */
     @PreAuthorize("hasRole('EMPLOYEE') or hasRole('ADMIN')")
     @GetMapping
-    public ResponseEntity<?> getZamestnanci(
-            @RequestParam(required = false) Long idZamestnance,
-            @RequestParam(required = false) String jmeno,
-            @RequestParam(required = false) String prijmeni,
-            @RequestParam(required = false) Long supermarketId,
-            @RequestParam(required = false) Long skladId,
-            @RequestParam(required = false) Long poziceId,
-            @RequestParam(required = false) Integer managerFlag,
-            @RequestParam(required = false) Integer limit
-    ) {
+    public ResponseEntity<?> getZamestnanci() {
         try {
-            ZamestnanecRequest request = new ZamestnanecRequest();
-            request.setIdZamestnance(idZamestnance);
-            request.setJmeno(jmeno);
-            request.setPrijmeni(prijmeni);
-            request.setSupermarketIdSupermarketu(supermarketId);
-            request.setSkladIdSkladu(skladId);
-            request.setPoziceIdPozice(poziceId);
-            request.setPracovnidoba(managerFlag); // Použití pracovnidoba pro manager_flag
-            request.setPracovnidoba(limit); // Překrytí pracovnidoba s limitem
-
-            List<ZamestnanecResponse> zamestnanci = zamestnanecService.getZamestnanci(request);
+            List<ZamestnanecResponse> zamestnanci = zamestnanecService.getAllZamestnanci();
             return ResponseEntity.ok(zamestnanci);
         } catch (DataAccessException dae) {
             dae.printStackTrace();

@@ -68,6 +68,14 @@ public class ProductController {
             @RequestParam(required = false) String searchQuery,
             @RequestParam(defaultValue = "all") String category
     ) {
+        return productService.getProductsImage(searchQuery, category);
+    }
+
+    @GetMapping("/list")
+    public List<Product> getProductsList(
+            @RequestParam(required = false) String searchQuery,
+            @RequestParam(defaultValue = "all") String category
+    ) {
         return productService.getProducts(searchQuery, category);
     }
 
