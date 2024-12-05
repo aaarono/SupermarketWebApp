@@ -47,7 +47,7 @@ function ProductPanel({ setActivePanel }) {
 
   // Пагинация
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
 
   useEffect(() => {
     fetchData();
@@ -64,9 +64,14 @@ function ProductPanel({ setActivePanel }) {
       console.log('Продукты:', productsResponse);
       console.log('Категории:', categoriesResponse);
       console.log('Склады:', skladIdsResponse);
+      const formattedSkladIds = skladIdsResponse.map((sklad) => ({
+        id: sklad.ID_SKLADU,
+        label: sklad.NAZEV,
+      }));
+      
+      setskladIds(formattedSkladIds);      
       setProducts(productsResponse);
       setCategories(categoriesResponse);
-      setskladIds(skladIdsResponse);
     } catch (error) {
       console.error('Ошибка при загрузке данных:', error);
     }
@@ -193,8 +198,12 @@ function ProductPanel({ setActivePanel }) {
                         <TableCell>{product.name}</TableCell>
                         <TableCell>{product.price}</TableCell>
                         <TableCell>{product.description}</TableCell>
-                        <TableCell>{product.categoryId ? product.categoryId : 'Без категории'}</TableCell>
-                        <TableCell>{product.skladId ? product.skladId : 'Без склада'}</TableCell>
+                        <TableCell>
+                          {categories.find((cat) => cat.id === product.categoryId)?.label || 'Без категории'}
+                        </TableCell>
+                        <TableCell>
+                          {skladIds.find((wh) => wh.id === product.skladId)?.label || 'Без склада'}
+                        </TableCell>
                         <TableCell align="right">
                           <IconButton onClick={() => handleFormOpen(product)} color="primary">
                             <FiEdit2 />
@@ -260,25 +269,36 @@ function ProductPanel({ setActivePanel }) {
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               />
-              <TextField
-                autoFocus
-                margin="dense"
-                label="Категория"
-                type="number"
-                fullWidth
-                required
+              <FormControl fullWidth margin="dense">
+              <InputLabel id="category-label">Категория</InputLabel>
+              <Select
+                labelId="category-label"
                 value={formData.categoryId}
                 onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-              />
-              <TextField
-                margin="dense"
-                label="Склад"
-                type="number"
-                fullWidth
                 required
-                value={formData.skladId}
-                onChange={(e) => setFormData({ ...formData, skladId : e.target.value })}
-              />
+              >
+                {categories.map((category) => (
+                  <MenuItem key={category.id} value={category.id}>
+                    {category.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl fullWidth margin="dense">
+            <InputLabel id="warehouse-label">Склад</InputLabel>
+            <Select
+              labelId="warehouse-label"
+              value={formData.skladId}
+              onChange={(e) => setFormData({ ...formData, skladId: e.target.value })}
+              required
+            >
+              {skladIds.map((warehouse) => (
+                <MenuItem key={warehouse.id} value={warehouse.id}>
+                  {warehouse.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
             </DialogContent>
             <DialogActions>
               <Button onClick={handleFormClose}>Отмена</Button>

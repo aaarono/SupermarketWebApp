@@ -32,6 +32,7 @@ public class CategoryService {
                     List<Category> categoryList = new ArrayList<>();
                     while (rs.next()) {
                         Category category = new Category();
+                        category.setId(rs.getLong("id_kategorie")); // Добавляем ID категории
                         category.setValue(rs.getString("nazev"));
                         category.setLabel(rs.getString("nazev"));
                         categoryList.add(category);
@@ -44,8 +45,6 @@ public class CategoryService {
         allCategory.setValue("all");
         allCategory.setLabel("All Categories");
         categories.add(0, allCategory);
-        System.out.println("categories.get(2).getLabel() = " + categories.get(2).getLabel());
-        System.out.println("categories.get(2).getValue() = " + categories.get(2).getValue());
 
         return categories;
     }
@@ -73,7 +72,8 @@ public class CategoryService {
                     List<Category> categoryList = new ArrayList<>();
                     while (rs.next()) {
                         Category category = new Category();
-                        category.setValue(rs.getString("id_kategorie"));
+                        category.setId(rs.getLong("id_kategorie")); // Добавляем ID категории
+                        category.setValue(rs.getString("nazev"));
                         category.setLabel(rs.getString("nazev"));
                         categoryList.add(category);
                     }
@@ -88,5 +88,4 @@ public class CategoryService {
 
         return categories;
     }
-
 }
