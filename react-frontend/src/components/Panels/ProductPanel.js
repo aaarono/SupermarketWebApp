@@ -57,7 +57,7 @@ function ProductPanel({ setActivePanel }) {
   const fetchData = async () => {
     try {
       const [productsResponse, categoriesResponse, skladIdsResponse] = await Promise.all([
-        api.get('/api/products'),
+        api.get('/api/products/list'),
         api.get('/api/categories'),
         api.get('/api/sklads'),
       ]);
