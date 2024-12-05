@@ -71,6 +71,18 @@ function AdminNavigation({ setActivePanel }) {
           </ListItemIcon>
           <ListItemText primary="Payments" />
         </ListItem>
+        <ListItem button onClick={() => setActivePanel('card')}>
+          <ListItemIcon>
+            <FiCreditCard />
+          </ListItemIcon>
+          <ListItemText primary="Card" />
+        </ListItem>
+        <ListItem button onClick={() => setActivePanel('cash')}>
+          <ListItemIcon>
+            <FiCreditCard />
+          </ListItemIcon>
+          <ListItemText primary="Cash" />
+        </ListItem>
         <ListItem button onClick={() => setActivePanel('employee')}>
           <ListItemIcon>
             <FiUserCheck />

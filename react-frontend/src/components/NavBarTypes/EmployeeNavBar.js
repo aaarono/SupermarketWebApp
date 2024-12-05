@@ -129,7 +129,7 @@ const EmployeeNavBar = ({ NavBarTypeRole }) => {
               </StyledButton>
             </Tooltip>
 
-            <Tooltip title="Order Products">
+            {/* <Tooltip title="Order Products">
               <StyledButton
                 startIcon={<LocalMallIcon />}
                 aria-label="Order Products"
@@ -137,7 +137,7 @@ const EmployeeNavBar = ({ NavBarTypeRole }) => {
               >
                 Order Supplier
               </StyledButton>
-            </Tooltip>
+            </Tooltip> */}
 
             <Tooltip title="Employee Info">
               <StyledButton

@@ -10,6 +10,8 @@ import SupermarketPanel from '../components/Panels/SupermarketPanel';
 import PaymentPanel from '../components/Panels/PaymentPanel';
 import EmployeePanel from '../components/Panels/EmployeePanel';
 import NavBar from '../components/NavBar';
+import CardPanel from '../components/Panels/KartaPannel';
+import CashPanel from '../components/Panels/HotovostPannel';
 
 function AdminPanelPage({ AdminPanelRole }) {
   const [activePanel, setActivePanel] = useState('product'); // Начальная панель
@@ -30,6 +32,10 @@ function AdminPanelPage({ AdminPanelRole }) {
         return <SupermarketPanel setActivePanel={setActivePanel} />;
       case 'payment':
         return <PaymentPanel setActivePanel={setActivePanel} />;
+      case 'card':
+        return <CardPanel setActivePanel={setActivePanel} />;
+      case 'cash':
+        return <CashPanel setActivePanel={setActivePanel} />;
       case 'employee':
         return <EmployeePanel setActivePanel={setActivePanel} />;
       default:
