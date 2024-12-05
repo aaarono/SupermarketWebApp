@@ -19,6 +19,8 @@ import {
   DialogActions,
   TextField,
   Select,
+  InputLabel,
+  FormControl,
   MenuItem,
   IconButton,
   Snackbar,
@@ -31,7 +33,7 @@ import api from '../../services/api';
 function ProductPanel({ setActivePanel }) {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [warehouses, setWarehouses] = useState([]);
+  const [warehouseIds, setwarehouseIds] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -48,35 +50,25 @@ function ProductPanel({ setActivePanel }) {
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
   useEffect(() => {
-    fetchProducts();
-    fetchCategories();
-    fetchWarehouses();
+    fetchData();
   }, []);
 
-  const fetchProducts = async () => {
+  // Объединяем загрузку данных в одну функцию
+  const fetchData = async () => {
     try {
-      const response = await api.get('/products');
-      setProducts(response.data);
+      const [productsResponse, categoriesResponse, warehouseIdsResponse] = await Promise.all([
+        api.get('/api/products'),
+        api.get('/api/categories'),
+        api.get('/api/sklads'),
+      ]);
+      console.log('Продукты:', productsResponse);
+      console.log('Категории:', categoriesResponse);
+      console.log('Склады:', warehouseIdsResponse);
+      setProducts(productsResponse);
+      setCategories(categoriesResponse);
+      setwarehouseIds(warehouseIdsResponse);
     } catch (error) {
-      console.error('Ошибка при загрузке продуктов:', error);
-    }
-  };
-
-  const fetchCategories = async () => {
-    try {
-      const response = await api.get('/categories');
-      setCategories(response.data);
-    } catch (error) {
-      console.error('Ошибка при загрузке категорий:', error);
-    }
-  };
-
-  const fetchWarehouses = async () => {
-    try {
-      const response = await api.get('/warehouses');
-      setWarehouses(response.data);
-    } catch (error) {
-      console.error('Ошибка при загрузке складов:', error);
+      console.error('Ошибка при загрузке данных:', error);
     }
   };
 
@@ -90,7 +82,7 @@ function ProductPanel({ setActivePanel }) {
             categoryId: product.categoryId,
             warehouseId: product.warehouseId,
           }
-        : { name: '', price: '', categoryId: '', warehouseId: '' }
+        : { name: '', price: '', category: '', warehouseId: '' }
     );
     setFormOpen(true);
   };
@@ -105,13 +97,13 @@ function ProductPanel({ setActivePanel }) {
     e.preventDefault();
     try {
       if (selectedProduct) {
-        await api.put(`/products/${selectedProduct.id}`, formData);
+        await api.put(`/api/products/${selectedProduct.id}`, formData);
         setSnackbar({ open: true, message: 'Продукт обновлен успешно', severity: 'success' });
       } else {
-        await api.post('/products', formData);
+        await api.post('/api/products', formData);
         setSnackbar({ open: true, message: 'Продукт добавлен успешно', severity: 'success' });
       }
-      fetchProducts();
+      fetchData();
       handleFormClose();
     } catch (error) {
       console.error('Ошибка при сохранении продукта:', error);
@@ -131,9 +123,9 @@ function ProductPanel({ setActivePanel }) {
 
   const handleDelete = async () => {
     try {
-      await api.delete(`/products/${selectedProduct.id}`);
+      await api.delete(`/api/products/${selectedProduct.id}`);
       setSnackbar({ open: true, message: 'Продукт удален успешно', severity: 'success' });
-      fetchProducts();
+      fetchData();
       handleDeleteConfirmClose();
     } catch (error) {
       console.error('Ошибка при удалении продукта:', error);
@@ -147,9 +139,14 @@ function ProductPanel({ setActivePanel }) {
   };
 
   const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(+event.target.value);
+    setRowsPerPage(+event.target.value || 5);
     setPage(0);
   };
+
+  // Проверяем загрузились ли все данные
+  if (!products || !categories || !warehouseIds) {
+    return <Typography>Загрузка данных...</Typography>;
+  }
 
   return (
     <div style={{ display: 'flex' }}>
@@ -159,14 +156,20 @@ function ProductPanel({ setActivePanel }) {
       {/* Содержимое панели продуктов */}
       <div style={{ flexGrow: 1, padding: '16px' }}>
         <Typography variant="h4" gutterBottom>
-          Products
+          Продукты
         </Typography>
 
-        <Button variant="contained" color="primary" startIcon={<FiPlus />} onClick={() => handleFormOpen()}>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<FiPlus />}
+          onClick={() => handleFormOpen()}
+          style={{ marginBottom: '16px' }}
+        >
           Добавить продукт
         </Button>
 
-        <Paper sx={{ width: '100%', overflow: 'hidden', marginTop: 2 }}>
+        <Paper sx={{ width: '100%', overflow: 'hidden' }}>
           <TableContainer>
             <Table stickyHeader aria-label="products table">
               <TableHead>
@@ -179,23 +182,28 @@ function ProductPanel({ setActivePanel }) {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {products.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((product) => (
-                  <TableRow hover key={product.id}>
-                    <TableCell>{product.name}</TableCell>
-                    <TableCell>{product.price}</TableCell>
-                    <TableCell>{product.categoryName}</TableCell>
-                    <TableCell>{product.warehouseName}</TableCell>
-                    <TableCell align="right">
-                      <IconButton onClick={() => handleFormOpen(product)}>
-                        <FiEdit2 />
-                      </IconButton>
-                      <IconButton onClick={() => handleDeleteConfirmOpen(product)}>
-                        <FiTrash2 />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {products.length === 0 && (
+                {products.length > 0 ? (
+                  products.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((product) => {
+                    const categoryId = categories.find((cat) => cat.id === product.categoryId);
+                    const warehouse = warehouseIds.find((wh) => wh.id === product.warehouseId);
+                    return (
+                      <TableRow hover key={product.id}>
+                        <TableCell>{product.name}</TableCell>
+                        <TableCell>{product.price}</TableCell>
+                        <TableCell>{categoryId ? categoryId.name : 'Без категории'}</TableCell>
+                        <TableCell>{warehouse ? warehouse.name : 'Без склада'}</TableCell>
+                        <TableCell align="right">
+                          <IconButton onClick={() => handleFormOpen(product)} color="primary">
+                            <FiEdit2 />
+                          </IconButton>
+                          <IconButton onClick={() => handleDeleteConfirmOpen(product)} color="secondary">
+                            <FiTrash2 />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                ) : (
                   <TableRow>
                     <TableCell colSpan={5} align="center">
                       Нет данных
@@ -212,12 +220,13 @@ function ProductPanel({ setActivePanel }) {
             page={page}
             onPageChange={handleChangePage}
             rowsPerPage={rowsPerPage}
+            rowsPerPageOptions={[5, 10, 25]}
             onRowsPerPageChange={handleChangeRowsPerPage}
           />
         </Paper>
 
         {/* Диалоговая форма добавления/редактирования */}
-        <Dialog open={formOpen} onClose={handleFormClose}>
+        <Dialog open={formOpen} onClose={handleFormClose} fullWidth maxWidth="sm">
           <DialogTitle>{selectedProduct ? 'Редактировать продукт' : 'Добавить продукт'}</DialogTitle>
           <form onSubmit={handleFormSubmit}>
             <DialogContent>
@@ -240,42 +249,36 @@ function ProductPanel({ setActivePanel }) {
                 value={formData.price}
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
               />
-              <Select
-                margin="dense"
-                label="Категория"
-                fullWidth
-                required
-                value={formData.categoryId}
-                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                displayEmpty
-              >
-                <MenuItem value="" disabled>
-                  Выберите категорию
-                </MenuItem>
-                {categories.map((category) => (
-                  <MenuItem key={category.id} value={category.id}>
-                    {category.name}
-                  </MenuItem>
-                ))}
-              </Select>
-              <Select
-                margin="dense"
-                label="Склад"
-                fullWidth
-                required
-                value={formData.warehouseId}
-                onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
-                displayEmpty
-              >
-                <MenuItem value="" disabled>
-                  Выберите склад
-                </MenuItem>
-                {warehouses.map((warehouse) => (
-                  <MenuItem key={warehouse.id} value={warehouse.id}>
-                    {warehouse.name}
-                  </MenuItem>
-                ))}
-              </Select>
+              <FormControl fullWidth margin="dense" required>
+                <InputLabel id="categoryId-label">Категория</InputLabel>
+                <Select
+                  labelId="categoryId-label"
+                  label="Категория"
+                  value={formData.categoryId}
+                  onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                >
+                  {categories.map((categoryId) => (
+                    <MenuItem key={categoryId.id} value={categoryId.id}>
+                      {categoryId.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl fullWidth margin="dense" required>
+                <InputLabel id="warehouse-label">Склад</InputLabel>
+                <Select
+                  labelId="warehouse-label"
+                  label="Склад"
+                  value={formData.warehouseId}
+                  onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
+                >
+                  {warehouseIds.map((warehouse) => (
+                    <MenuItem key={warehouse.id} value={warehouse.id}>
+                      {warehouse.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </DialogContent>
             <DialogActions>
               <Button onClick={handleFormClose}>Отмена</Button>
@@ -306,7 +309,11 @@ function ProductPanel({ setActivePanel }) {
           autoHideDuration={6000}
           onClose={() => setSnackbar({ ...snackbar, open: false })}
         >
-          <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity}>
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+          >
             {snackbar.message}
           </Alert>
         </Snackbar>
