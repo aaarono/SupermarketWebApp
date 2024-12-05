@@ -1,6 +1,8 @@
 package com.bdas_dva.backend.Service;
 
-import com.bdas_dva.backend.Model.OrderRequest;
+import com.bdas_dva.backend.Model.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,8 +18,9 @@ import java.sql.Types;
 import java.sql.Timestamp;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Map;
-
+import java.util.Collections;
 /**
  * Služba pro zpracování objednávek a plateb.
  * Všechny operace jsou prováděny v rámci jedné transakce.
@@ -30,6 +33,9 @@ public class OrderService {
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
 
+    @Autowired
+    private ImageService imageService;
+
     /**
      * Konstruktor pro injektování závislostí.
      *
@@ -40,6 +46,89 @@ public class OrderService {
     public OrderService(JdbcTemplate jdbcTemplate, ObjectMapper objectMapper) {
         this.jdbcTemplate = jdbcTemplate;
         this.objectMapper = objectMapper;
+    }
+
+
+    public List<Order> getUserOrders(Long userId, Long zakaznikId) throws Exception {
+        SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("proc_list_user_orders_explicit")
+                .returningResultSet("p_orders", (rs, rowNum) -> {
+                    // Создаем объект Order
+                    Order order = new Order();
+                    order.setIdObjednavky(rs.getLong("ID_OBJEDNAVKY"));
+                    order.setDatum(rs.getDate("DATUM"));
+                    order.setStav(rs.getString("STAV"));
+                    order.setPoznamka(rs.getString("POZNAMKA"));
+                    order.setMnozstviProduktu(rs.getInt("TOTAL_COST"));
+                    order.setSupermarketId(rs.getInt("SUPERMARKET_ID_SUPERMARKETU"));
+                    order.setZakaznikId(rs.getLong("ZAKAZNIK_ID_ZAKAZNIKU"));
+
+                    // Устанавливаем адрес
+                    Address address = new Address();
+                    address.setUlice(rs.getString("ADDRESS_STREET"));
+                    address.setCisloPopisne(rs.getString("ADDRESS_BUILDING_NUMBER"));
+                    address.setPsc(rs.getString("ADDRESS_POSTAL_CODE"));
+                    address.setMesto(rs.getString("ADDRESS_CITY"));
+                    order.setAddress(address);
+
+                    // Устанавливаем данные заказчика
+                    Customer customer = new Customer();
+                    customer.setJmeno(rs.getString("CUSTOMER_NAME"));
+                    customer.setPrijmeni(rs.getString("CUSTOMER_SURNAME"));
+                    customer.setTelefon(rs.getLong("TELEFON"));
+                    customer.setEmail(rs.getString("EMAIL"));
+                    order.setCustomer(customer);
+
+                    // Устанавливаем тип оплаты
+                    Payment payment = new Payment();
+                    payment.setTyp(rs.getString("PAYMENT_TYPE"));
+                    order.setPayment(payment);
+
+                    // Десериализация JSON для продуктов
+                    String productsJson = rs.getString("PRODUCTS");
+                    if (productsJson != null) {
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        List<OrderProduct> products = null;
+                        try {
+                            products = objectMapper.readValue(
+                                    productsJson,
+                                    new TypeReference<List<OrderProduct>>() {}
+                            );
+                        } catch (JsonProcessingException e) {
+                            throw new RuntimeException(e);
+                        }
+
+                        // Для каждого продукта добавляем изображения через ImageService
+                        for (OrderProduct product : products) {
+                            List<Map<String, Object>> images = imageService.getImagesByFilters(product.getProductId(), null);
+                            if (!images.isEmpty()) {
+                                // Берем первое изображение, если их несколько
+                                Map<String, Object> imageMetadata = images.get(0);
+                                ImageData imageData = new ImageData();
+                                imageData.setImage((String) imageMetadata.get("NAZEV")); // Название файла изображения
+                                imageData.setImageType((String) imageMetadata.get("TYP")); // Тип изображения
+                                product.setImageData(imageData);
+                            }
+                        }
+
+                        order.setProducts(products);
+                    }
+
+                    return order;
+                });
+
+        // Входные параметры процедуры
+        MapSqlParameterSource inParams = new MapSqlParameterSource()
+                .addValue("p_user_id", userId)
+                .addValue("p_zakaznik_id", zakaznikId);
+
+        // Вызов процедуры
+        Map<String, Object> result = jdbcCall.execute(inParams);
+
+        // Получаем список заказов
+        List<Order> orders = (List<Order>) result.get("p_orders");
+
+        return orders != null ? orders : Collections.emptyList();
     }
 
     /**

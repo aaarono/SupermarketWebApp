@@ -1,5 +1,6 @@
 package com.bdas_dva.backend.Controller;
 
+import com.bdas_dva.backend.Model.Order;
 import com.bdas_dva.backend.Model.OrderRequest;
 import com.bdas_dva.backend.Service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.dao.DataAccessException;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -33,8 +36,15 @@ public class OrderController {
         }
     }
 
-//    @GetMapping
-//    public ResponseEntity<?> getOrders(@RequestBody request){
-//
-//    }
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<?> getUserOrders(@PathVariable Long userId,
+                                           @RequestParam(required = false) Long zakaznikId) {
+        try {
+            List<Order> orders = orderService.getUserOrders(userId, zakaznikId);
+            return ResponseEntity.ok(orders);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Ошибка получения заказов: " + e.getMessage());
+        }
+    }
 }

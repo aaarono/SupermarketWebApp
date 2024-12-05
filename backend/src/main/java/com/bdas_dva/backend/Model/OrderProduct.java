@@ -4,6 +4,15 @@ public class OrderProduct {
     private Long orderId;
     private Long productId;
     private Integer quantity;
+    private ImageData imageData;
+
+    public ImageData getImageData() {
+        return imageData;
+    }
+
+    public void setImageData(ImageData imageData) {
+        this.imageData = imageData;
+    }
 
     // Конструкторы
     public OrderProduct() {
