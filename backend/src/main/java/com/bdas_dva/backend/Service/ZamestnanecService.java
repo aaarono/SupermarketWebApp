@@ -37,6 +37,29 @@ public class ZamestnanecService {
         this.objectMapper = objectMapper;
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    public List<ZamestnanecResponse> getAllZamestnanci() throws Exception {
+        SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("proc_zamnestnanec_r")
+                .returningResultSet("p_cursor", new ZamestnanecRowMapper());
+
+        logger.info("Calling procedure proc_zamnestnanec_r to fetch all employees.");
+
+        // Вызов процедуры без входных параметров
+        Map<String, Object> out = jdbcCall.execute();
+
+        @SuppressWarnings("unchecked")
+        List<ZamestnanecResponse> zamestnanci = (List<ZamestnanecResponse>) out.get("p_cursor");
+
+        if (zamestnanci == null || zamestnanci.isEmpty()) {
+            logger.warn("No employees returned by procedure.");
+            return Collections.emptyList();
+        }
+
+        logger.info("Procedure returned {} employees.", zamestnanci.size());
+        return zamestnanci;
+    }
+
     /**
      * Získá seznam zaměstnanců s možností filtrování.
      *
@@ -45,9 +68,10 @@ public class ZamestnanecService {
      * @throws Exception V případě chyby při volání procedury nebo mapování dat.
      */
     @Transactional(rollbackFor = Exception.class)
-    public List<ZamestnanecResponse> getZamestnanci(ZamestnanecRequest request) throws Exception {
+    public List<ZamestnanecResponse> getZamestnanciFiltered(ZamestnanecRequest request) throws Exception {
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("proc_zamnestnanec_r")
+                .returningResultSet("p_cursor", new ZamestnanecRowMapper())
                 .declareParameters(
                         new SqlParameter("p_id_zamnestnance", Types.NUMERIC),
                         new SqlParameter("p_jmeno", Types.VARCHAR),
@@ -57,7 +81,7 @@ public class ZamestnanecService {
                         new SqlParameter("p_pozice_id_pozice", Types.NUMERIC),
                         new SqlParameter("p_manager_flag", Types.NUMERIC),
                         new SqlParameter("p_limit", Types.NUMERIC),
-                        new SqlOutParameter("p_cursor", -10, new ZamestnanecRowMapper())
+                        new SqlOutParameter("p_cursor", Types.REF_CURSOR)
                 );
 
         MapSqlParameterSource inParams = new MapSqlParameterSource()
@@ -84,7 +108,17 @@ public class ZamestnanecService {
         @SuppressWarnings("unchecked")
         List<ZamestnanecResponse> zamestnanci = (List<ZamestnanecResponse>) out.get("p_cursor");
 
-        if (zamestnanci == null) {
+        // Логирование ID сотрудников
+        List<Long> ids = new ArrayList<>();
+        if (zamestnanci != null) {
+            for (ZamestnanecResponse zamestnanec : zamestnanci) {
+                ids.add(zamestnanec.getIdZamestnance());
+            }
+        }
+
+        logger.info("Returned employee IDs: {}", ids);
+
+        if (zamestnanci == null || zamestnanci.isEmpty()) {
             logger.warn("No employees returned by procedure.");
             return Collections.emptyList();
         }
