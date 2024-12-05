@@ -48,7 +48,6 @@ public class OrderService {
         this.objectMapper = objectMapper;
     }
 
-
     public List<Order> getUserOrders(Long userId, Long zakaznikId) throws Exception {
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("proc_list_user_orders_explicit")
@@ -56,61 +55,49 @@ public class OrderService {
                     // Создаем объект Order
                     Order order = new Order();
                     order.setIdObjednavky(rs.getLong("ID_OBJEDNAVKY"));
-                    order.setDatum(rs.getDate("DATUM"));
-                    order.setStav(rs.getString("STAV"));
-                    order.setPoznamka(rs.getString("POZNAMKA"));
+                    order.setDatum(rs.getDate("DATUM"));  // Убрали псевдоним ORDER_DATE
+                    order.setStav(rs.getString("STAV"));  // Убрали псевдоним ORDER_STATUS
                     order.setMnozstviProduktu(rs.getInt("TOTAL_COST"));
-                    order.setSupermarketId(rs.getInt("SUPERMARKET_ID_SUPERMARKETU"));
                     order.setZakaznikId(rs.getLong("ZAKAZNIK_ID_ZAKAZNIKU"));
 
                     // Устанавливаем адрес
                     Address address = new Address();
-                    address.setUlice(rs.getString("ADDRESS_STREET"));
-                    address.setCisloPopisne(rs.getString("ADDRESS_BUILDING_NUMBER"));
-                    address.setPsc(rs.getString("ADDRESS_POSTAL_CODE"));
-                    address.setMesto(rs.getString("ADDRESS_CITY"));
+                    address.setIdAdresy(rs.getLong("ADRESA_ID_ADRESY"));
+                    address.setUlice(rs.getString("ULICE"));
+                    address.setCisloPopisne(rs.getString("CISLOPOPISNE"));
+                    address.setPsc(rs.getString("PSC"));
+                    address.setMesto(rs.getString("MESTO"));
                     order.setAddress(address);
 
                     // Устанавливаем данные заказчика
                     Customer customer = new Customer();
-                    customer.setJmeno(rs.getString("CUSTOMER_NAME"));
-                    customer.setPrijmeni(rs.getString("CUSTOMER_SURNAME"));
+                    customer.setJmeno(rs.getString("JMENO"));
+                    customer.setPrijmeni(rs.getString("PRIJMENI"));
                     customer.setTelefon(rs.getLong("TELEFON"));
-                    customer.setEmail(rs.getString("EMAIL"));
                     order.setCustomer(customer);
 
                     // Устанавливаем тип оплаты
                     Payment payment = new Payment();
-                    payment.setTyp(rs.getString("PAYMENT_TYPE"));
+                    payment.setTyp(rs.getString("TYP"));
+                    payment.setSuma(rs.getDouble("TOTAL_COST"));
+                    payment.setDatum(rs.getDate("DATUM"));
                     order.setPayment(payment);
 
                     // Десериализация JSON для продуктов
                     String productsJson = rs.getString("PRODUCTS");
                     if (productsJson != null) {
                         ObjectMapper objectMapper = new ObjectMapper();
-                        List<OrderProduct> products = null;
+                        List<Product> products = null;
                         try {
                             products = objectMapper.readValue(
                                     productsJson,
-                                    new TypeReference<List<OrderProduct>>() {}
+                                    new TypeReference<List<Product>>() {}
                             );
                         } catch (JsonProcessingException e) {
                             throw new RuntimeException(e);
                         }
 
-                        // Для каждого продукта добавляем изображения через ImageService
-                        for (OrderProduct product : products) {
-                            List<Map<String, Object>> images = imageService.getImagesByFilters(product.getProductId(), null);
-                            if (!images.isEmpty()) {
-                                // Берем первое изображение, если их несколько
-                                Map<String, Object> imageMetadata = images.get(0);
-                                ImageData imageData = new ImageData();
-                                imageData.setImage((String) imageMetadata.get("NAZEV")); // Название файла изображения
-                                imageData.setImageType((String) imageMetadata.get("TYP")); // Тип изображения
-                                product.setImageData(imageData);
-                            }
-                        }
-
+                        // Устанавливаем продукты
                         order.setProducts(products);
                     }
 
@@ -130,6 +117,7 @@ public class OrderService {
 
         return orders != null ? orders : Collections.emptyList();
     }
+
 
     /**
      * Vytvoří objednávku a zpracuje platbu.

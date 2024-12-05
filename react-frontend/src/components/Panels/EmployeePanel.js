@@ -39,16 +39,16 @@ function EmployeePanel({ setActivePanel }) {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [positions, setPositions] = useState([]);
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    warehouseId: '',
-    supermarketId: '',
-    salary: '',
-    workingHours: '',
-    positionId: '',
-    employmentStartDate: '',
-    managerId: '', // Single manager
-    addressId: ''
+    jmeno: '',
+    prijmeni: '',
+    skladIdSkladu: '',
+    supermarketIdSupermarketu: '',
+    mzda: '',
+    pracovnidoba: '',
+    poziceIdPozice: '',
+    datumZamestnani: '',
+    zamestnanecIdZamestnance: '', // Represents the manager
+    adresaIdAdresy: ''
   });
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
@@ -81,6 +81,7 @@ function EmployeePanel({ setActivePanel }) {
       setEmployees(sortedEmployees);
     } catch (error) {
       console.error('Error fetching employees:', error);
+      setSnackbar({ open: true, message: 'Error fetching employees', severity: 'error' });
     }
   };
 
@@ -88,9 +89,11 @@ function EmployeePanel({ setActivePanel }) {
   const fetchWarehouses = async () => {
     try {
       const response = await api.get('/api/sklads');
+      console.log(response)
       setWarehouses(response);
     } catch (error) {
       console.error('Error fetching warehouses:', error);
+      setSnackbar({ open: true, message: 'Error fetching warehouses', severity: 'error' });
     }
   };
 
@@ -98,9 +101,11 @@ function EmployeePanel({ setActivePanel }) {
   const fetchSupermarkets = async () => {
     try {
       const response = await api.get('/api/supermarkets');
+      console.log(response)
       setSupermarkets(response);
     } catch (error) {
       console.error('Error fetching supermarkets:', error);
+      setSnackbar({ open: true, message: 'Error fetching supermarkets', severity: 'error' });
     }
   };
 
@@ -112,6 +117,7 @@ function EmployeePanel({ setActivePanel }) {
       setPositions(response);
     } catch (error) {
       console.error('Error fetching positions:', error);
+      setSnackbar({ open: true, message: 'Error fetching positions', severity: 'error' });
     }
   };
 
@@ -131,6 +137,7 @@ function EmployeePanel({ setActivePanel }) {
       setManagers(managersWithPlace);
     } catch (error) {
       console.error('Error fetching managers:', error);
+      setSnackbar({ open: true, message: 'Error fetching managers', severity: 'error' });
     }
   };
 
@@ -138,9 +145,11 @@ function EmployeePanel({ setActivePanel }) {
   const fetchAddresses = async () => {
     try {
       const response = await api.get('/api/addresses');
+      console.log(response)
       setAddresses(response);
     } catch (error) {
       console.error('Error fetching addresses:', error);
+      setSnackbar({ open: true, message: 'Error fetching addresses', severity: 'error' });
     }
   };
 
@@ -150,28 +159,28 @@ function EmployeePanel({ setActivePanel }) {
     setFormData(
       employee
         ? {
-            firstName: employee.jmeno,
-            lastName: employee.prijmeni,
-            warehouseId: employee.skladIdSkladu || '',
-            supermarketId: employee.supermarketIdSupermarketu || '',
-            salary: employee.mzda,
-            workingHours: employee.pracovnidoba,
-            positionId: employee.poziceIdPozice || '',
-            employmentStartDate: employee.datumZamestnani,
-            managerId: employee.managerId || '', // Single manager
-            addressId: employee.adresaIdAdresy || '',
+            jmeno: employee.jmeno || '',
+            prijmeni: employee.prijmeni || '',
+            skladIdSkladu: employee.skladIdSkladu || '',
+            supermarketIdSupermarketu: employee.supermarketIdSupermarketu || '',
+            mzda: employee.mzda || '',
+            pracovnidoba: employee.pracovnidoba || '',
+            poziceIdPozice: employee.poziceIdPozice || '',
+            datumZamestnani: employee.datumZamestnani ? employee.datumZamestnani.substring(0, 10) : '', // Ensure date format
+            zamestnanecIdZamestnance: employee.zamestnanecIdZamestnance || '', // Single manager
+            adresaIdAdresy: employee.adresaIdAdresy || '',
           }
         : {
-            firstName: '',
-            lastName: '',
-            warehouseId: '',
-            supermarketId: '',
-            salary: '',
-            workingHours: '',
-            positionId: '',
-            employmentStartDate: '',
-            managerId: '', // Single manager
-            addressId: '',
+            jmeno: '',
+            prijmeni: '',
+            skladIdSkladu: '',
+            supermarketIdSupermarketu: '',
+            mzda: '',
+            pracovnidoba: '',
+            poziceIdPozice: '',
+            datumZamestnani: '',
+            zamestnanecIdZamestnance: '', // Single manager
+            adresaIdAdresy: '',
           }
     );
     setFormOpen(true);
@@ -182,38 +191,49 @@ function EmployeePanel({ setActivePanel }) {
     setFormOpen(false);
     setSelectedEmployee(null);
     setFormData({
-      firstName: '',
-      lastName: '',
-      warehouseId: '',
-      supermarketId: '',
-      salary: '',
-      workingHours: '',
-      positionId: '',
-      employmentStartDate: '',
-      managerId: '', // Single manager
-      addressId: ''
+      jmeno: '',
+      prijmeni: '',
+      skladIdSkladu: '',
+      supermarketIdSupermarketu: '',
+      mzda: '',
+      pracovnidoba: '',
+      poziceIdPozice: '',
+      datumZamestnani: '',
+      zamestnanecIdZamestnance: '', // Single manager
+      adresaIdAdresy: ''
     });
   };
 
   // Handle form submission for adding or editing an employee
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-    // Convert necessary fields to numbers
+    // Validate required fields
+    if (!formData.jmeno || !formData.prijmeni || !formData.poziceIdPozice) {
+      setSnackbar({ open: true, message: 'Please fill in all required fields.', severity: 'warning' });
+      return;
+    }
+
+    // Prepare payload with correct field names and types
     const payload = {
-      ...formData,
-      skladIdSkladu: formData.warehouseId !== '' ? Number(formData.warehouseId) : null,
-      supermarketIdSupermarketu: formData.supermarketId !== '' ? Number(formData.supermarketId) : null,
-      poziceIdPozice: formData.positionId !== '' ? Number(formData.positionId) : null,
-      adresaIdAdresy: formData.addressId !== '' ? Number(formData.addressId) : null,
-      managerId: formData.managerId !== '' ? Number(formData.managerId) : null, // Single manager
+      jmeno: formData.jmeno,
+      prijmeni: formData.prijmeni,
+      skladIdSkladu: formData.skladIdSkladu !== '' ? Number(formData.skladIdSkladu) : null,
+      supermarketIdSupermarketu: formData.supermarketIdSupermarketu !== '' ? Number(formData.supermarketIdSupermarketu) : null,
+      mzda: formData.mzda !== '' ? Number(formData.mzda) : null,
+      pracovnidoba: formData.pracovnidoba !== '' ? Number(formData.pracovnidoba) : null,
+      poziceIdPozice: formData.poziceIdPozice !== '' ? Number(formData.poziceIdPozice) : null,
+      datumZamestnani: formData.datumZamestnani !== '' ? new Date(formData.datumZamestnani) : null,
+      zamestnanecIdZamestnance: formData.zamestnanecIdZamestnance !== '' ? Number(formData.zamestnanecIdZamestnance) : null, // Single manager
+      adresaIdAdresy: formData.adresaIdAdresy !== '' ? Number(formData.adresaIdAdresy) : null,
     };
   
     try {
       if (selectedEmployee) {
-        console.log(payload);
+        console.log('Updating employee:', payload);
         await api.put(`/api/zamestnanci/${selectedEmployee.idZamestnance}`, payload);
         setSnackbar({ open: true, message: 'Employee updated successfully', severity: 'success' });
       } else {
+        console.log('Adding employee:', payload);
         await api.post('/api/zamestnanci', payload);
         setSnackbar({ open: true, message: 'Employee added successfully', severity: 'success' });
       }
@@ -262,7 +282,7 @@ function EmployeePanel({ setActivePanel }) {
   };
 
   // Determine which fields to show based on selected position
-  const selectedPosition = positions.find(p => p.ID_POZICE === formData.positionId);
+  const selectedPosition = positions.find(p => p.ID_POZICE === formData.poziceIdPozice);
   const isStoreStaff = selectedPosition?.NAZEV === 'Store Stuff' || selectedPosition?.NAZEV === 'Store Manager';
   const isWarehouseStaff = selectedPosition?.NAZEV === 'Warehouse Stuff' || selectedPosition?.NAZEV === 'Warehouse Manager';
   
@@ -276,9 +296,9 @@ function EmployeePanel({ setActivePanel }) {
   const resetWorkplaceAndManager = () => {
     setFormData(prev => ({
       ...prev,
-      supermarketId: '',
-      warehouseId: '',
-      managerId: '',
+      supermarketIdSupermarketu: '',
+      skladIdSkladu: '',
+      zamestnanecIdZamestnance: '',
     }));
   };
 
@@ -286,7 +306,7 @@ function EmployeePanel({ setActivePanel }) {
   const handlePositionChange = (e) => {
     setFormData(prev => ({
       ...prev,
-      positionId: e.target.value,
+      poziceIdPozice: e.target.value,
     }));
     resetWorkplaceAndManager();
   };
@@ -296,14 +316,14 @@ function EmployeePanel({ setActivePanel }) {
     if (isStoreStaff) {
       setFormData(prev => ({
         ...prev,
-        supermarketId: e.target.value,
-        managerId: '',
+        supermarketIdSupermarketu: e.target.value,
+        zamestnanecIdZamestnance: '',
       }));
     } else if (isWarehouseStaff) {
       setFormData(prev => ({
         ...prev,
-        warehouseId: e.target.value,
-        managerId: '',
+        skladIdSkladu: e.target.value,
+        zamestnanecIdZamestnance: '',
       }));
     }
   };
@@ -401,8 +421,8 @@ function EmployeePanel({ setActivePanel }) {
                 type="text"
                 fullWidth
                 required
-                value={formData.firstName}
-                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                value={formData.jmeno}
+                onChange={(e) => setFormData({ ...formData, jmeno: e.target.value })}
               />
 
               {/* Last Name */}
@@ -412,8 +432,8 @@ function EmployeePanel({ setActivePanel }) {
                 type="text"
                 fullWidth
                 required
-                value={formData.lastName}
-                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                value={formData.prijmeni}
+                onChange={(e) => setFormData({ ...formData, prijmeni: e.target.value })}
               />
 
               {/* Position Selection */}
@@ -422,7 +442,7 @@ function EmployeePanel({ setActivePanel }) {
                 <Select
                   labelId="position-label"
                   label="Position"
-                  value={formData.positionId}
+                  value={formData.poziceIdPozice}
                   onChange={handlePositionChange} // Use custom handler
                 >
                   <MenuItem value="">
@@ -444,7 +464,7 @@ function EmployeePanel({ setActivePanel }) {
                     <Select
                       labelId="supermarket-label"
                       label="Supermarket"
-                      value={formData.supermarketId}
+                      value={formData.supermarketIdSupermarketu}
                       onChange={handleWorkplaceChange} // Use custom handler
                     >
                       <MenuItem value="">
@@ -463,7 +483,7 @@ function EmployeePanel({ setActivePanel }) {
                     <Select
                       labelId="warehouse-label"
                       label="Warehouse"
-                      value={formData.warehouseId}
+                      value={formData.skladIdSkladu}
                       onChange={handleWorkplaceChange} // Use custom handler
                     >
                       <MenuItem value="">
@@ -485,16 +505,16 @@ function EmployeePanel({ setActivePanel }) {
                 margin="dense"
                 disabled={
                   requiresWorkplace &&
-                  ((workplaceType === 'Supermarket' && formData.supermarketId === '') ||
-                    (workplaceType === 'Warehouse' && formData.warehouseId === ''))
+                  ((workplaceType === 'Supermarket' && formData.supermarketIdSupermarketu === '') ||
+                    (workplaceType === 'Warehouse' && formData.skladIdSkladu === ''))
                 }
               >
                 <InputLabel id="manager-label">Manager</InputLabel>
                 <Select
                   labelId="manager-label"
                   label="Manager"
-                  value={formData.managerId}
-                  onChange={(e) => setFormData({ ...formData, managerId: e.target.value })}
+                  value={formData.zamestnanecIdZamestnance}
+                  onChange={(e) => setFormData({ ...formData, zamestnanecIdZamestnance: e.target.value })}
                 >
                   <MenuItem value="">
                     <em>Select Manager</em>
@@ -502,14 +522,14 @@ function EmployeePanel({ setActivePanel }) {
                   {managers
                     .filter(manager => {
                       // Ensure manager is in the same workplace
-                      if (workplaceType === 'Supermarket' && manager.supermarketIdSupermarketu === formData.supermarketId) {
+                      if (workplaceType === 'Supermarket' && manager.supermarketIdSupermarketu === formData.supermarketIdSupermarketu) {
                         // Exclude self if editing
                         if (selectedEmployee && manager.idZamestnance === selectedEmployee.idZamestnance) {
                           return false;
                         }
                         return true;
                       }
-                      if (workplaceType === 'Warehouse' && manager.skladIdSkladu === formData.warehouseId) {
+                      if (workplaceType === 'Warehouse' && manager.skladIdSkladu === formData.skladIdSkladu) {
                         // Exclude self if editing
                         if (selectedEmployee && manager.idZamestnance === selectedEmployee.idZamestnance) {
                           return false;
@@ -533,8 +553,8 @@ function EmployeePanel({ setActivePanel }) {
                 type="number"
                 fullWidth
                 required
-                value={formData.salary}
-                onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
+                value={formData.mzda}
+                onChange={(e) => setFormData({ ...formData, mzda: e.target.value })}
               />
 
               {/* Working Hours */}
@@ -544,8 +564,8 @@ function EmployeePanel({ setActivePanel }) {
                 type="number"
                 fullWidth
                 required
-                value={formData.workingHours}
-                onChange={(e) => setFormData({ ...formData, workingHours: e.target.value })}
+                value={formData.pracovnidoba}
+                onChange={(e) => setFormData({ ...formData, pracovnidoba: e.target.value })}
               />
 
               {/* Address Selection */}
@@ -554,8 +574,8 @@ function EmployeePanel({ setActivePanel }) {
                 <Select
                   labelId="address-label"
                   label="Address"
-                  value={formData.addressId}
-                  onChange={(e) => setFormData({ ...formData, addressId: e.target.value })}
+                  value={formData.adresaIdAdresy}
+                  onChange={(e) => setFormData({ ...formData, adresaIdAdresy: e.target.value })}
                 >
                   <MenuItem value="">
                     <em>Select Address</em>
@@ -575,8 +595,8 @@ function EmployeePanel({ setActivePanel }) {
                 type="date"
                 fullWidth
                 required
-                value={formData.employmentStartDate}
-                onChange={(e) => setFormData({ ...formData, employmentStartDate: e.target.value })}
+                value={formData.datumZamestnani}
+                onChange={(e) => setFormData({ ...formData, datumZamestnani: e.target.value })}
                 InputLabelProps={{
                   shrink: true,
                 }}

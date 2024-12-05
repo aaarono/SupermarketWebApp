@@ -31,6 +31,8 @@ const ProductImage = styled(Avatar)(({ theme }) => ({
   height: 120,
   borderRadius: "12px",
   boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+  backgroundSize: "cover", // Для изображения как фона
+  backgroundPosition: "center", // Центрировать изображение
 }));
 
 const OrdersList = () => {
@@ -38,28 +40,34 @@ const OrdersList = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchProductImage = async (productId) => {
+      const response = await api.get(`/api/products/image/${productId}`);
+        const base64Image = response; // Строка Base64
+        const imageSrc = `data:image/png;base64,${base64Image}`; // Создаем строку для src
+        return imageSrc;
+  };
+
   useEffect(() => {
     const fetchOrders = async () => {
       try {
         setLoading(true);
-        const userId = 38; // Пример ID пользователя
-        const response = await api.get(`/api/orders/user/${userId}`);
-
-        const ordersWithProducts = await Promise.all(
-          response.data.map(async (order) => {
-            const productsWithDetails = await Promise.all(
+        const response = await api.get(`/api/orders/user`);
+        console.log(response);
+        const ordersWithImages = await Promise.all(
+          response.map(async (order) => {
+            const productsWithImages = await Promise.all(
               order.products.map(async (product) => {
-                const productDetails = await api.get(`/api/products/${product.productId}`);
+                const imageUrl = await fetchProductImage(product.id); // Получаем изображение
                 return {
                   ...product,
-                  ...productDetails.data,
+                  imageUrl, // Добавляем URL изображения
                 };
               })
             );
-            return { ...order, products: productsWithDetails };
+            return { ...order, products: productsWithImages };
           })
         );
-        setOrders(ordersWithProducts);
+        setOrders(ordersWithImages);
       } catch (error) {
         console.error("Ошибка при загрузке заказов:", error);
         alert("Произошла ошибка при загрузке заказов. Попробуйте позже.");
@@ -124,7 +132,7 @@ const OrdersList = () => {
                   </Typography>
                   {order.products.map((product) => (
                     <Box
-                      key={product.productId}
+                      key={product.id}
                       sx={{
                         display: "flex",
                         flexDirection: { xs: "column", sm: "row" },
@@ -136,7 +144,10 @@ const OrdersList = () => {
                         borderRadius: 2,
                       }}
                     >
-                      <ProductImage src={product.imageUrl} alt={product.name} />
+                      <ProductImage>
+                        {/* Отображаем изображение, используя тэг <img /> */}
+                        <img src={product.imageUrl} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      </ProductImage>
                       <Box>
                         <Typography variant="subtitle1">{product.name}</Typography>
                         <Typography variant="body2" color="text.secondary">

@@ -327,7 +327,7 @@ const Cart = () => {
       };
 
       // Отправляем POST-запрос на бэкенд
-      await api.post('/api/products/orders', requestBody); // Убедитесь, что эндпоинт /api/orders существует
+      await api.post('/api/orders', requestBody); // Убедитесь, что эндпоинт /api/orders существует
 
       alert('Заказ успешно создан!');
 

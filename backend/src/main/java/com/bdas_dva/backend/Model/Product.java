@@ -4,11 +4,19 @@ public class Product {
     private Long id;
     private String name;
     private Double price;
-    private String description;
     private String category;
     private Long categoryId;
     private Long skladId;
     private String image;
+    private Integer quantity;
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
 
     public Long getCategoryId() {
         return categoryId;
@@ -48,14 +56,6 @@ public class Product {
 
     public void setPrice(Double price) {
         this.price = price;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     public String getCategory() {

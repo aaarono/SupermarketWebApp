@@ -68,7 +68,6 @@ public class ProductService {
             product.setId(rs.getLong("ID_PRODUKTU"));
             product.setName(rs.getString("NAZEV"));
             product.setPrice(rs.getDouble("CENA"));
-            product.setDescription(rs.getString("POPIS"));
             product.setCategoryId(rs.getLong("KAT_PROD_ID_KATEGORIE"));
             product.setSkladId(rs.getLong("SKLAD_ID_SKLADU"));
             return product;
@@ -274,7 +273,6 @@ public class ProductService {
         product.setId(rs.getLong("id"));
         product.setName(rs.getString("name"));
         product.setPrice(rs.getDouble("price"));
-        product.setDescription(rs.getString("description"));
         product.setCategory(rs.getString("category"));
 
         // Handling the image

@@ -13,7 +13,8 @@ public class Order {
     private Long zakaznikId;
 
     // Связанные объекты
-    private List<OrderProduct> products;
+    private List<OrderProduct> orderProducts;
+    private List<Product> products;
     private Address address;
     private Customer customer;
     private Payment payment;
@@ -89,11 +90,19 @@ public class Order {
         this.zakaznikId = zakaznikId;
     }
 
-    public List<OrderProduct> getProducts() {
+    public List<OrderProduct> getOrderProductProducts() {
+        return orderProducts;
+    }
+
+    public void setOrderProductProducts(List<OrderProduct> orderProducts) {
+        this.orderProducts = orderProducts;
+    }
+
+    public List<Product> getProducts() {
         return products;
     }
 
-    public void setProducts(List<OrderProduct> products) {
+    public void setProducts(List<Product> products) {
         this.products = products;
     }
 

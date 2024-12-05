@@ -2,7 +2,11 @@ package com.bdas_dva.backend.Controller;
 
 import com.bdas_dva.backend.Model.Order;
 import com.bdas_dva.backend.Model.OrderRequest;
+import com.bdas_dva.backend.Model.User;
 import com.bdas_dva.backend.Service.OrderService;
+import com.bdas_dva.backend.Service.UserService;
+import com.bdas_dva.backend.Service.ZakaznikService;
+import com.bdas_dva.backend.Util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,6 +22,13 @@ public class OrderController {
 
     @Autowired
     private OrderService orderService;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
 
     @PreAuthorize("hasRole('USER') or hasRole('EMPLOYEE') or hasRole('ADMIN')")
     @PostMapping
@@ -36,12 +47,34 @@ public class OrderController {
         }
     }
 
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<?> getUserOrders(@PathVariable Long userId,
-                                           @RequestParam(required = false) Long zakaznikId) {
+    @GetMapping("/user")
+    public ResponseEntity<?> getUserOrders(@RequestParam(required = false) Long userId,
+                                           @RequestParam(required = false) Long zakaznikId,
+                                           @RequestHeader(value = "Authorization", required = false) String authHeader) {
         try {
+            // Если userId не передан в параметрах запроса, берем его из JWT токена
+            if (userId == null && authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+                if (jwtUtil.validateToken(token)) {
+                    String email = jwtUtil.getUserNameFromJwtToken(token);
+                    User user = userService.getUserWithRoleByEmail(email);
+                    if (user != null) {
+                        userId = user.getIdUser(); // Получаем ID пользователя из токена
+                    }
+                } else {
+                    return ResponseEntity.status(401).body("Invalid or expired token");
+                }
+            }
+
+            // Если userId все еще null, возвращаем ошибку
+            if (userId == null) {
+                return ResponseEntity.status(400).body("User ID is required or must be provided in JWT token");
+            }
+
+            // Получаем заказы пользователя
             List<Order> orders = orderService.getUserOrders(userId, zakaznikId);
             return ResponseEntity.ok(orders);
+
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Ошибка получения заказов: " + e.getMessage());
