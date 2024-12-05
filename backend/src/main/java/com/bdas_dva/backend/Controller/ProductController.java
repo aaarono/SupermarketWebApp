@@ -22,6 +22,38 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
+    @PostMapping
+    public ResponseEntity<String> addProduct(@RequestBody Map<String, Object> productDTO) {
+        productService.addProduct(
+                (String) productDTO.get("name"),
+                productDTO.get("price") != null ? Double.parseDouble(productDTO.get("price").toString()) : null,
+                (String) productDTO.get("description"),
+                productDTO.get("categoryId") != null ? Integer.parseInt(productDTO.get("categoryId").toString()) : null,
+                productDTO.get("skladId") != null ? Integer.parseInt(productDTO.get("skladId").toString()) : null
+        );
+        return ResponseEntity.ok("Продукт успешно добавлен.");
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<String> updateProduct(@PathVariable("id") Long id, @RequestBody Map<String, Object> productDTO) {
+        productService.updateProduct(
+                id,
+                (String) productDTO.get("name"),
+                productDTO.get("price") != null ? Double.parseDouble(productDTO.get("price").toString()) : null,
+                (String) productDTO.get("description"),
+                productDTO.get("categoryId") != null ? Integer.parseInt(productDTO.get("categoryId").toString()) : null,
+                productDTO.get("skladId") != null ? Integer.parseInt(productDTO.get("skladId").toString()) : null
+        );
+        return ResponseEntity.ok("Продукт успешно обновлен.");
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteProduct(@PathVariable("id") Long id) {
+        productService.deleteProduct(id);
+        return ResponseEntity.ok("Продукт успешно удален.");
+    }
+    
+
     private final Map<String, Integer> formatMapping = Map.of(
             "jpg", 1,
             "png", 2,
