@@ -57,28 +57,64 @@ public class ZamestnanecService {
                         new SqlParameter("p_pozice_id_pozice", Types.NUMERIC),
                         new SqlParameter("p_manager_flag", Types.NUMERIC),
                         new SqlParameter("p_limit", Types.NUMERIC),
-                        new SqlOutParameter("p_cursor", -10, new ZamestnanecRowMapper()) // Using -10 instead of OracleTypes.CURSOR
+                        new SqlOutParameter("p_cursor", -10, new ZamestnanecRowMapper())
                 );
 
         MapSqlParameterSource inParams = new MapSqlParameterSource()
                 .addValue("p_id_zamnestnance", request.getIdZamestnance())
                 .addValue("p_jmeno", request.getJmeno())
                 .addValue("p_prijmeni", request.getPrijmeni())
-                .addValue("p_supermarket_id_supermarketu", request.getSupermarketIdSupermarketu())
-                .addValue("p_sklad_id_skladu", request.getSkladIdSkladu())
+                .addValue("p_supermarket_id_supermarketu",
+                        request.getSupermarketIdSupermarketu() != null && request.getSupermarketIdSupermarketu() != 0
+                                ? request.getSupermarketIdSupermarketu()
+                                : null)
+                .addValue("p_sklad_id_skladu",
+                        request.getSkladIdSkladu() != null && request.getSkladIdSkladu() != 0
+                                ? request.getSkladIdSkladu()
+                                : null)
                 .addValue("p_pozice_id_pozice", request.getPoziceIdPozice())
-                .addValue("p_manager_flag", request.getPoziceIdPozice() != null && (request.getPoziceIdPozice() == 2 || request.getPoziceIdPozice() == 3) ? 1 : 0)
+                .addValue("p_manager_flag", request.getPoziceIdPozice() != null &&
+                        (request.getPoziceIdPozice() == 2 || request.getPoziceIdPozice() == 3) ? 1 : 0)
                 .addValue("p_limit", request.getPracovnidoba() != null ? request.getPracovnidoba() : null);
 
-        logger.info("Volání procedury proc_zamnestnanec_r s parametry: {}", inParams);
+        logger.info("Calling procedure proc_zamnestnanec_r with parameters: {}", inParams);
 
         Map<String, Object> out = jdbcCall.execute(inParams);
 
         @SuppressWarnings("unchecked")
         List<ZamestnanecResponse> zamestnanci = (List<ZamestnanecResponse>) out.get("p_cursor");
 
-        return zamestnanci != null ? zamestnanci : Collections.emptyList();
+        if (zamestnanci == null) {
+            logger.warn("No employees returned by procedure.");
+            return Collections.emptyList();
+        }
+
+        logger.info("Procedure returned {} employees.", zamestnanci.size());
+        return zamestnanci;
     }
+
+    private static class ZamestnanecRowMapper implements RowMapper<ZamestnanecResponse> {
+        @Override
+        public ZamestnanecResponse mapRow(ResultSet rs, int rowNum) throws SQLException {
+            ZamestnanecResponse zamestnanec = new ZamestnanecResponse();
+            zamestnanec.setIdZamestnance(rs.getLong("ID_ZAMNESTNANCE"));
+            zamestnanec.setDatumZamestnani(rs.getDate("DATUMZAMESTNANI"));
+            zamestnanec.setPracovnidoba(rs.getInt("PRACOVNIDOBA"));
+            zamestnanec.setSupermarketIdSupermarketu(rs.getObject("SUPERMARKET_ID_SUPERMARKETU", Long.class));
+            zamestnanec.setSkladIdSkladu(rs.getObject("SKLAD_ID_SKLADU", Long.class));
+            zamestnanec.setZamestnanecIdZamestnance(
+                    rs.getObject("ZAMNESTNANEC_ID_ZAMNESTNANCE", Long.class) != null
+                            ? rs.getLong("ZAMNESTNANEC_ID_ZAMNESTNANCE")
+                            : null);
+            zamestnanec.setAdresaIdAdresy(rs.getObject("ADRESA_ID_ADRESY", Long.class));
+            zamestnanec.setJmeno(rs.getString("JMENO") != null ? rs.getString("JMENO") : "Не указано");
+            zamestnanec.setPrijmeni(rs.getString("PRIJMENI") != null ? rs.getString("PRIJMENI") : "Не указано");
+            zamestnanec.setMzda(rs.getDouble("MZDA"));
+            zamestnanec.setPoziceIdPozice(rs.getLong("POZICE_ID_POZICE"));
+            return zamestnanec;
+        }
+    }
+
 
     /**
      * Vytvoří nového zaměstnance.
@@ -261,26 +297,26 @@ public class ZamestnanecService {
         String sql = "SELECT ID_POZICE, NAZEV FROM POZICE";
         return jdbcTemplate.queryForList(sql);
     }
-
-    /**
-     * RowMapper pro mapování řádků z CURSOR na ZamestnanecResponse.
-     */
-    private static class ZamestnanecRowMapper implements RowMapper<ZamestnanecResponse> {
-        @Override
-        public ZamestnanecResponse mapRow(ResultSet rs, int rowNum) throws SQLException {
-            ZamestnanecResponse zamestnanec = new ZamestnanecResponse();
-            zamestnanec.setIdZamestnance(rs.getLong("ID_ZAMNESTNANCE"));
-            zamestnanec.setDatumZamestnani(rs.getDate("DATUMZAMESTNANI"));
-            zamestnanec.setPracovnidoba(rs.getInt("PRACOVNIDOBA"));
-            zamestnanec.setSupermarketIdSupermarketu(rs.getLong("SUPERMARKET_ID_SUPERMARKETU"));
-            zamestnanec.setSkladIdSkladu(rs.getLong("SKLAD_ID_SKLADU"));
-            zamestnanec.setZamestnanecIdZamestnance(rs.getLong("ZAMNESTNANEC_ID_ZAMNESTNANCE"));
-            zamestnanec.setAdresaIdAdresy(rs.getLong("ADRESA_ID_ADRESY"));
-            zamestnanec.setJmeno(rs.getString("JMENO"));
-            zamestnanec.setPrijmeni(rs.getString("PRIJMENI"));
-            zamestnanec.setMzda(rs.getDouble("MZDA"));
-            zamestnanec.setPoziceIdPozice(rs.getLong("POZICE_ID_POZICE"));
-            return zamestnanec;
-        }
-    }
+//
+//    /**
+//     * RowMapper pro mapování řádků z CURSOR na ZamestnanecResponse.
+//     */
+//    private static class ZamestnanecRowMapper implements RowMapper<ZamestnanecResponse> {
+//        @Override
+//        public ZamestnanecResponse mapRow(ResultSet rs, int rowNum) throws SQLException {
+//            ZamestnanecResponse zamestnanec = new ZamestnanecResponse();
+//            zamestnanec.setIdZamestnance(rs.getLong("ID_ZAMNESTNANCE"));
+//            zamestnanec.setDatumZamestnani(rs.getDate("DATUMZAMESTNANI"));
+//            zamestnanec.setPracovnidoba(rs.getInt("PRACOVNIDOBA"));
+//            zamestnanec.setSupermarketIdSupermarketu(rs.getLong("SUPERMARKET_ID_SUPERMARKETU"));
+//            zamestnanec.setSkladIdSkladu(rs.getLong("SKLAD_ID_SKLADU"));
+//            zamestnanec.setZamestnanecIdZamestnance(rs.getLong("ZAMNESTNANEC_ID_ZAMNESTNANCE"));
+//            zamestnanec.setAdresaIdAdresy(rs.getLong("ADRESA_ID_ADRESY"));
+//            zamestnanec.setJmeno(rs.getString("JMENO"));
+//            zamestnanec.setPrijmeni(rs.getString("PRIJMENI"));
+//            zamestnanec.setMzda(rs.getDouble("MZDA"));
+//            zamestnanec.setPoziceIdPozice(rs.getLong("POZICE_ID_POZICE"));
+//            return zamestnanec;
+//        }
+//    }
 }

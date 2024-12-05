@@ -65,8 +65,9 @@ function EmployeePanel({ setActivePanel }) {
   const fetchEmployees = async () => {
     try {
       const response = await api.get('/api/zamestnanci');
-      console.log(response)
-      setEmployees(response);
+      const sortedEmployees = response.sort((a, b) => a.idZamestnance - b.idZamestnance);
+      console.log(sortedEmployees);
+      setEmployees(sortedEmployees);
     } catch (error) {
       console.error('Ошибка при загрузке сотрудников:', error);
     }
@@ -102,8 +103,28 @@ function EmployeePanel({ setActivePanel }) {
 
   const fetchManagers = async () => {
     try {
-      const response = await api.get('/api/zamestnanci'); // Предположим, что менеджеры — это те же сотрудники
-      setManagers(response);
+      const response = await api.get('/api/zamestnanci');
+      const uniqueManagers = response.filter((manager, index, self) => {
+        const warehouse = warehouses.find((w) => w.ID_SKLADU === manager.skladIdSkladu);
+        const supermarket = supermarkets.find((s) => s.ID_SUPERMARKETU === manager.supermarketIdSupermarketu);
+        return (
+          self.findIndex(
+            (m) =>
+              m.skladIdSkladu === manager.skladIdSkladu || m.supermarketIdSupermarketu === manager.supermarketIdSupermarketu
+          ) === index
+        );
+      });
+  
+      const managersWithPlace = uniqueManagers.map((manager) => {
+        const warehouse = warehouses.find((w) => w.ID_SKLADU === manager.skladIdSkladu);
+        const supermarket = supermarkets.find((s) => s.ID_SUPERMARKETU === manager.supermarketIdSupermarketu);
+        return {
+          ...manager,
+          placeType: warehouse ? 'Склад' : supermarket ? 'Супермаркет' : 'Не указано',
+          placeName: warehouse ? warehouse.NAZEV : supermarket ? supermarket.NAZEV : 'Не указано',
+        };
+      });
+      setManagers(managersWithPlace);
     } catch (error) {
       console.error('Ошибка при загрузке менеджеров:', error);
     }
@@ -323,7 +344,7 @@ function EmployeePanel({ setActivePanel }) {
                 value={formData.skladIdSkladu}
                 onChange={(e) => setFormData({ ...formData, skladIdSkladu: e.target.value })}
               >
-                <MenuItem value="">Выберите склад</MenuItem>
+              <MenuItem value="">Выберите склад</MenuItem>
                 {warehouses.map((warehouse) => (
                   <MenuItem key={warehouse.ID_SKLADU} value={warehouse.ID_SKLADU}>
                     {warehouse.NAZEV}
@@ -348,12 +369,18 @@ function EmployeePanel({ setActivePanel }) {
                 onChange={(e) => setFormData({ ...formData, zamestnanecIdZamestnance: e.target.value })}
               >
                 <MenuItem value="">Выберите менеджера</MenuItem>
-                {managers.map((manager) => (
-                  <MenuItem key={manager.idZamestnance} value={manager.idZamestnance}>
-                    {manager.jmeno} {manager.prijmeni}
-                  </MenuItem>
-                ))}
+                {managers
+                  .filter(
+                    (manager) =>
+                      (manager.skladIdSkladu === formData.skladIdSkladu || manager.supermarketIdSupermarketu === formData.supermarketIdSupermarketu)
+                  )
+                  .map((manager) => (
+                    <MenuItem key={manager.idZamestnance} value={manager.idZamestnance}>
+                      {`${manager.jmeno} ${manager.prijmeni} (${manager.placeType}: ${manager.placeName})`}
+                    </MenuItem>
+                  ))}
               </Select>
+
               <TextField
                 margin="dense"
                 label="Зарплата"

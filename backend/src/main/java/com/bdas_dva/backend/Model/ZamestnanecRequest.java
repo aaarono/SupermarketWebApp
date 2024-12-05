@@ -42,7 +42,7 @@ public class ZamestnanecRequest {
     }
 
     public Long getSupermarketIdSupermarketu() {
-        return supermarketIdSupermarketu;
+        return supermarketIdSupermarketu != null && supermarketIdSupermarketu > 0 ? supermarketIdSupermarketu : null;
     }
 
     public void setSupermarketIdSupermarketu(Long supermarketIdSupermarketu) {
@@ -50,7 +50,7 @@ public class ZamestnanecRequest {
     }
 
     public Long getSkladIdSkladu() {
-        return skladIdSkladu;
+        return skladIdSkladu != null && skladIdSkladu > 0 ? skladIdSkladu : null;
     }
 
     public void setSkladIdSkladu(Long skladIdSkladu) {
@@ -58,7 +58,7 @@ public class ZamestnanecRequest {
     }
 
     public Long getZamestnanecIdZamestnance() {
-        return zamestnanecIdZamestnance;
+        return zamestnanecIdZamestnance != null && zamestnanecIdZamestnance > 0 ? zamestnanecIdZamestnance : null;
     }
 
     public void setZamestnanecIdZamestnance(Long zamestnanecIdZamestnance) {
@@ -66,7 +66,7 @@ public class ZamestnanecRequest {
     }
 
     public Long getAdresaIdAdresy() {
-        return adresaIdAdresy;
+        return adresaIdAdresy != null && adresaIdAdresy > 0 ? adresaIdAdresy : null;
     }
 
     public void setAdresaIdAdresy(Long adresaIdAdresy) {
@@ -74,7 +74,7 @@ public class ZamestnanecRequest {
     }
 
     public String getJmeno() {
-        return jmeno;
+        return jmeno != null && !jmeno.isEmpty() ? jmeno : null;
     }
 
     public void setJmeno(String jmeno) {
@@ -82,7 +82,7 @@ public class ZamestnanecRequest {
     }
 
     public String getPrijmeni() {
-        return prijmeni;
+        return prijmeni != null && !prijmeni.isEmpty() ? prijmeni : null;
     }
 
     public void setPrijmeni(String prijmeni) {
@@ -90,7 +90,7 @@ public class ZamestnanecRequest {
     }
 
     public Double getMzda() {
-        return mzda;
+        return mzda != null && mzda > 0 ? mzda : null;
     }
 
     public void setMzda(Double mzda) {
