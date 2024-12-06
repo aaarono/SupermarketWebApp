@@ -1,5 +1,3 @@
-// ImagePanel.js
-
 import React, { useState, useEffect } from 'react';
 import {
   Typography,
@@ -21,7 +19,10 @@ import {
   DialogActions,
   TextField,
   CircularProgress,
-  Avatar,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl,
 } from '@mui/material';
 import { FiEdit2, FiTrash2, FiPlus } from 'react-icons/fi';
 import AdminNavigation from './AdminNavigation';
@@ -29,6 +30,8 @@ import api from '../../services/api';
 
 function ImagePanel({ setActivePanel }) {
   const [images, setImages] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [formats, setFormats] = useState([]);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   // Пагинация
@@ -36,6 +39,7 @@ function ImagePanel({ setActivePanel }) {
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const [formOpen, setFormOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [formData, setFormData] = useState({
     obrazek: null,
@@ -44,16 +48,18 @@ function ImagePanel({ setActivePanel }) {
     format_id_formatu: '',
     produkt_id_produktu: '',
   });
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchImages();
+    fetchProducts();
+    fetchFormats();
   }, []);
 
   const fetchImages = async () => {
     try {
       const response = await api.get('/api/images');
+      console.log(response)
       setImages(response);
       setLoading(false);
     } catch (error) {
@@ -63,22 +69,42 @@ function ImagePanel({ setActivePanel }) {
     }
   };
 
+  const fetchProducts = async () => {
+    try {
+      const response = await api.get('/api/products');
+      console.log(response)
+      setProducts(response);
+    } catch (error) {
+      console.error('Ошибка при загрузке продуктов:', error);
+    }
+  };
+
+  const fetchFormats = async () => {
+    try {
+      const response = await api.get('/api/image-formats');
+      console.log(response)
+      setFormats(response);
+    } catch (error) {
+      console.error('Ошибка при загрузке форматов:', error);
+    }
+  };
+
   const handleFormOpen = (image = null) => {
     setSelectedImage(image);
     setFormData(
       image
         ? {
-            obrazek: null, // Не загружаем изображение при редактировании
-            nazev: image.nazev,
-            typ: image.typ,
-            format_id_formatu: image.format_id_formatu,
-            produkt_id_produktu: image.produkt_id_produktu,
+            obrazek: null,
+            nazev: image.NAZEV,
+            typ: image.FORMAT_ID_FORMATU || '', // ID формата выставляется в тип
+            format_id_formatu: image.FORMAT_ID_FORMATU || '',
+            produkt_id_produktu: image.PRODUKT_ID_PRODUKTU || '',
           }
         : { obrazek: null, nazev: '', typ: '', format_id_formatu: '', produkt_id_produktu: '' }
     );
     setFormOpen(true);
   };
-
+  
   const handleFormClose = () => {
     setFormOpen(false);
     setSelectedImage(null);
@@ -87,44 +113,59 @@ function ImagePanel({ setActivePanel }) {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+  
+    if (!formData.format_id_formatu) {
+      setSnackbar({ open: true, message: 'Выберите тип изображения.', severity: 'error' });
+      return;
+    }
+  
+    // Разрешаем пустой ID продукта только для изображения с ID 1
+    if (!formData.produkt_id_produktu && (!selectedImage || selectedImage.ID_OBRAZKU !== 1)) {
+      setSnackbar({ open: true, message: 'Укажите продукт для изображения.', severity: 'error' });
+      return;
+    }
+  
     try {
       const dataToSend = new FormData();
-      if (!selectedImage) {
+      if (formData.obrazek) {
         dataToSend.append('obrazek', formData.obrazek);
       }
-      dataToSend.append('nazev', formData.nazev);
-      dataToSend.append('typ', formData.typ);
-      dataToSend.append('format_id_formatu', parseInt(formData.format_id_formatu, 10));
-      dataToSend.append('produkt_id_produktu', parseInt(formData.produkt_id_produktu, 10));
-
+      dataToSend.append('nazev', formData.nazev || '');
+      dataToSend.append('format_id_formatu', formData.format_id_formatu || '');
+      dataToSend.append('produkt_id_produktu', formData.produkt_id_produktu || '');
+  
+      const config = {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      };
+  
       if (selectedImage) {
-        await api.put(`/api/images/${selectedImage.id}`, dataToSend, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
+        await api.put(`/api/images/${selectedImage.ID_OBRAZKU}`, dataToSend, config);
         setSnackbar({ open: true, message: 'Изображение обновлено успешно', severity: 'success' });
       } else {
-        await api.post('/api/images', dataToSend, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
+        await api.post('/api/images', dataToSend, config);
         setSnackbar({ open: true, message: 'Изображение добавлено успешно', severity: 'success' });
       }
+  
       fetchImages();
       handleFormClose();
     } catch (error) {
       console.error('Ошибка при сохранении изображения:', error);
-      const errorMessage = error.response?.data || 'Ошибка при сохранении изображения';
-      setSnackbar({ open: true, message: errorMessage, severity: 'error' });
+      setSnackbar({ open: true, message: 'Ошибка при сохранении изображения', severity: 'error' });
     }
   };
+  
 
   const handleDeleteConfirmOpen = (image) => {
+    if (image.ID_OBRAZKU === 1) {
+      setSnackbar({ open: true, message: 'Это изображение нельзя удалить.', severity: 'error' });
+      return;
+    }
     setSelectedImage(image);
     setDeleteConfirmOpen(true);
   };
+
 
   const handleDeleteConfirmClose = () => {
     setDeleteConfirmOpen(false);
@@ -133,18 +174,16 @@ function ImagePanel({ setActivePanel }) {
 
   const handleDelete = async () => {
     try {
-      await api.delete(`/api/images/${selectedImage.id}`);
+      await api.delete(`/api/images/${selectedImage.ID_OBRAZKU}`);
       setSnackbar({ open: true, message: 'Изображение удалено успешно', severity: 'success' });
       fetchImages();
       handleDeleteConfirmClose();
     } catch (error) {
       console.error('Ошибка при удалении изображения:', error);
-      const errorMessage = error.response?.data || 'Ошибка при удалении изображения';
-      setSnackbar({ open: true, message: errorMessage, severity: 'error' });
+      setSnackbar({ open: true, message: 'Ошибка при удалении изображения', severity: 'error' });
     }
   };
 
-  // Обработчики пагинации
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -154,7 +193,6 @@ function ImagePanel({ setActivePanel }) {
     setPage(0);
   };
 
-  // Проверяем, загрузились ли данные
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', marginTop: '50px' }}>
@@ -165,10 +203,7 @@ function ImagePanel({ setActivePanel }) {
 
   return (
     <div style={{ display: 'flex' }}>
-      {/* Навигация */}
       <AdminNavigation setActivePanel={setActivePanel} />
-
-      {/* Содержимое панели изображений */}
       <div style={{ flexGrow: 1, padding: '16px' }}>
         <Typography variant="h4" gutterBottom>
           Изображения
@@ -182,14 +217,12 @@ function ImagePanel({ setActivePanel }) {
         >
           Добавить изображение
         </Button>
-
         <Paper sx={{ width: '100%', overflow: 'hidden', marginTop: 2 }}>
           <TableContainer>
             <Table stickyHeader aria-label="images table">
               <TableHead>
                 <TableRow>
                   <TableCell>ID</TableCell>
-                  <TableCell>Изображение</TableCell>
                   <TableCell>Название</TableCell>
                   <TableCell>Тип</TableCell>
                   <TableCell>ID Формата</TableCell>
@@ -200,24 +233,21 @@ function ImagePanel({ setActivePanel }) {
               <TableBody>
                 {images.length > 0 ? (
                   images.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((image) => (
-                    <TableRow hover key={image.id}>
-                      <TableCell>{image.id}</TableCell>
-                      <TableCell>
-                        {image.obrazek ? (
-                          <Avatar variant="square" src={`data:image/jpeg;base64,${image.obrazek}`} alt={image.nazev} />
-                        ) : (
-                          'Нет изображения'
-                        )}
-                      </TableCell>
-                      <TableCell>{image.nazev}</TableCell>
-                      <TableCell>{image.typ}</TableCell>
-                      <TableCell>{image.format_id_formatu}</TableCell>
-                      <TableCell>{image.produkt_id_produktu}</TableCell>
+                    <TableRow hover key={image.ID_OBRAZKU}>
+                      <TableCell>{image.ID_OBRAZKU}</TableCell>
+                      <TableCell>{image.NAZEV}</TableCell>
+                      <TableCell>{formats.find((f) => f.ID_FORMATU === image.FORMAT_ID_FORMATU)?.ROZIRENI || '—' }</TableCell>
+                      <TableCell>{image.FORMAT_ID_FORMATU}</TableCell>
+                      <TableCell>{products.find((p) => p.id === image.PRODUKT_ID_PRODUKTU)?.name || '—'}</TableCell>
                       <TableCell align="right">
                         <IconButton onClick={() => handleFormOpen(image)} color="primary">
                           <FiEdit2 />
                         </IconButton>
-                        <IconButton onClick={() => handleDeleteConfirmOpen(image)} color="secondary">
+                        <IconButton
+                          onClick={() => handleDeleteConfirmOpen(image)}
+                          color="secondary"
+                          disabled={image.ID_OBRAZKU === 1} // Отключаем кнопку
+                        >
                           <FiTrash2 />
                         </IconButton>
                       </TableCell>
@@ -225,7 +255,7 @@ function ImagePanel({ setActivePanel }) {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} align="center">
+                    <TableCell colSpan={6} align="center">
                       Нет данных
                     </TableCell>
                   </TableRow>
@@ -233,7 +263,6 @@ function ImagePanel({ setActivePanel }) {
               </TableBody>
             </Table>
           </TableContainer>
-
           <TablePagination
             component="div"
             count={images.length}
@@ -245,32 +274,28 @@ function ImagePanel({ setActivePanel }) {
           />
         </Paper>
 
-        {/* Форма добавления/редактирования изображения */}
         <Dialog open={formOpen} onClose={handleFormClose} fullWidth maxWidth="sm">
           <DialogTitle>{selectedImage ? 'Редактировать изображение' : 'Добавить изображение'}</DialogTitle>
           <form onSubmit={handleFormSubmit}>
             <DialogContent>
-              {!selectedImage && (
-                <Button
-                  variant="contained"
-                  component="label"
-                  fullWidth
-                  style={{ marginBottom: '16px' }}
-                >
-                  Загрузить изображение
-                  <input
-                    type="file"
-                    hidden
-                    accept="image/*"
-                    onChange={(e) => setFormData({ ...formData, obrazek: e.target.files[0] })}
-                  />
-                </Button>
-              )}
-              {selectedImage && (
-                <Typography variant="body2" color="textSecondary" gutterBottom>
-                  Изображение не может быть изменено
-                </Typography>
-              )}
+              <Button
+                variant="contained"
+                component="label"
+                fullWidth
+                style={{ marginBottom: '16px' }}
+                disabled={!formData.format_id_formatu}
+              >
+                {selectedImage ? 'Обновить изображение' : 'Загрузить изображение'}
+                <input
+                  type="file"
+                  hidden
+                  accept={formats.find((f) => f.ID_FORMATU === parseInt(formData.format_id_formatu, 10))?.ROZIRENI
+                    ? `.${formats.find((f) => f.ID_FORMATU === parseInt(formData.format_id_formatu, 10))?.ROZIRENI}`
+                    : 'image/*'} // Ограничение по выбранному формату
+                  onChange={(e) => setFormData({ ...formData, obrazek: e.target.files[0] })}
+                />
+              </Button>
+
               <TextField
                 autoFocus
                 margin="dense"
@@ -281,50 +306,67 @@ function ImagePanel({ setActivePanel }) {
                 value={formData.nazev}
                 onChange={(e) => setFormData({ ...formData, nazev: e.target.value })}
               />
-              <TextField
-                margin="dense"
-                label="Тип"
-                type="text"
-                fullWidth
-                required
-                value={formData.typ}
-                onChange={(e) => setFormData({ ...formData, typ: e.target.value })}
-              />
-              <TextField
-                margin="dense"
-                label="ID Формата"
-                type="number"
-                fullWidth
-                required
-                value={formData.format_id_formatu}
-                onChange={(e) => setFormData({ ...formData, format_id_formatu: e.target.value })}
-              />
-              <TextField
-                margin="dense"
-                label="ID Продукта"
-                type="number"
-                fullWidth
-                required
-                value={formData.produkt_id_produktu}
-                onChange={(e) => setFormData({ ...formData, produkt_id_produktu: e.target.value })}
-              />
+              <FormControl fullWidth margin="dense">
+              <InputLabel>Тип</InputLabel>
+                <Select
+                  value={formData.format_id_formatu}
+                  onChange={(e) => {
+                    setFormData({
+                      ...formData,
+                      typ: e.target.value, // ID формата
+                      format_id_formatu: e.target.value, // ID формата синхронизируется
+                    });
+                  }}
+                  required
+                >
+                  {formats.map((format) => (
+                    <MenuItem key={format.ID_FORMATU} value={format.ID_FORMATU}>
+                      {`${format.ID_FORMATU}. ${format.ROZIRENI}`} {/* Отображаем ID и название */}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth margin="dense">
+                <InputLabel>Продукт</InputLabel>
+                <Select
+                  value={formData.produkt_id_produktu}
+                  onChange={(e) => setFormData({ ...formData, produkt_id_produktu: e.target.value })}
+                  disabled={selectedImage?.ID_OBRAZKU === 1} // Отключаем поле для ID 1
+                >
+                  {products.map((product) => (
+                    <MenuItem key={product.id} value={product.id}>
+                      {`${product.id}. ${product.name}`}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {selectedImage?.ID_OBRAZKU === 1 && (
+                  <Typography variant="body2" color="textSecondary">
+                    Продукт для этого изображения не обязателен.
+                  </Typography>
+                )}
+              </FormControl>
             </DialogContent>
             <DialogActions>
               <Button onClick={handleFormClose}>Отмена</Button>
               <Button type="submit" color="primary">
-                Сохранить
+                {selectedImage ? 'Сохранить изменения' : 'Добавить изображение'}
               </Button>
             </DialogActions>
           </form>
         </Dialog>
 
-        {/* Диалог подтверждения удаления */}
         <Dialog open={deleteConfirmOpen} onClose={handleDeleteConfirmClose}>
           <DialogTitle>Удалить изображение?</DialogTitle>
           <DialogContent>
-            <Typography>
-              Вы уверены, что хотите удалить изображение с ID {selectedImage?.id}?
+            <Typography gutterBottom>
+              Вы уверены, что хотите удалить изображение с ID {selectedImage?.ID_OBRAZKU}?
             </Typography>
+            {selectedImage && (
+              <Typography variant="body2" color="textSecondary">
+                Название: {selectedImage?.NAZEV || 'Нет названия'}
+              </Typography>
+            )}
           </DialogContent>
           <DialogActions>
             <Button onClick={handleDeleteConfirmClose}>Отмена</Button>
@@ -334,7 +376,6 @@ function ImagePanel({ setActivePanel }) {
           </DialogActions>
         </Dialog>
 
-        {/* Уведомления */}
         <Snackbar
           open={snackbar.open}
           autoHideDuration={6000}

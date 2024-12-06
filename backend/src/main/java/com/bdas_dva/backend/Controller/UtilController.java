@@ -116,7 +116,7 @@ public class UtilController {
             List<Log> logs = utilService.getLogs(idLogu, limit);
             return ResponseEntity.ok(logs);
         } catch (Exception e) {
-            e.printStackTrace(); 
+            e.printStackTrace();
             return ResponseEntity.status(500).body("Ошибка при получении логов: " + e.getMessage());
         }
     }
