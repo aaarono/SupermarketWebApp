@@ -30,11 +30,19 @@ import api from '../../services/api';
 
 function ImagePanel({ setActivePanel }) {
   const [images, setImages] = useState([]);
+  const [filteredImages, setFilteredImages] = useState([]);
   const [products, setProducts] = useState([]);
   const [formats, setFormats] = useState([]);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  // Пагинация
+  const [searchFilters, setSearchFilters] = useState({
+    id: '',
+    nazev: '',
+    typ: '',
+    produkt: '',
+  });
+  const [sortOrder, setSortOrder] = useState('asc');
+
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
@@ -56,11 +64,11 @@ function ImagePanel({ setActivePanel }) {
     fetchFormats();
   }, []);
 
-  const fetchImages = async () => {
+const fetchImages = async () => {
     try {
       const response = await api.get('/api/images');
-      console.log(response)
       setImages(response);
+      setFilteredImages(response);
       setLoading(false);
     } catch (error) {
       console.error('Ошибка при загрузке изображений:', error);
@@ -201,6 +209,45 @@ function ImagePanel({ setActivePanel }) {
     );
   }
 
+  const applyFilters = () => {
+    let results = [...images];
+
+    if (searchFilters.id) {
+      results = results.filter((image) =>
+        image.ID_OBRAZKU.toString().includes(searchFilters.id)
+      );
+    }
+    if (searchFilters.nazev) {
+      results = results.filter((image) =>
+        image.NAZEV.toLowerCase().includes(searchFilters.nazev.toLowerCase())
+      );
+    }
+    if (searchFilters.typ) {
+      results = results.filter(
+        (image) => image.FORMAT_ID_FORMATU === parseInt(searchFilters.typ, 10)
+      );
+    }
+    if (searchFilters.produkt) {
+      results = results.filter((image) =>
+        products
+          .find((p) => p.id === image.PRODUKT_ID_PRODUKTU)
+          ?.name.toLowerCase()
+          .includes(searchFilters.produkt.toLowerCase())
+      );
+    }
+
+    setFilteredImages(results);
+  };
+
+  const handleSortToggle = () => {
+    setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    setFilteredImages((prev) =>
+      [...prev].sort((a, b) =>
+        sortOrder === 'asc' ? b.ID_OBRAZKU - a.ID_OBRAZKU : a.ID_OBRAZKU - b.ID_OBRAZKU
+      )
+    );
+  };
+
   return (
     <div style={{ display: 'flex' }}>
       <AdminNavigation setActivePanel={setActivePanel} />
@@ -208,6 +255,50 @@ function ImagePanel({ setActivePanel }) {
         <Typography variant="h4" gutterBottom>
           Изображения
         </Typography>
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
+          <TextField
+            label="Поиск по ID"
+            variant="outlined"
+            value={searchFilters.id}
+            onChange={(e) => setSearchFilters({ ...searchFilters, id: e.target.value })}
+          />
+          <TextField
+            label="Поиск по названию"
+            variant="outlined"
+            value={searchFilters.nazev}
+            onChange={(e) => setSearchFilters({ ...searchFilters, nazev: e.target.value })}
+          />
+          <FormControl style={{ minWidth: '150px' }}>
+            <InputLabel>Тип</InputLabel>
+            <Select
+              value={searchFilters.typ}
+              onChange={(e) => setSearchFilters({ ...searchFilters, typ: e.target.value })}
+            >
+              <MenuItem value="">Все</MenuItem>
+              {formats.map((format) => (
+                <MenuItem key={format.ID_FORMATU} value={format.ID_FORMATU}>
+                  {`${format.ID_FORMATU}. ${format.ROZIRENI}`}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <TextField
+            label="Поиск по продукту"
+            variant="outlined"
+            value={searchFilters.produkt}
+            onChange={(e) => setSearchFilters({ ...searchFilters, produkt: e.target.value })}
+          />
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={applyFilters}
+          >
+            Поиск
+          </Button>
+        </div>
+
+              
+
         <Button
           variant="contained"
           color="primary"
@@ -219,10 +310,12 @@ function ImagePanel({ setActivePanel }) {
         </Button>
         <Paper sx={{ width: '100%', overflow: 'hidden', marginTop: 2 }}>
           <TableContainer>
-            <Table stickyHeader aria-label="images table">
+          <Table stickyHeader aria-label="images table">
               <TableHead>
                 <TableRow>
-                  <TableCell>ID</TableCell>
+                  <TableCell onClick={handleSortToggle} style={{ cursor: 'pointer' }}>
+                    ID {sortOrder === 'asc' ? '↑' : '↓'}
+                  </TableCell>
                   <TableCell>Название</TableCell>
                   <TableCell>Тип</TableCell>
                   <TableCell>ID Формата</TableCell>
@@ -231,14 +324,19 @@ function ImagePanel({ setActivePanel }) {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {images.length > 0 ? (
-                  images.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((image) => (
+                {filteredImages
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((image) => (
                     <TableRow hover key={image.ID_OBRAZKU}>
                       <TableCell>{image.ID_OBRAZKU}</TableCell>
                       <TableCell>{image.NAZEV}</TableCell>
-                      <TableCell>{formats.find((f) => f.ID_FORMATU === image.FORMAT_ID_FORMATU)?.ROZIRENI || '—' }</TableCell>
+                      <TableCell>
+                        {formats.find((f) => f.ID_FORMATU === image.FORMAT_ID_FORMATU)?.ROZIRENI || '—'}
+                      </TableCell>
                       <TableCell>{image.FORMAT_ID_FORMATU}</TableCell>
-                      <TableCell>{products.find((p) => p.id === image.PRODUKT_ID_PRODUKTU)?.name || '—'}</TableCell>
+                      <TableCell>
+                        {products.find((p) => p.id === image.PRODUKT_ID_PRODUKTU)?.name || '—'}
+                      </TableCell>
                       <TableCell align="right">
                         <IconButton onClick={() => handleFormOpen(image)} color="primary">
                           <FiEdit2 />
@@ -246,20 +344,13 @@ function ImagePanel({ setActivePanel }) {
                         <IconButton
                           onClick={() => handleDeleteConfirmOpen(image)}
                           color="secondary"
-                          disabled={image.ID_OBRAZKU === 1} // Отключаем кнопку
+                          disabled={image.ID_OBRAZKU === 1}
                         >
                           <FiTrash2 />
                         </IconButton>
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center">
-                      Нет данных
-                    </TableCell>
-                  </TableRow>
-                )}
+                  ))}
               </TableBody>
             </Table>
           </TableContainer>
