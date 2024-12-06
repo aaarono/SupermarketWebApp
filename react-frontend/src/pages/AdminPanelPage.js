@@ -34,7 +34,7 @@ function AdminPanelPage({ AdminPanelRole }) {
       case 'product':
         return <ProductPanel setActivePanel={setActivePanel} />;
       case 'order-product':
-        return <OrderProductPanel setActivePanel={setActivePanel} />; // TODO реализовать OrderProductPanel
+        return <OrderProductPanel setActivePanel={setActivePanel} />;
       case 'product-supplier':
         return <ProductSupplierPanel setActivePanel={setActivePanel} />; // TODO реализовать ProductSupplierPanel
       case 'supplier':

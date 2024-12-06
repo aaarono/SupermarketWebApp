@@ -1,4 +1,4 @@
-// OrderProductPanel.js
+// src/components/OrderProductPanel.js
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -50,8 +50,15 @@ function OrderProductPanel({ setActivePanel }) {
 
   const fetchOrderProducts = async () => {
     try {
-      const response = await api.get('/api/order-products');
-      setOrderProducts(response);
+      const response = await api.get('/api/order-products'); // Исправлено
+      console.log('Полученные данные:', response); // Логирование для отладки
+
+      // Проверка структуры ответа
+      if (response && response) {
+        setOrderProducts(Array.isArray(response) ? response : []);
+      } else {
+        setOrderProducts([]);
+      }
       setLoading(false);
     } catch (error) {
       console.error('Ошибка при загрузке связей заказ-продукт:', error);
@@ -65,8 +72,8 @@ function OrderProductPanel({ setActivePanel }) {
     setFormData(
       orderProduct
         ? {
-            objednavka_id_objednavky: orderProduct.objednavka_id_objednavky,
-            produkt_id_produktu: orderProduct.produkt_id_produktu,
+            objednavka_id_objednavky: orderProduct.orderId,
+            produkt_id_produktu: orderProduct.productId, // Исправлено
             quantity: orderProduct.quantity,
           }
         : { objednavka_id_objednavky: '', produkt_id_produktu: '', quantity: '' }
@@ -84,13 +91,13 @@ function OrderProductPanel({ setActivePanel }) {
     e.preventDefault();
     try {
       const dataToSend = {
-        objednavka_id_objednavky: parseInt(formData.objednavka_id_objednavky, 10),
-        produkt_id_produktu: parseInt(formData.produkt_id_produktu, 10),
+        orderId: parseInt(formData.objednavka_id_objednavky, 10),
+        productId: parseInt(formData.produkt_id_produktu, 10), // Исправлено
         quantity: parseInt(formData.quantity, 10),
       };
 
       if (selectedOrderProduct) {
-        await api.put(`/api/order-products/${selectedOrderProduct.id}`, dataToSend);
+        await api.put('/api/order-products', dataToSend);
         setSnackbar({ open: true, message: 'Связь обновлена успешно', severity: 'success' });
       } else {
         await api.post('/api/order-products', dataToSend);
@@ -117,7 +124,12 @@ function OrderProductPanel({ setActivePanel }) {
 
   const handleDelete = async () => {
     try {
-      await api.delete(`/api/order-products/${selectedOrderProduct.id}`);
+      await api.delete('/api/order-products', {
+        params: {
+          orderId: selectedOrderProduct.orderId, // Исправлено
+          productId: selectedOrderProduct.productId, // Исправлено
+        },
+      });
       setSnackbar({ open: true, message: 'Связь удалена успешно', severity: 'success' });
       fetchOrderProducts();
       handleDeleteConfirmClose();
@@ -172,7 +184,6 @@ function OrderProductPanel({ setActivePanel }) {
             <Table stickyHeader aria-label="order-products table">
               <TableHead>
                 <TableRow>
-                  <TableCell>ID</TableCell>
                   <TableCell>ID Заказа</TableCell>
                   <TableCell>ID Продукта</TableCell>
                   <TableCell>Количество</TableCell>
@@ -181,25 +192,26 @@ function OrderProductPanel({ setActivePanel }) {
               </TableHead>
               <TableBody>
                 {orderProducts.length > 0 ? (
-                  orderProducts.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((op) => (
-                    <TableRow hover key={op.id}>
-                      <TableCell>{op.id}</TableCell>
-                      <TableCell>{op.objednavka_id_objednavky}</TableCell>
-                      <TableCell>{op.produkt_id_produktu}</TableCell>
-                      <TableCell>{op.quantity}</TableCell>
-                      <TableCell align="right">
-                        <IconButton onClick={() => handleFormOpen(op)} color="primary">
-                          <FiEdit2 />
-                        </IconButton>
-                        <IconButton onClick={() => handleDeleteConfirmOpen(op)} color="secondary">
-                          <FiTrash2 />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  orderProducts
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((op) => (
+                      <TableRow hover key={`${op.orderId}-${op.productId}`}> {/* Исправлено */}
+                        <TableCell>{op.orderId}</TableCell>
+                        <TableCell>{op.productId}</TableCell> {/* Исправлено */}
+                        <TableCell>{op.quantity}</TableCell>
+                        <TableCell align="right">
+                          <IconButton onClick={() => handleFormOpen(op)} color="primary">
+                            <FiEdit2 />
+                          </IconButton>
+                          <IconButton onClick={() => handleDeleteConfirmOpen(op)} color="secondary">
+                            <FiTrash2 />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} align="center">
+                    <TableCell colSpan={4} align="center"> {/* Исправлено colSpan */}
                       Нет данных
                     </TableCell>
                   </TableRow>
@@ -233,6 +245,7 @@ function OrderProductPanel({ setActivePanel }) {
                 required
                 value={formData.objednavka_id_objednavky}
                 onChange={(e) => setFormData({ ...formData, objednavka_id_objednavky: e.target.value })}
+                disabled={!!selectedOrderProduct} // Запрещаем изменение ID заказа при редактировании
               />
               <TextField
                 margin="dense"
@@ -242,6 +255,7 @@ function OrderProductPanel({ setActivePanel }) {
                 required
                 value={formData.produkt_id_produktu}
                 onChange={(e) => setFormData({ ...formData, produkt_id_produktu: e.target.value })}
+                disabled={!!selectedOrderProduct} // Запрещаем изменение ID продукта при редактировании
               />
               <TextField
                 margin="dense"
@@ -267,7 +281,8 @@ function OrderProductPanel({ setActivePanel }) {
           <DialogTitle>Удалить связь?</DialogTitle>
           <DialogContent>
             <Typography>
-              Вы уверены, что хотите удалить связь с ID {selectedOrderProduct?.id}?
+              Вы уверены, что хотите удалить связь заказа ID {selectedOrderProduct?.orderId} и продукта ID{' '}
+              {selectedOrderProduct?.productId}?
             </Typography>
           </DialogContent>
           <DialogActions>

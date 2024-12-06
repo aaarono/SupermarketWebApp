@@ -1,4 +1,4 @@
-// ProductSupplierPanel.js
+// src/components/ProductSupplierPanel.js
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -37,8 +37,8 @@ function ProductSupplierPanel({ setActivePanel }) {
   const [formOpen, setFormOpen] = useState(false);
   const [selectedProductSupplier, setSelectedProductSupplier] = useState(null);
   const [formData, setFormData] = useState({
-    produkt_id_produktu: '',
-    dodavatel_id_dodavatelu: '',
+    DODAVATEL_ID_DODAVATELU: '',
+    PRODUKT_ID_PRODUKTU: '',
   });
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -49,8 +49,15 @@ function ProductSupplierPanel({ setActivePanel }) {
 
   const fetchProductSuppliers = async () => {
     try {
-      const response = await api.get('/api/product-suppliers');
-      setProductSuppliers(response);
+      const response = await api.get('/api/product-suppliers'); // Убедитесь, что путь правильный
+      console.log('Полученные данные:', response); // Логирование для отладки
+
+      // Проверка структуры ответа
+      if (response && response) {
+        setProductSuppliers(Array.isArray(response) ? response : []);
+      } else {
+        setProductSuppliers([]);
+      }
       setLoading(false);
     } catch (error) {
       console.error('Ошибка при загрузке связей продукт-поставщик:', error);
@@ -64,10 +71,10 @@ function ProductSupplierPanel({ setActivePanel }) {
     setFormData(
       productSupplier
         ? {
-            produkt_id_produktu: productSupplier.produkt_id_produktu,
-            dodavatel_id_dodavatelu: productSupplier.dodavatel_id_dodavatelu,
+            DODAVATEL_ID_DODAVATELU: productSupplier.DODAVATEL_ID_DODAVATELU,
+            PRODUKT_ID_PRODUKTU: productSupplier.PRODUKT_ID_PRODUKTU,
           }
-        : { produkt_id_produktu: '', dodavatel_id_dodavatelu: '' }
+        : { DODAVATEL_ID_DODAVATELU: '', PRODUKT_ID_PRODUKTU: '', supplyPrice: '', supplyDate: '' }
     );
     setFormOpen(true);
   };
@@ -75,19 +82,19 @@ function ProductSupplierPanel({ setActivePanel }) {
   const handleFormClose = () => {
     setFormOpen(false);
     setSelectedProductSupplier(null);
-    setFormData({ produkt_id_produktu: '', dodavatel_id_dodavatelu: '' });
+    setFormData({ DODAVATEL_ID_DODAVATELU: '', PRODUKT_ID_PRODUKTU: '', supplyPrice: '', supplyDate: '' });
   };
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     try {
       const dataToSend = {
-        produkt_id_produktu: parseInt(formData.produkt_id_produktu, 10),
-        dodavatel_id_dodavatelu: parseInt(formData.dodavatel_id_dodavatelu, 10),
+        DODAVATEL_ID_DODAVATELU: parseInt(formData.DODAVATEL_ID_DODAVATELU, 10),
+        PRODUKT_ID_PRODUKTU: parseInt(formData.PRODUKT_ID_PRODUKTU, 10),
       };
 
       if (selectedProductSupplier) {
-        await api.put(`/api/product-suppliers/${selectedProductSupplier.id}`, dataToSend);
+        await api.put('/api/product-suppliers', dataToSend);
         setSnackbar({ open: true, message: 'Связь обновлена успешно', severity: 'success' });
       } else {
         await api.post('/api/product-suppliers', dataToSend);
@@ -114,7 +121,12 @@ function ProductSupplierPanel({ setActivePanel }) {
 
   const handleDelete = async () => {
     try {
-      await api.delete(`/api/product-suppliers/${selectedProductSupplier.id}`);
+      await api.delete('/api/product-suppliers', {
+        params: {
+          produktIdProduktu: selectedProductSupplier.PRODUKT_ID_PRODUKTU,
+          DodavatelIdDodavatelyu: selectedProductSupplier.DODAVATEL_ID_DODAVATELU,
+        },
+      });
       setSnackbar({ open: true, message: 'Связь удалена успешно', severity: 'success' });
       fetchProductSuppliers();
       handleDeleteConfirmClose();
@@ -169,32 +181,32 @@ function ProductSupplierPanel({ setActivePanel }) {
             <Table stickyHeader aria-label="product-suppliers table">
               <TableHead>
                 <TableRow>
-                  <TableCell>ID</TableCell>
-                  <TableCell>ID Продукта</TableCell>
                   <TableCell>ID Поставщика</TableCell>
+                  <TableCell>ID Продукта</TableCell>
                   <TableCell align="right">Действия</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {productSuppliers.length > 0 ? (
-                  productSuppliers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((ps) => (
-                    <TableRow hover key={ps.id}>
-                      <TableCell>{ps.id}</TableCell>
-                      <TableCell>{ps.produkt_id_produktu}</TableCell>
-                      <TableCell>{ps.dodavatel_id_dodavatelu}</TableCell>
-                      <TableCell align="right">
-                        <IconButton onClick={() => handleFormOpen(ps)} color="primary">
-                          <FiEdit2 />
-                        </IconButton>
-                        <IconButton onClick={() => handleDeleteConfirmOpen(ps)} color="secondary">
-                          <FiTrash2 />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  productSuppliers
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((ps) => (
+                      <TableRow hover key={`${ps.PRODUKT_ID_PRODUKTU}-${ps.DODAVATEL_ID_DODAVATELU}`}>
+                        <TableCell>{ps.DODAVATEL_ID_DODAVATELU}</TableCell>
+                        <TableCell>{ps.PRODUKT_ID_PRODUKTU}</TableCell>
+                        <TableCell align="right">
+                          <IconButton onClick={() => handleFormOpen(ps)} color="primary">
+                            <FiEdit2 />
+                          </IconButton>
+                          <IconButton onClick={() => handleDeleteConfirmOpen(ps)} color="secondary">
+                            <FiTrash2 />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={4} align="center">
+                    <TableCell colSpan={5} align="center">
                       Нет данных
                     </TableCell>
                   </TableRow>
@@ -222,21 +234,23 @@ function ProductSupplierPanel({ setActivePanel }) {
               <TextField
                 autoFocus
                 margin="dense"
-                label="ID Продукта"
-                type="number"
-                fullWidth
-                required
-                value={formData.produkt_id_produktu}
-                onChange={(e) => setFormData({ ...formData, produkt_id_produktu: e.target.value })}
-              />
-              <TextField
-                margin="dense"
                 label="ID Поставщика"
                 type="number"
                 fullWidth
                 required
-                value={formData.dodavatel_id_dodavatelu}
-                onChange={(e) => setFormData({ ...formData, dodavatel_id_dodavatelu: e.target.value })}
+                value={formData.DODAVATEL_ID_DODAVATELU}
+                onChange={(e) => setFormData({ ...formData, DODAVATEL_ID_DODAVATELU: e.target.value })}
+                disabled={!!selectedProductSupplier} // Запрещаем изменение ID поставщика при редактировании
+              />
+              <TextField
+                margin="dense"
+                label="ID Продукта"
+                type="number"
+                fullWidth
+                required
+                value={formData.PRODUKT_ID_PRODUKTU}
+                onChange={(e) => setFormData({ ...formData, PRODUKT_ID_PRODUKTU: e.target.value })}
+                disabled={!!selectedProductSupplier} // Запрещаем изменение ID продукта при редактировании
               />
             </DialogContent>
             <DialogActions>
@@ -253,7 +267,8 @@ function ProductSupplierPanel({ setActivePanel }) {
           <DialogTitle>Удалить связь?</DialogTitle>
           <DialogContent>
             <Typography>
-              Вы уверены, что хотите удалить связь с ID {selectedProductSupplier?.id}?
+              Вы уверены, что хотите удалить связь продукта ID {selectedProductSupplier?.PRODUKT_ID_PRODUKTU} и поставщика ID{' '}
+              {selectedProductSupplier?.DODAVATEL_ID_DODAVATELU}?
             </Typography>
           </DialogContent>
           <DialogActions>
