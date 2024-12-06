@@ -34,7 +34,7 @@ function OrderPanel({ setActivePanel }) {
 
   const fetchOrders = async () => {
     try {
-      const response = await api.get('/orders');
+      const response = await api.get('/api/orders');
       setOrders(response.data);
     } catch (error) {
       console.error('Ошибка при загрузке заказов:', error);
@@ -43,7 +43,7 @@ function OrderPanel({ setActivePanel }) {
 
   const handleStatusChange = async (orderId, newStatus) => {
     try {
-      await api.put(`/orders/${orderId}`, { status: newStatus });
+      await api.put(`/api/orders/${orderId}`, { status: newStatus });
       setSnackbar({ open: true, message: 'Статус заказа обновлен', severity: 'success' });
       fetchOrders();
     } catch (error) {
