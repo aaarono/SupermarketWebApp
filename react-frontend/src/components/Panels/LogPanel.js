@@ -1,5 +1,3 @@
-// LogPanel.js
-
 import React, { useState, useEffect } from 'react';
 import {
   Typography,
@@ -14,12 +12,15 @@ import {
   Snackbar,
   Alert,
   CircularProgress,
+  TextField,
+  Button,
 } from '@mui/material';
 import AdminNavigation from './AdminNavigation';
 import api from '../../services/api';
 
 function LogPanel({ setActivePanel }) {
   const [logs, setLogs] = useState([]);
+  const [filteredLogs, setFilteredLogs] = useState([]); // Фильтрованные данные
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   // Пагинация
@@ -28,20 +29,57 @@ function LogPanel({ setActivePanel }) {
 
   const [loading, setLoading] = useState(true);
 
+  // Сортировка
+  const [sortOrder, setSortOrder] = useState('asc'); // 'asc' или 'desc'
+
+  // Фильтрация
+  const [filterId, setFilterId] = useState('');
+  const [filterOperation, setFilterOperation] = useState('');
+  const [filterTableName, setFilterTableName] = useState('');
+  const [filterDate, setFilterDate] = useState('');
+
   useEffect(() => {
     fetchLogs();
   }, []);
 
   const fetchLogs = async () => {
     try {
-      const response = await api.get('/api/logs');
-      setLogs(response);
+      const response = await api.get('/api/util/logs');
+      const sortedLogs = response.sort((a, b) => a.idLogu - b.idLogu); // Автоматическая сортировка по ID
+      setLogs(sortedLogs);
+      setFilteredLogs(sortedLogs); // Изначально фильтрованные данные такие же, как все логи
       setLoading(false);
     } catch (error) {
       console.error('Ошибка при загрузке логов:', error);
       setSnackbar({ open: true, message: 'Ошибка при загрузке логов', severity: 'error' });
       setLoading(false);
     }
+  };
+
+  // Обработчик сортировки
+  const handleSort = () => {
+    const sortedLogs = [...filteredLogs].sort((a, b) => {
+      if (sortOrder === 'asc') {
+        return b.idLogu - a.idLogu; // Сортировка по убыванию
+      } else {
+        return a.idLogu - b.idLogu; // Сортировка по возрастанию
+      }
+    });
+    setFilteredLogs(sortedLogs);
+    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+  };
+
+  // Обработчик фильтрации
+  const handleFilter = () => {
+    const filtered = logs.filter(
+      (log) =>
+        (!filterId || log.idLogu.toString().includes(filterId)) &&
+        (!filterOperation || log.operace.toLowerCase().includes(filterOperation.toLowerCase())) &&
+        (!filterTableName || log.nazevTabulky.toLowerCase().includes(filterTableName.toLowerCase())) &&
+        (!filterDate || new Date(log.datumModifikace).toLocaleDateString().includes(filterDate))
+    );
+    setFilteredLogs(filtered);
+    setPage(0); // Сбрасываем пагинацию на первую страницу
   };
 
   // Обработчики пагинации
@@ -74,30 +112,73 @@ function LogPanel({ setActivePanel }) {
           Логи
         </Typography>
 
+        {/* Поля для фильтрации */}
+        <div style={{ marginBottom: '16px', display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <TextField
+            label="Поиск по ID"
+            value={filterId}
+            onChange={(e) => setFilterId(e.target.value)}
+            variant="outlined"
+            size="small"
+          />
+          <TextField
+            label="Поиск по операции"
+            value={filterOperation}
+            onChange={(e) => setFilterOperation(e.target.value)}
+            variant="outlined"
+            size="small"
+          />
+          <TextField
+            label="Поиск по таблице"
+            value={filterTableName}
+            onChange={(e) => setFilterTableName(e.target.value)}
+            variant="outlined"
+            size="small"
+          />
+          <TextField
+            label="Поиск по дате (ДД.ММ.ГГГГ)"
+            value={filterDate}
+            onChange={(e) => setFilterDate(e.target.value)}
+            variant="outlined"
+            size="small"
+          />
+          <Button variant="contained" color="primary" onClick={handleFilter}>
+            Искать
+          </Button>
+        </div>
+
         <Paper sx={{ width: '100%', overflow: 'hidden', marginTop: 2 }}>
           <TableContainer>
             <Table stickyHeader aria-label="logs table">
               <TableHead>
                 <TableRow>
-                  <TableCell>ID Лога</TableCell>
+                  <TableCell onClick={handleSort} style={{ cursor: 'pointer' }}>
+                    ID Лога {sortOrder === 'asc' ? '↑' : '↓'}
+                  </TableCell>
                   <TableCell>Операция</TableCell>
                   <TableCell>Название Таблицы</TableCell>
                   <TableCell>Дата Модификации</TableCell>
+                  <TableCell>Старые Значения</TableCell>
+                  <TableCell>Новые Значения</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {logs.length > 0 ? (
-                  logs.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((log) => (
-                    <TableRow hover key={log.id_logu}>
-                      <TableCell>{log.id_logu}</TableCell>
-                      <TableCell>{log.operace}</TableCell>
-                      <TableCell>{log.nazevtabulky}</TableCell>
-                      <TableCell>{new Date(log.datummodifikace).toLocaleString()}</TableCell>
-                    </TableRow>
-                  ))
+                {filteredLogs.length > 0 ? (
+                  filteredLogs
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((log) => (
+                      <TableRow hover key={log.idLogu}>
+                        <TableCell>{log.idLogu}</TableCell>
+                        <TableCell>{log.operace}</TableCell>
+                        <TableCell>{log.nazevTabulky}</TableCell>
+                        <TableCell>{new Date(log.datumModifikace).toLocaleString()}</TableCell>
+                        <TableCell>{log.oldValues || '—'}</TableCell>
+                        <TableCell>{log.newValues || '—'}</TableCell>
+                      </TableRow>
+                    ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={4} align="center">
+                    <TableCell colSpan={6} align="center">
                       Нет данных
                     </TableCell>
                   </TableRow>
@@ -108,7 +189,7 @@ function LogPanel({ setActivePanel }) {
 
           <TablePagination
             component="div"
-            count={logs.length}
+            count={filteredLogs.length}
             page={page}
             onPageChange={handleChangePage}
             rowsPerPage={rowsPerPage}

@@ -1,11 +1,9 @@
 package com.bdas_dva.backend.Controller;
 
-import com.bdas_dva.backend.Model.Zamestnanec;
-import com.bdas_dva.backend.Model.ZamestnanecRequest;
-import com.bdas_dva.backend.Model.ZamestnanecResponse;
-import com.bdas_dva.backend.Model.ZamestnanecUserLinkRequest;
-import com.bdas_dva.backend.Model.ZamestnanecRegisterRequest;
+import com.bdas_dva.backend.Model.*;
+import com.bdas_dva.backend.Service.UtilService;
 import com.bdas_dva.backend.Service.ZamestnanecService;
+import org.aspectj.util.UtilClassLoader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,6 +20,8 @@ public class ZamestnanecController {
     @Autowired
     private ZamestnanecService zamestnanecService;
 
+    @Autowired
+    private UtilService utilService;
     /**
      * Získá detail zaměstnanca podle jeho ID.
      *
@@ -170,6 +170,70 @@ public class ZamestnanecController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Ошибка при получении списка позиций: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Создать новую pozice.
+     * @param pozice Объект Pozice с полем 'nazev'.
+     * @return Статус операции.
+     */
+    @PostMapping("/pozice")
+    public ResponseEntity<?> createPozice(@RequestBody Pozice pozice) {
+        try {
+            if (pozice.getNazev() == null || pozice.getNazev().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Поле 'nazev' обязательно для заполнения.");
+            }
+
+            utilService.executePoziceCUD("INSERT", pozice);
+            return ResponseEntity.ok("Pozice успешно создана.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Ошибка при создании pozice: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Обновить существующую pozice.
+     * @param idPozice ID pozice, которую нужно обновить.
+     * @param pozice Объект Pozice с полем 'nazev' (может быть обновлено).
+     * @return Статус операции.
+     */
+    @PutMapping("/pozice/{id}")
+    public ResponseEntity<?> updatePozice(@PathVariable("id") Long idPozice, @RequestBody Pozice pozice) {
+        try {
+            if (idPozice == null) {
+                return ResponseEntity.badRequest().body("ID pozice обязательно для обновления.");
+            }
+
+            pozice.setIdPozice(idPozice);
+            utilService.executePoziceCUD("UPDATE", pozice);
+            return ResponseEntity.ok("Pozice успешно обновлена.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Ошибка при обновлении pozice: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Удалить существующую pozice.
+     * @param idPozice ID pozice, которую нужно удалить.
+     * @return Статус операции.
+     */
+    @DeleteMapping("/pozice/{id}")
+    public ResponseEntity<?> deletePozice(@PathVariable("id") Long idPozice) {
+        try {
+            if (idPozice == null) {
+                return ResponseEntity.badRequest().body("ID pozice обязательно для удаления.");
+            }
+
+            Pozice pozice = new Pozice();
+            pozice.setIdPozice(idPozice);
+            utilService.executePoziceCUD("DELETE", pozice);
+            return ResponseEntity.ok("Pozice успешно удалена.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Ошибка при удалении pozice: " + e.getMessage());
         }
     }
 }

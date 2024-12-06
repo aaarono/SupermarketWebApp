@@ -149,7 +149,9 @@ const EmployeeInfo = () => {
   const fetchHierarchy = async () => {
     try {
       const response = await api.get("/api/zamestnanci/hierarchy/1");
+      console.log(response);
       const tree = buildHierarchy(response);
+      console.log(tree)
       setHierarchy(tree);
     } catch (error) {
       console.error("Ошибка загрузки иерархии сотрудников:", error);
