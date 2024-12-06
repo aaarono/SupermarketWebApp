@@ -48,7 +48,7 @@ function FormatPanel({ setActivePanel }) {
 
   const fetchFormats = async () => {
     try {
-      const response = await api.get('/api/formats');
+      const response = await api.get('/api/image-formats');
       setFormats(response);
       setLoading(false);
     } catch (error) {
@@ -151,7 +151,7 @@ function FormatPanel({ setActivePanel }) {
         <Typography variant="h4" gutterBottom>
           Форматы
         </Typography>
-        <Button
+        {/* <Button
           variant="contained"
           color="primary"
           startIcon={<FiPlus />}
@@ -159,7 +159,7 @@ function FormatPanel({ setActivePanel }) {
           style={{ marginBottom: '16px' }}
         >
           Добавить формат
-        </Button>
+        </Button> */}
 
         <Paper sx={{ width: '100%', overflow: 'hidden', marginTop: 2 }}>
           <TableContainer>
@@ -168,7 +168,7 @@ function FormatPanel({ setActivePanel }) {
                 <TableRow>
                   <TableCell>ID Формата</TableCell>
                   <TableCell>Разрешение</TableCell>
-                  <TableCell align="right">Действия</TableCell>
+                  {/* <TableCell align="right">Действия</TableCell> */}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -177,14 +177,14 @@ function FormatPanel({ setActivePanel }) {
                     <TableRow hover key={format.ID_FORMATU}>
                       <TableCell>{format.ID_FORMATU}</TableCell>
                       <TableCell>{format.ROZIRENI}</TableCell>
-                      <TableCell align="right">
+                      {/* <TableCell align="right">
                         <IconButton onClick={() => handleFormOpen(format)} color="primary">
                           <FiEdit2 />
                         </IconButton>
                         <IconButton onClick={() => handleDeleteConfirmOpen(format)} color="secondary">
                           <FiTrash2 />
                         </IconButton>
-                      </TableCell>
+                      </TableCell> */}
                     </TableRow>
                   ))
                 ) : (
@@ -210,7 +210,7 @@ function FormatPanel({ setActivePanel }) {
         </Paper>
 
         {/* Форма добавления/редактирования формата */}
-        <Dialog open={formOpen} onClose={handleFormClose} fullWidth maxWidth="sm">
+        {/* <Dialog open={formOpen} onClose={handleFormClose} fullWidth maxWidth="sm">
           <DialogTitle>{selectedFormat ? 'Редактировать формат' : 'Добавить формат'}</DialogTitle>
           <form onSubmit={handleFormSubmit}>
             <DialogContent>
@@ -232,10 +232,10 @@ function FormatPanel({ setActivePanel }) {
               </Button>
             </DialogActions>
           </form>
-        </Dialog>
+        </Dialog> */}
 
         {/* Диалог подтверждения удаления */}
-        <Dialog open={deleteConfirmOpen} onClose={handleDeleteConfirmClose}>
+        {/* <Dialog open={deleteConfirmOpen} onClose={handleDeleteConfirmClose}>
           <DialogTitle>Удалить формат?</DialogTitle>
           <DialogContent>
             <Typography>
@@ -248,7 +248,7 @@ function FormatPanel({ setActivePanel }) {
               Удалить
             </Button>
           </DialogActions>
-        </Dialog>
+        </Dialog> */}
 
         {/* Уведомления */}
         <Snackbar

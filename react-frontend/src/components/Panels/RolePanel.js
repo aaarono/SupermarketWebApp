@@ -48,7 +48,7 @@ function RolePanel({ setActivePanel }) {
 
   const fetchRoles = async () => {
     try {
-      const response = await api.get('/api/roles');
+      const response = await api.get('/api/util/roles');
       setRoles(response);
       setLoading(false);
     } catch (error) {
@@ -151,7 +151,7 @@ function RolePanel({ setActivePanel }) {
         <Typography variant="h4" gutterBottom>
           Роли
         </Typography>
-        <Button
+        {/* <Button
           variant="contained"
           color="primary"
           startIcon={<FiPlus />}
@@ -159,7 +159,7 @@ function RolePanel({ setActivePanel }) {
           style={{ marginBottom: '16px' }}
         >
           Добавить роль
-        </Button>
+        </Button> */}
 
         <Paper sx={{ width: '100%', overflow: 'hidden', marginTop: 2 }}>
           <TableContainer>
@@ -168,7 +168,7 @@ function RolePanel({ setActivePanel }) {
                 <TableRow>
                   <TableCell>ID Роли</TableCell>
                   <TableCell>Название роли</TableCell>
-                  <TableCell align="right">Действия</TableCell>
+                  {/* <TableCell align="right">Действия</TableCell> */}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -177,14 +177,14 @@ function RolePanel({ setActivePanel }) {
                     <TableRow hover key={role.ID_ROLE}>
                       <TableCell>{role.ID_ROLE}</TableCell>
                       <TableCell>{role.ROLENAME}</TableCell>
-                      <TableCell align="right">
+                      {/* <TableCell align="right">
                         <IconButton onClick={() => handleFormOpen(role)} color="primary">
                           <FiEdit2 />
                         </IconButton>
                         <IconButton onClick={() => handleDeleteConfirmOpen(role)} color="secondary">
                           <FiTrash2 />
                         </IconButton>
-                      </TableCell>
+                      </TableCell> */}
                     </TableRow>
                   ))
                 ) : (
@@ -210,7 +210,7 @@ function RolePanel({ setActivePanel }) {
         </Paper>
 
         {/* Форма добавления/редактирования роли */}
-        <Dialog open={formOpen} onClose={handleFormClose} fullWidth maxWidth="sm">
+        {/* <Dialog open={formOpen} onClose={handleFormClose} fullWidth maxWidth="sm">
           <DialogTitle>{selectedRole ? 'Редактировать роль' : 'Добавить роль'}</DialogTitle>
           <form onSubmit={handleFormSubmit}>
             <DialogContent>
@@ -232,10 +232,10 @@ function RolePanel({ setActivePanel }) {
               </Button>
             </DialogActions>
           </form>
-        </Dialog>
+        </Dialog> */}
 
         {/* Диалог подтверждения удаления */}
-        <Dialog open={deleteConfirmOpen} onClose={handleDeleteConfirmClose}>
+        {/* <Dialog open={deleteConfirmOpen} onClose={handleDeleteConfirmClose}>
           <DialogTitle>Удалить роль?</DialogTitle>
           <DialogContent>
             <Typography>
@@ -248,10 +248,10 @@ function RolePanel({ setActivePanel }) {
               Удалить
             </Button>
           </DialogActions>
-        </Dialog>
+        </Dialog> */}
 
         {/* Уведомления */}
-        <Snackbar
+        {/* <Snackbar
           open={snackbar.open}
           autoHideDuration={6000}
           onClose={() => setSnackbar({ ...snackbar, open: false })}
@@ -259,7 +259,7 @@ function RolePanel({ setActivePanel }) {
           <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity}>
             {snackbar.message}
           </Alert>
-        </Snackbar>
+        </Snackbar> */}
       </div>
     </div>
   );

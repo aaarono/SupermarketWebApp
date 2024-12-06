@@ -1,3 +1,4 @@
+// UtilService.java
 package com.bdas_dva.backend.Service;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,22 @@ public class UtilService {
         } catch (DataAccessException e) {
             e.printStackTrace();
             throw new RuntimeException("Ошибка при выполнении запроса: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Получить все роли из таблицы ROLE.
+     * @return Список ролей.
+     */
+    public List<Map<String, Object>> getAllRoles() {
+        String query = "SELECT * FROM ROLE";
+
+        try {
+            // Выполнение запроса для получения всех ролей
+            return jdbcTemplate.queryForList(query);
+        } catch (DataAccessException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Ошибка при получении ролей: " + e.getMessage());
         }
     }
 }
