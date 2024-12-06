@@ -48,7 +48,7 @@ function PositionPanel({ setActivePanel }) {
 
   const fetchPositions = async () => {
     try {
-      const response = await api.get('/api/positions');
+      const response = await api.get('/api/zamestnanci/pozice');
       setPositions(response);
       setLoading(false);
     } catch (error) {
@@ -151,7 +151,7 @@ function PositionPanel({ setActivePanel }) {
         <Typography variant="h4" gutterBottom>
           Позиции
         </Typography>
-        <Button
+        {/* <Button
           variant="contained"
           color="primary"
           startIcon={<FiPlus />}
@@ -159,7 +159,7 @@ function PositionPanel({ setActivePanel }) {
           style={{ marginBottom: '16px' }}
         >
           Добавить позицию
-        </Button>
+        </Button> */}
 
         <Paper sx={{ width: '100%', overflow: 'hidden', marginTop: 2 }}>
           <TableContainer>
@@ -168,7 +168,7 @@ function PositionPanel({ setActivePanel }) {
                 <TableRow>
                   <TableCell>ID Позиции</TableCell>
                   <TableCell>Название</TableCell>
-                  <TableCell align="right">Действия</TableCell>
+                  {/* <TableCell align="right">Действия</TableCell> */}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -176,15 +176,15 @@ function PositionPanel({ setActivePanel }) {
                   positions.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((position) => (
                     <TableRow hover key={position.ID_POZICE}>
                       <TableCell>{position.ID_POZICE}</TableCell>
-                      <TableCell>{position.nazev}</TableCell>
-                      <TableCell align="right">
+                      <TableCell>{position.NAZEV}</TableCell>
+                      {/* <TableCell align="right">
                         <IconButton onClick={() => handleFormOpen(position)} color="primary">
                           <FiEdit2 />
                         </IconButton>
                         <IconButton onClick={() => handleDeleteConfirmOpen(position)} color="secondary">
                           <FiTrash2 />
                         </IconButton>
-                      </TableCell>
+                      </TableCell> */}
                     </TableRow>
                   ))
                 ) : (
@@ -210,7 +210,7 @@ function PositionPanel({ setActivePanel }) {
         </Paper>
 
         {/* Форма добавления/редактирования позиции */}
-        <Dialog open={formOpen} onClose={handleFormClose} fullWidth maxWidth="sm">
+        {/* <Dialog open={formOpen} onClose={handleFormClose} fullWidth maxWidth="sm">
           <DialogTitle>{selectedPosition ? 'Редактировать позицию' : 'Добавить позицию'}</DialogTitle>
           <form onSubmit={handleFormSubmit}>
             <DialogContent>
@@ -232,10 +232,10 @@ function PositionPanel({ setActivePanel }) {
               </Button>
             </DialogActions>
           </form>
-        </Dialog>
+        </Dialog> */}
 
         {/* Диалог подтверждения удаления */}
-        <Dialog open={deleteConfirmOpen} onClose={handleDeleteConfirmClose}>
+        {/* <Dialog open={deleteConfirmOpen} onClose={handleDeleteConfirmClose}>
           <DialogTitle>Удалить позицию?</DialogTitle>
           <DialogContent>
             <Typography>
@@ -248,7 +248,7 @@ function PositionPanel({ setActivePanel }) {
               Удалить
             </Button>
           </DialogActions>
-        </Dialog>
+        </Dialog> */}
 
         {/* Уведомления */}
         <Snackbar

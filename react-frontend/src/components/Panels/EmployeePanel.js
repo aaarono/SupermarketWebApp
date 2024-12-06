@@ -317,12 +317,14 @@ function EmployeePanel({ setActivePanel }) {
       setFormData(prev => ({
         ...prev,
         supermarketIdSupermarketu: e.target.value,
+        skladIdSkladu: '',
         zamestnanecIdZamestnance: '',
       }));
     } else if (isWarehouseStaff) {
       setFormData(prev => ({
         ...prev,
         skladIdSkladu: e.target.value,
+        supermarketIdSupermarketu: '',
         zamestnanecIdZamestnance: '',
       }));
     }

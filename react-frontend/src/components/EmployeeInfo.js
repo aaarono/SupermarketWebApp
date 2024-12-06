@@ -28,98 +28,49 @@ const positionIcons = {
   2: <FaUsers color="secondary" />, // Командир
   3: <FaEnvelope color="success" />, // Администратор
   4: <FaPhone color="warning" />, // Сотрудник
-  // Добавьте другие позиции по необходимости
+};
+
+// Функция для построения дерева иерархии
+const buildHierarchy = (employees) => {
+  const map = {};
+  const roots = [];
+
+  employees.forEach((employee) => {
+    map[employee.idZamestnance] = { ...employee, children: [] };
+  });
+
+  employees.forEach((employee) => {
+    if (employee.zamestnanecIdZamestnance) {
+      const parent = map[employee.zamestnanecIdZamestnance];
+      if (parent) {
+        parent.children.push(map[employee.idZamestnance]);
+      }
+    } else {
+      roots.push(map[employee.idZamestnance]);
+    }
+  });
+
+  return roots;
 };
 
 // Рекурсивный компонент для отображения сотрудников
 const EmployeeListItem = ({ employee, positionsMap, level = 0 }) => {
   const [open, setOpen] = useState(false);
-  const [children, setChildren] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success",
-  });
 
-  // Обработчик клика для разворачивания/сворачивания списка подчинённых
-  const handleClick = () => {
-    // Разворачивать можно только на уровне менеджеров (level === 0)
-    if (level === 0) {
-      if (open) {
-        setOpen(false);
-      } else {
-        if (children.length === 0) {
-          fetchChildren();
-        } else {
-          setOpen(true);
-        }
-      }
-    }
-  };
-
-  // Функция для загрузки подчинённых сотрудников
-  const fetchChildren = async () => {
-    setLoading(true);
-    try {
-      const response = await api.get(`/api/zamestnanci/hierarchy/${employee.idZamestnance}`);
-      if (response && Array.isArray(response)) {
-        setChildren(response);
-        if (response.length > 0) {
-          setOpen(true);
-        } else {
-          // Если подчинённых нет, можно показать уведомление или просто оставить список свернутым
-          setSnackbar({
-            open: true,
-            message: "У этого сотрудника нет подчинённых.",
-            severity: "info",
-          });
-        }
-      } else {
-        console.error("Неправильный формат данных от API:", response);
-        setChildren([]);
-      }
-    } catch (error) {
-      console.error("Ошибка при загрузке иерархии:", error);
-      setSnackbar({
-        open: true,
-        message: "Ошибка при загрузке иерархии",
-        severity: "error",
-      });
-      setChildren([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Получение названия позиции из карты позиций
   const positionName = positionsMap[employee.poziceIdPozice] || "Неизвестная позиция";
-  // Получение иконки позиции
   const positionIcon = positionIcons[employee.poziceIdPozice] || <PersonIcon color="primary" />;
 
   return (
     <>
-      <ListItem
-        sx={{ pl: level * 4 }}
-        secondaryAction={
-          // Показывать иконку разворота только для менеджеров (level === 0)
-          level === 0 && (
-            <IconButton edge="end" onClick={handleClick}>
-              {open ? <ExpandLess /> : <ExpandMore />}
-            </IconButton>
-          )
-        }
-      >
+      <ListItem sx={{ pl: level * 4 }}>
         <ListItemAvatar>
-          <Avatar>
-            {employee.employeeName ? employee.employeeName.charAt(0) : "?"}
-          </Avatar>
+          <Avatar>{employee.employeeName?.charAt(0) || "?"}</Avatar>
         </ListItemAvatar>
         <ListItemText
           primary={
             <Box display="flex" alignItems="center">
               {positionIcon}
-              <Typography variant="subtitle1" sx={{ ml: 1, fontWeight: 'bold' }}>
+              <Typography variant="subtitle1" sx={{ ml: 1, fontWeight: "bold" }}>
                 {employee.employeeName || "N/A"}
               </Typography>
             </Box>
@@ -141,125 +92,70 @@ const EmployeeListItem = ({ employee, positionsMap, level = 0 }) => {
               )}
             </>
           }
-          onClick={handleClick}
-          // Устанавливаем курсор только для менеджеров, чтобы показать, что элемент кликабельный
-          style={{ cursor: level === 0 ? "pointer" : "default" }}
         />
-      </ListItem>
-      {/* Разворачиваемый список подчинённых */}
-      <Collapse in={open} timeout="auto" unmountOnExit>
-        {loading ? (
-          <Box display="flex" justifyContent="center" alignItems="center" padding={2}>
-            <CircularProgress size={20} />
-          </Box>
-        ) : (
-          children.length > 0 && (
-            <List component="div" disablePadding>
-              {children.map((child) => {
-                // Убедитесь, что у подчинённого есть idZamestnance
-                if (!child.idZamestnance) {
-                  console.warn("Child employee missing idZamestnance:", child);
-                  return null;
-                }
-                return (
-                  <EmployeeListItem
-                    key={child.idZamestnance}
-                    employee={child}
-                    positionsMap={positionsMap}
-                    level={level + 1}
-                  />
-                );
-              })}
-            </List>
-          )
+        {employee.children?.length > 0 && (
+          <IconButton edge="end" onClick={() => setOpen(!open)}>
+            {open ? <ExpandLess /> : <ExpandMore />}
+          </IconButton>
         )}
+      </ListItem>
+      <Collapse in={open} timeout="auto" unmountOnExit>
+        <List component="div" disablePadding>
+          {employee.children.map((child) => (
+            <EmployeeListItem
+              key={child.idZamestnance}
+              employee={child}
+              positionsMap={positionsMap}
+              level={level + 1}
+            />
+          ))}
+        </List>
       </Collapse>
-      {/* Snackbar для уведомлений */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </>
   );
 };
 
-// Корневой компонент для отображения дерева сотрудников
+// Корневой компонент
 const EmployeeInfo = () => {
-  const [managers, setManagers] = useState([]);
+  const [hierarchy, setHierarchy] = useState([]);
   const [positions, setPositions] = useState({});
   const [loading, setLoading] = useState(true);
-  const [positionsLoading, setPositionsLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "success",
   });
 
-  // Список ID менеджеров. Замените на реальные ID или получите их из API
-  const managerIds = [1, 2]; // Примерные ID
-
-  // Функция для загрузки списка позиций
+  // Загрузка позиций
   const fetchPositions = async () => {
-    setPositionsLoading(true);
     try {
       const response = await api.get("/api/zamestnanci/pozice");
-      console.log('Positions API Response:', response);
-      if (response && Array.isArray(response)) {
-        const map = {};
-        response.forEach((pos) => {
-          map[pos.ID_POZICE] = pos.NAZEV;
-        });
-        setPositions(map);
-      } else {
-        console.error("Неправильный формат данных позиций:", response);
-        setPositions({});
-      }
+      const map = response.reduce((acc, pos) => {
+        acc[pos.ID_POZICE] = pos.NAZEV;
+        return acc;
+      }, {});
+      setPositions(map);
     } catch (error) {
-      console.error("Ошибка при загрузке позиций:", error);
+      console.error("Ошибка загрузки позиций:", error);
       setSnackbar({
         open: true,
-        message: "Ошибка при загрузке позиций",
+        message: "Ошибка загрузки позиций",
         severity: "error",
       });
-      setPositions({});
-    } finally {
-      setPositionsLoading(false);
     }
   };
 
-  // Функция для загрузки менеджеров
-  const fetchManagers = async () => {
-    setLoading(true);
+  // Загрузка иерархии сотрудников
+  const fetchHierarchy = async () => {
     try {
-      const fetchPromises = managerIds.map((id) =>
-        api.get(`/api/zamestnanci/hierarchy/${id}`)
-      );
-      const results = await Promise.all(fetchPromises);
-      console.log('Managers API Responses:', results);
-      // Предполагаем, что первый элемент в каждом ответе — это сам менеджер
-      const managersData = results
-        .map((result) => {
-          if (result && Array.isArray(result) && result.length > 0) {
-            return result[0];
-          }
-          return null;
-        })
-        .filter((manager) => manager !== null && manager.idZamestnance);
-      setManagers(managersData);
+      const response = await api.get("/api/zamestnanci/hierarchy/1");
+      const tree = buildHierarchy(response);
+      setHierarchy(tree);
     } catch (error) {
-      console.error("Ошибка при загрузке менеджеров:", error);
+      console.error("Ошибка загрузки иерархии сотрудников:", error);
       setSnackbar({
         open: true,
-        message: "Ошибка при загрузке менеджеров",
+        message: "Ошибка загрузки сотрудников",
         severity: "error",
       });
     } finally {
@@ -267,17 +163,13 @@ const EmployeeInfo = () => {
     }
   };
 
-  // Загрузка позиций при монтировании компонента
   useEffect(() => {
-    fetchPositions();
+    const fetchData = async () => {
+      await fetchPositions();
+      await fetchHierarchy();
+    };
+    fetchData();
   }, []);
-
-  // Загрузка менеджеров после загрузки позиций
-  useEffect(() => {
-    if (!positionsLoading) {
-      fetchManagers();
-    }
-  }, [positionsLoading]);
 
   return (
     <Box
@@ -292,30 +184,21 @@ const EmployeeInfo = () => {
       <Typography variant="h4" component="h1" gutterBottom align="center">
         Справочник сотрудников
       </Typography>
-      {(loading || positionsLoading) ? (
+      {loading ? (
         <Box display="flex" justifyContent="center" alignItems="center" padding={2}>
           <CircularProgress />
         </Box>
       ) : (
         <List>
-          {managers.map((manager) => {
-            // Убедитесь, что у менеджера есть idZamestnance
-            if (!manager.idZamestnance) {
-              console.warn("Manager missing idZamestnance:", manager);
-              return null;
-            }
-            return (
-              <EmployeeListItem
-                key={manager.idZamestnance}
-                employee={manager}
-                positionsMap={positions}
-                level={0} // Менеджеры находятся на уровне 0
-              />
-            );
-          })}
+          {hierarchy.map((employee) => (
+            <EmployeeListItem
+              key={employee.idZamestnance}
+              employee={employee}
+              positionsMap={positions}
+            />
+          ))}
         </List>
       )}
-      {/* Snackbar для уведомлений */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
