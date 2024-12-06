@@ -36,19 +36,19 @@ function AdminPanelPage({ AdminPanelRole }) {
       case 'order-product':
         return <OrderProductPanel setActivePanel={setActivePanel} />;
       case 'product-supplier':
-        return <ProductSupplierPanel setActivePanel={setActivePanel} />; // TODO реализовать ProductSupplierPanel
+        return <ProductSupplierPanel setActivePanel={setActivePanel} />;
       case 'supplier':
         return <SupplierPanel setActivePanel={setActivePanel} />; // TODO реализовать SupplierPanel
       case 'image':
         return <ImagePanel setActivePanel={setActivePanel} />; // TODO реализовать ImagePanel
       case 'format':
-        return <FormatPanel setActivePanel={setActivePanel} />; // TODO реализовать FormatPanel
+        return <FormatPanel setActivePanel={setActivePanel} />;
       case 'position':
-        return <PositionPanel setActivePanel={setActivePanel} />; // TODO реализовать PositionPanel
+        return <PositionPanel setActivePanel={setActivePanel} />;
       case 'role':
-        return <RolePanel setActivePanel={setActivePanel} />; // TODO реализовать RolePanel
+        return <RolePanel setActivePanel={setActivePanel} />;
       case 'log':
-        return <LogPanel setActivePanel={setActivePanel} />; // TODO реализовать LogPanel
+        return <LogPanel setActivePanel={setActivePanel} />;
       case 'order':
         return <OrderPanel setActivePanel={setActivePanel} />; // TODO реализовать OrderPanel
       case 'address':
