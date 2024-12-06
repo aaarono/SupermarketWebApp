@@ -149,6 +149,36 @@ public class ZamestnanecService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getEmployeeHierarchy(Long idEmployee) throws Exception {
+        SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("P_SHOW_HIERARCHY_BY_ID")
+                .declareParameters(
+                        new SqlParameter("P_ID_EMPLOYEE", Types.NUMERIC),
+                        new SqlOutParameter("OUT_CURSOR", Types.REF_CURSOR)
+                );
+
+        // Параметры для процедуры
+        MapSqlParameterSource inParams = new MapSqlParameterSource()
+                .addValue("P_ID_EMPLOYEE", idEmployee);
+
+        logger.info("Calling procedure P_SHOW_HIERARCHY_BY_ID with parameter: {}", idEmployee);
+
+        // Вызов процедуры
+        Map<String, Object> out = jdbcCall.execute(inParams);
+
+        // Получаем результат в виде списка карт (для возможной сериализации в JSON)
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> hierarchy = (List<Map<String, Object>>) out.get("OUT_CURSOR");
+
+        if (hierarchy == null || hierarchy.isEmpty()) {
+            logger.warn("No hierarchy found for employee with ID: {}", idEmployee);
+            return Collections.emptyList();
+        }
+
+        logger.info("Procedure returned {} hierarchy entries.", hierarchy.size());
+        return hierarchy;
+    }
 
     /**
      * Vytvoří nového zaměstnance.

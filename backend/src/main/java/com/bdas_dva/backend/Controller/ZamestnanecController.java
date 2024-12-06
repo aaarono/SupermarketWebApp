@@ -23,6 +23,31 @@ public class ZamestnanecController {
     private ZamestnanecService zamestnanecService;
 
     /**
+     * Získá detail zaměstnanca podle jeho ID.
+     *
+     * @param idZamestnance ID zaměstnanca.
+     * @return Detail zaměstnanca ve formátu JSON.
+     */
+    @PreAuthorize("hasRole('EMPLOYEE') or hasRole('ADMIN')")
+    @GetMapping("/hierarchy/{idZamestnance}")
+    public ResponseEntity<?> getZamestnanecById(@PathVariable Long idZamestnance) {
+        try {
+            List<Map<String, Object>> zamestnanec = zamestnanecService.getEmployeeHierarchy(idZamestnance);
+            if (zamestnanec != null) {
+                return ResponseEntity.ok(zamestnanec);
+            } else {
+                return ResponseEntity.status(404).body("Zaměstnanec s tímto ID nebyl nalezen.");
+            }
+        } catch (DataAccessException dae) {
+            dae.printStackTrace();
+            return ResponseEntity.status(500).body("Databázová chyba při získávání zaměstnanca.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Chyba při získávání zaměstnanca: " + e.getMessage());
+        }
+    }
+
+    /**
      * Získá seznam zaměstnanců s možností filtrování.
      * @return Seznam zaměstnanců ve formátu JSON.
      */

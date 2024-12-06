@@ -52,15 +52,13 @@ public class OrderService {
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("proc_list_user_orders_explicit")
                 .returningResultSet("p_orders", (rs, rowNum) -> {
-                    // Создаем объект Order
                     Order order = new Order();
                     order.setIdObjednavky(rs.getLong("ID_OBJEDNAVKY"));
-                    order.setDatum(rs.getDate("DATUM"));  // Убрали псевдоним ORDER_DATE
-                    order.setStav(rs.getString("STAV"));  // Убрали псевдоним ORDER_STATUS
+                    order.setDatum(rs.getDate("DATUM"));
+                    order.setStav(rs.getString("STAV"));
                     order.setMnozstviProduktu(rs.getInt("TOTAL_COST"));
                     order.setZakaznikId(rs.getLong("ZAKAZNIK_ID_ZAKAZNIKU"));
 
-                    // Устанавливаем адрес
                     Address address = new Address();
                     address.setIdAdresy(rs.getLong("ADRESA_ID_ADRESY"));
                     address.setUlice(rs.getString("ULICE"));
@@ -69,21 +67,18 @@ public class OrderService {
                     address.setMesto(rs.getString("MESTO"));
                     order.setAddress(address);
 
-                    // Устанавливаем данные заказчика
                     Customer customer = new Customer();
                     customer.setJmeno(rs.getString("JMENO"));
                     customer.setPrijmeni(rs.getString("PRIJMENI"));
                     customer.setTelefon(rs.getLong("TELEFON"));
                     order.setCustomer(customer);
 
-                    // Устанавливаем тип оплаты
                     Payment payment = new Payment();
                     payment.setTyp(rs.getString("TYP"));
                     payment.setSuma(rs.getDouble("TOTAL_COST"));
                     payment.setDatum(rs.getDate("DATUM"));
                     order.setPayment(payment);
 
-                    // Десериализация JSON для продуктов
                     String productsJson = rs.getString("PRODUCTS");
                     if (productsJson != null) {
                         ObjectMapper objectMapper = new ObjectMapper();
@@ -96,25 +91,19 @@ public class OrderService {
                         } catch (JsonProcessingException e) {
                             throw new RuntimeException(e);
                         }
-
-                        // Устанавливаем продукты
                         order.setProducts(products);
                     }
 
                     return order;
                 });
 
-        // Входные параметры процедуры
         MapSqlParameterSource inParams = new MapSqlParameterSource()
                 .addValue("p_user_id", userId)
                 .addValue("p_zakaznik_id", zakaznikId);
 
-        // Вызов процедуры
         Map<String, Object> result = jdbcCall.execute(inParams);
 
-        // Получаем список заказов
         List<Order> orders = (List<Order>) result.get("p_orders");
-
         return orders != null ? orders : Collections.emptyList();
     }
 
