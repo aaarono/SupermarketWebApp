@@ -32,18 +32,18 @@ public class ZamestnanecController {
     @GetMapping("/hierarchy/{idZamestnance}")
     public ResponseEntity<?> getZamestnanecById(@PathVariable Long idZamestnance) {
         try {
-            List<Map<String, Object>> zamestnanec = zamestnanecService.getEmployeeHierarchy(idZamestnance);
-            if (zamestnanec != null) {
-                return ResponseEntity.ok(zamestnanec);
+            List<Zamestnanec> zamestnanecList = zamestnanecService.getEmployeeHierarchy(idZamestnance);
+            if (zamestnanecList != null && !zamestnanecList.isEmpty()) {
+                return ResponseEntity.ok(zamestnanecList);
             } else {
                 return ResponseEntity.status(404).body("Zaměstnanec s tímto ID nebyl nalezen.");
             }
         } catch (DataAccessException dae) {
             dae.printStackTrace();
-            return ResponseEntity.status(500).body("Databázová chyba při získávání zaměstnanca.");
+            return ResponseEntity.status(500).body("Databázová chyba při získávání zaměstnance.");
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(500).body("Chyba při získávání zaměstnanca: " + e.getMessage());
+            return ResponseEntity.status(500).body("Chyba při získávání zaměstnance: " + e.getMessage());
         }
     }
 

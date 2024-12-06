@@ -1,142 +1,334 @@
-import React, { useState } from "react";
+// EmployeeInfo.js
+import React, { useState, useEffect } from "react";
 import {
   Box,
-  Card,
-  CardContent,
   Typography,
-  Collapse,
+  CircularProgress,
+  Snackbar,
+  Alert,
+  Avatar,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
   IconButton,
-  Grid,
-  useTheme,
-  useMediaQuery,
-  Chip,
-  Paper,
-  Tooltip
+  Collapse,
 } from "@mui/material";
-import { styled } from "@mui/system";
-import { FaChevronDown, FaChevronUp, FaUserTie, FaUsers, FaEnvelope, FaPhone } from "react-icons/fa";
+import {
+  ExpandLess,
+  ExpandMore,
+  Person as PersonIcon,
+} from "@mui/icons-material";
+import { FaUserTie, FaUsers, FaEnvelope, FaPhone } from "react-icons/fa"; // Иконки для позиций
+import api from "../services/api"; // Предполагается, что у вас настроен axios или другой клиент API
 
-const StyledCard = styled(Card)(({ theme }) => ({
-  margin: "16px",
-  transition: "all 0.3s ease-in-out",
-  "&:hover": {
-    transform: "translateY(-5px)",
-    boxShadow: theme.shadows[10]
-  }
-}));
-
-const mockData = {
-  managers: [
-    {
-      id: 1,
-      name: "John Smith",
-      position: "Senior Manager",
-      department: "Engineering",
-      email: "john.smith@example.com",
-      phone: "+1 (555) 123-4567",
-      staff: [
-        {
-          id: 101,
-          name: "Alice Johnson",
-          position: "Developer",
-          department: "Engineering",
-          email: "alice.j@example.com",
-          phone: "+1 (555) 234-5678"
-        },
-        {
-          id: 102,
-          name: "Bob Wilson",
-          position: "Developer",
-          department: "Engineering",
-          email: "bob.w@example.com",
-          phone: "+1 (555) 345-6789"
-        }
-      ]
-    },
-    {
-      id: 2,
-      name: "Sarah Davis",
-      position: "Product Manager",
-      department: "Product",
-      email: "sarah.d@example.com",
-      phone: "+1 (555) 456-7890",
-      staff: [
-        {
-          id: 201,
-          name: "Mike Brown",
-          position: "Product Analyst",
-          department: "Product",
-          email: "mike.b@example.com",
-          phone: "+1 (555) 567-8901"
-        }
-      ]
-    }
-  ]
+// Карта иконок для позиций
+const positionIcons = {
+  1: <FaUserTie color="primary" />, // Менеджер
+  2: <FaUsers color="secondary" />, // Командир
+  3: <FaEnvelope color="success" />, // Администратор
+  4: <FaPhone color="warning" />, // Сотрудник
+  // Добавьте другие позиции по необходимости
 };
 
-const EmployeeInfoCard = ({ employee, isManager = false }) => {
-  const [expanded, setExpanded] = useState(false);
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+// Рекурсивный компонент для отображения сотрудников
+const EmployeeListItem = ({ employee, positionsMap, level = 0 }) => {
+  const [open, setOpen] = useState(false);
+  const [children, setChildren] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
 
-  const handleExpandClick = () => {
-    setExpanded(!expanded);
+  // Обработчик клика для разворачивания/сворачивания списка подчинённых
+  const handleClick = () => {
+    // Разворачивать можно только на уровне менеджеров (level === 0)
+    if (level === 0) {
+      if (open) {
+        setOpen(false);
+      } else {
+        if (children.length === 0) {
+          fetchChildren();
+        } else {
+          setOpen(true);
+        }
+      }
+    }
   };
 
+  // Функция для загрузки подчинённых сотрудников
+  const fetchChildren = async () => {
+    setLoading(true);
+    try {
+      const response = await api.get(`/api/zamestnanci/hierarchy/${employee.idZamestnance}`);
+      if (response && Array.isArray(response)) {
+        setChildren(response);
+        if (response.length > 0) {
+          setOpen(true);
+        } else {
+          // Если подчинённых нет, можно показать уведомление или просто оставить список свернутым
+          setSnackbar({
+            open: true,
+            message: "У этого сотрудника нет подчинённых.",
+            severity: "info",
+          });
+        }
+      } else {
+        console.error("Неправильный формат данных от API:", response);
+        setChildren([]);
+      }
+    } catch (error) {
+      console.error("Ошибка при загрузке иерархии:", error);
+      setSnackbar({
+        open: true,
+        message: "Ошибка при загрузке иерархии",
+        severity: "error",
+      });
+      setChildren([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Получение названия позиции из карты позиций
+  const positionName = positionsMap[employee.poziceIdPozice] || "Неизвестная позиция";
+  // Получение иконки позиции
+  const positionIcon = positionIcons[employee.poziceIdPozice] || <PersonIcon color="primary" />;
+
   return (
-    <StyledCard role="article" aria-label={`Employee card for ${employee.name}`}>
-      <CardContent>
-        <Box display="flex" flexDirection={isMobile ? "column" : "row"} alignItems="center">
-          <Box flex={1}>
-            <Typography variant="h6" component="h2">{employee.name}</Typography>
-            <Typography color="textSecondary" gutterBottom>{employee.position}</Typography>
-            <Box display="flex" gap={1} alignItems="center" mb={1}>
-              <FaEnvelope />
-              <Typography variant="body2">{employee.email}</Typography>
+    <>
+      <ListItem
+        sx={{ pl: level * 4 }}
+        secondaryAction={
+          // Показывать иконку разворота только для менеджеров (level === 0)
+          level === 0 && (
+            <IconButton edge="end" onClick={handleClick}>
+              {open ? <ExpandLess /> : <ExpandMore />}
+            </IconButton>
+          )
+        }
+      >
+        <ListItemAvatar>
+          <Avatar>
+            {employee.employeeName ? employee.employeeName.charAt(0) : "?"}
+          </Avatar>
+        </ListItemAvatar>
+        <ListItemText
+          primary={
+            <Box display="flex" alignItems="center">
+              {positionIcon}
+              <Typography variant="subtitle1" sx={{ ml: 1, fontWeight: 'bold' }}>
+                {employee.employeeName || "N/A"}
+              </Typography>
             </Box>
-            <Box display="flex" gap={1} alignItems="center" mb={1}>
-              <FaPhone />
-              <Typography variant="body2">{employee.phone}</Typography>
-            </Box>
+          }
+          secondary={
+            <>
+              <Typography variant="body2" color="textSecondary">
+                {positionName}
+              </Typography>
+              {employee.email && (
+                <Typography variant="body2" color="textSecondary">
+                  📧 {employee.email}
+                </Typography>
+              )}
+              {employee.phone && (
+                <Typography variant="body2" color="textSecondary">
+                  📞 {employee.phone}
+                </Typography>
+              )}
+            </>
+          }
+          onClick={handleClick}
+          // Устанавливаем курсор только для менеджеров, чтобы показать, что элемент кликабельный
+          style={{ cursor: level === 0 ? "pointer" : "default" }}
+        />
+      </ListItem>
+      {/* Разворачиваемый список подчинённых */}
+      <Collapse in={open} timeout="auto" unmountOnExit>
+        {loading ? (
+          <Box display="flex" justifyContent="center" alignItems="center" padding={2}>
+            <CircularProgress size={20} />
           </Box>
-          {isManager && (
-            <Tooltip title={expanded ? "Show less" : "Show team members"}>
-              <IconButton onClick={handleExpandClick} aria-expanded={expanded} aria-label="show more">
-                {expanded ? <FaChevronUp /> : <FaChevronDown />}
-              </IconButton>
-            </Tooltip>
-          )}
-        </Box>
-      </CardContent>
-      {isManager && (
-        <Collapse in={expanded} timeout="auto" unmountOnExit>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>Team Members</Typography>
-            <Grid container spacing={2}>
-              {employee.staff.map((staffMember) => (
-                <Grid item xs={12} sm={6} key={staffMember.id}>
-                  <EmployeeInfoCard employee={staffMember} />
-                </Grid>
-              ))}
-            </Grid>
-          </CardContent>
-        </Collapse>
-      )}
-    </StyledCard>
+        ) : (
+          children.length > 0 && (
+            <List component="div" disablePadding>
+              {children.map((child) => {
+                // Убедитесь, что у подчинённого есть idZamestnance
+                if (!child.idZamestnance) {
+                  console.warn("Child employee missing idZamestnance:", child);
+                  return null;
+                }
+                return (
+                  <EmployeeListItem
+                    key={child.idZamestnance}
+                    employee={child}
+                    positionsMap={positionsMap}
+                    level={level + 1}
+                  />
+                );
+              })}
+            </List>
+          )
+        )}
+      </Collapse>
+      {/* Snackbar для уведомлений */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </>
   );
 };
 
+// Корневой компонент для отображения дерева сотрудников
 const EmployeeInfo = () => {
+  const [managers, setManagers] = useState([]);
+  const [positions, setPositions] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [positionsLoading, setPositionsLoading] = useState(true);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
+  // Список ID менеджеров. Замените на реальные ID или получите их из API
+  const managerIds = [1, 2]; // Примерные ID
+
+  // Функция для загрузки списка позиций
+  const fetchPositions = async () => {
+    setPositionsLoading(true);
+    try {
+      const response = await api.get("/api/zamestnanci/pozice");
+      console.log('Positions API Response:', response);
+      if (response && Array.isArray(response)) {
+        const map = {};
+        response.forEach((pos) => {
+          map[pos.ID_POZICE] = pos.NAZEV;
+        });
+        setPositions(map);
+      } else {
+        console.error("Неправильный формат данных позиций:", response);
+        setPositions({});
+      }
+    } catch (error) {
+      console.error("Ошибка при загрузке позиций:", error);
+      setSnackbar({
+        open: true,
+        message: "Ошибка при загрузке позиций",
+        severity: "error",
+      });
+      setPositions({});
+    } finally {
+      setPositionsLoading(false);
+    }
+  };
+
+  // Функция для загрузки менеджеров
+  const fetchManagers = async () => {
+    setLoading(true);
+    try {
+      const fetchPromises = managerIds.map((id) =>
+        api.get(`/api/zamestnanci/hierarchy/${id}`)
+      );
+      const results = await Promise.all(fetchPromises);
+      console.log('Managers API Responses:', results);
+      // Предполагаем, что первый элемент в каждом ответе — это сам менеджер
+      const managersData = results
+        .map((result) => {
+          if (result && Array.isArray(result) && result.length > 0) {
+            return result[0];
+          }
+          return null;
+        })
+        .filter((manager) => manager !== null && manager.idZamestnance);
+      setManagers(managersData);
+    } catch (error) {
+      console.error("Ошибка при загрузке менеджеров:", error);
+      setSnackbar({
+        open: true,
+        message: "Ошибка при загрузке менеджеров",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Загрузка позиций при монтировании компонента
+  useEffect(() => {
+    fetchPositions();
+  }, []);
+
+  // Загрузка менеджеров после загрузки позиций
+  useEffect(() => {
+    if (!positionsLoading) {
+      fetchManagers();
+    }
+  }, [positionsLoading]);
+
   return (
-    <Box sx={{ maxWidth: 1200, margin: "0 auto", padding: 3 }} role="main" aria-label="Employee hierarchy display">
-      <Typography variant="h4" component="h1" gutterBottom align="center">Employee Directory</Typography>
-      <Grid container spacing={3}>
-        {mockData.managers.map((manager) => (
-          <Grid item xs={12} key={manager.id}>
-            <EmployeeInfoCard employee={manager} isManager={true} />
-          </Grid>
-        ))}
-      </Grid>
+    <Box
+      sx={{
+        maxWidth: 800,
+        margin: "0 auto",
+        padding: 3,
+      }}
+      role="main"
+      aria-label="Отображение иерархии сотрудников"
+    >
+      <Typography variant="h4" component="h1" gutterBottom align="center">
+        Справочник сотрудников
+      </Typography>
+      {(loading || positionsLoading) ? (
+        <Box display="flex" justifyContent="center" alignItems="center" padding={2}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <List>
+          {managers.map((manager) => {
+            // Убедитесь, что у менеджера есть idZamestnance
+            if (!manager.idZamestnance) {
+              console.warn("Manager missing idZamestnance:", manager);
+              return null;
+            }
+            return (
+              <EmployeeListItem
+                key={manager.idZamestnance}
+                employee={manager}
+                positionsMap={positions}
+                level={0} // Менеджеры находятся на уровне 0
+              />
+            );
+          })}
+        </List>
+      )}
+      {/* Snackbar для уведомлений */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

@@ -12,16 +12,45 @@ import EmployeePanel from '../components/Panels/EmployeePanel';
 import NavBar from '../components/NavBar';
 import CardPanel from '../components/Panels/KartaPannel';
 import CashPanel from '../components/Panels/HotovostPannel';
+import UserPanel from '../components/Panels/UserPanel';
+import OrderProductPanel from '../components/Panels/OrderProductPanel';
+import ProductSupplierPanel from '../components/Panels/ProductSupplierPanel';
+import SupplierPanel from '../components/Panels/SupplierPanel';
+import ImagePanel from '../components/Panels/ImagePanel';
+import FormatPanel from '../components/Panels/FormatPanel';
+import PositionPanel from '../components/Panels/PositionPanel';
+import RolePanel from '../components/Panels/RolePanel';
+import LogPanel from '../components/Panels/LogPanel';
 
 function AdminPanelPage({ AdminPanelRole }) {
-  const [activePanel, setActivePanel] = useState('product'); // Начальная панель
+  const [activePanel, setActivePanel] = useState('user');
 
   const renderActivePanel = () => {
     switch (activePanel) {
+      case 'user':
+        return <UserPanel setActivePanel={setActivePanel} />; // TODO: реализовать UserPanel
+      case 'employee':
+        return <EmployeePanel setActivePanel={setActivePanel} />;
       case 'product':
         return <ProductPanel setActivePanel={setActivePanel} />;
+      case 'order-product':
+        return <OrderProductPanel setActivePanel={setActivePanel} />; // TODO реализовать OrderProductPanel
+      case 'product-supplier':
+        return <ProductSupplierPanel setActivePanel={setActivePanel} />; // TODO реализовать ProductSupplierPanel
+      case 'supplier':
+        return <SupplierPanel setActivePanel={setActivePanel} />; // TODO реализовать SupplierPanel
+      case 'image':
+        return <ImagePanel setActivePanel={setActivePanel} />; // TODO реализовать ImagePanel
+      case 'format':
+        return <FormatPanel setActivePanel={setActivePanel} />; // TODO реализовать FormatPanel
+      case 'position':
+        return <PositionPanel setActivePanel={setActivePanel} />; // TODO реализовать PositionPanel
+      case 'role':
+        return <RolePanel setActivePanel={setActivePanel} />; // TODO реализовать RolePanel
+      case 'log':
+        return <LogPanel setActivePanel={setActivePanel} />; // TODO реализовать LogPanel
       case 'order':
-        return <OrderPanel setActivePanel={setActivePanel} />;
+        return <OrderPanel setActivePanel={setActivePanel} />; // TODO реализовать OrderPanel
       case 'address':
         return <AddressPanel setActivePanel={setActivePanel} />;
       case 'category':
@@ -36,16 +65,14 @@ function AdminPanelPage({ AdminPanelRole }) {
         return <CardPanel setActivePanel={setActivePanel} />;
       case 'cash':
         return <CashPanel setActivePanel={setActivePanel} />;
-      case 'employee':
-        return <EmployeePanel setActivePanel={setActivePanel} />;
       default:
-        return <ProductPanel setActivePanel={setActivePanel} />;
+        return <UserPanel setActivePanel={setActivePanel} />;
     }
   };
 
   return (
     <>
-      <NavBar NavBarUserRole = { AdminPanelRole } />
+      <NavBar NavBarUserRole={AdminPanelRole} />
       {renderActivePanel()}
     </>
   );

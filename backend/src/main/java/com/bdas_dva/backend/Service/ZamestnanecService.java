@@ -22,6 +22,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ZamestnanecService {
@@ -150,7 +151,7 @@ public class ZamestnanecService {
     }
 
     @Transactional(readOnly = true)
-    public List<Map<String, Object>> getEmployeeHierarchy(Long idEmployee) throws Exception {
+    public List<Zamestnanec> getEmployeeHierarchy(Long idEmployee) throws Exception {
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("P_SHOW_HIERARCHY_BY_ID")
                 .declareParameters(
@@ -167,7 +168,7 @@ public class ZamestnanecService {
         // Вызов процедуры
         Map<String, Object> out = jdbcCall.execute(inParams);
 
-        // Получаем результат в виде списка карт (для возможной сериализации в JSON)
+        // Получаем результат в виде списка карт
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> hierarchy = (List<Map<String, Object>>) out.get("OUT_CURSOR");
 
@@ -177,8 +178,32 @@ public class ZamestnanecService {
         }
 
         logger.info("Procedure returned {} hierarchy entries.", hierarchy.size());
-        return hierarchy;
+
+        // Маппинг результата на объекты Zamestnanec
+        List<Zamestnanec> result = hierarchy.stream().map(this::mapToZamestnanec).collect(Collectors.toList());
+        return result;
     }
+
+    private Zamestnanec mapToZamestnanec(Map<String, Object> row) {
+        Zamestnanec zamestnanec = new Zamestnanec();
+
+        // Основные поля
+        zamestnanec.setLevel(((Number) row.get("V_LEVEL")).intValue()); // Уровень иерархии
+        zamestnanec.setEmployeeName((String) row.get("V_EMPLOYEE_NAME")); // Полное имя сотрудника
+        zamestnanec.setIdZamestnance(((Number) row.get("ID_ZAMNESTNANCE")).longValue()); // ID сотрудника
+
+        // Новые поля
+        zamestnanec.setPoziceIdPozice(row.get("POZICE_ID_POZICE") != null ? ((Number) row.get("POZICE_ID_POZICE")).longValue() : null); // ID позиции
+        zamestnanec.setMzda(row.get("MZDA") != null ? ((Number) row.get("MZDA")).doubleValue() : null); // Зарплата
+        zamestnanec.setSupermarketIdSupermarketu(row.get("SUPERMARKET_ID_SUPERMARKETU") != null ? ((Number) row.get("SUPERMARKET_ID_SUPERMARKETU")).longValue() : null); // ID супермаркета
+        zamestnanec.setSkladIdSkladu(row.get("SKLAD_ID_SKLADU") != null ? ((Number) row.get("SKLAD_ID_SKLADU")).longValue() : null); // ID склада
+        zamestnanec.setPracovnidoba(row.get("PRACOVNIDOBA") != null ? ((Number) row.get("PRACOVNIDOBA")).intValue() : null); // Рабочие часы
+        zamestnanec.setZamestnanecIdZamestnance(row.get("ZAMNESTNANEC_ID_ZAMNESTNANCE") != null ? ((Number) row.get("ZAMNESTNANEC_ID_ZAMNESTNANCE")).longValue() : null); // ID супермаркета
+
+        return zamestnanec;
+    }
+
+
 
     /**
      * Vytvoří nového zaměstnance.

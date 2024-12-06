@@ -14,6 +14,8 @@ public class Zamestnanec {
     private String prijmeni;
     private Double mzda;
     private Long poziceIdPozice;
+    private Integer level; // Уровень иерархии
+    private String employeeName; // Полное имя сотрудника
 
     // Getters and Setters
 
@@ -103,5 +105,21 @@ public class Zamestnanec {
 
     public void setPoziceIdPozice(Long poziceIdPozice) {
         this.poziceIdPozice = poziceIdPozice;
+    }
+
+    public Integer getLevel() {
+        return level;
+    }
+
+    public void setLevel(Integer level) {
+        this.level = level;
+    }
+
+    public String getEmployeeName() {
+        return employeeName;
+    }
+
+    public void setEmployeeName(String employeeName) {
+        this.employeeName = employeeName;
     }
 }

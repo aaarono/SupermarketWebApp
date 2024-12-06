@@ -87,7 +87,62 @@ function AdminNavigation({ setActivePanel }) {
           <ListItemIcon>
             <FiUserCheck />
           </ListItemIcon>
-          <ListItemText primary="Employees" />
+          <ListItemText primary="Eployee" />
+        </ListItem>
+
+        <ListItem button onClick={() => setActivePanel('user')}>
+          <ListItemIcon>
+            <FiUserCheck />
+          </ListItemIcon>
+          <ListItemText primary="User" />
+        </ListItem>
+        <ListItem button onClick={() => setActivePanel('order-product')}>
+          <ListItemIcon>
+            <FiUserCheck />
+          </ListItemIcon>
+          <ListItemText primary="order-product" />
+        </ListItem>
+        <ListItem button onClick={() => setActivePanel('product-supplier')}>
+          <ListItemIcon>
+            <FiUserCheck />
+          </ListItemIcon>
+          <ListItemText primary="product-supplier" />
+        </ListItem>
+        <ListItem button onClick={() => setActivePanel('supplier')}>
+          <ListItemIcon>
+            <FiUserCheck />
+          </ListItemIcon>
+          <ListItemText primary="Supplier" />
+        </ListItem>
+        <ListItem button onClick={() => setActivePanel('image')}>
+          <ListItemIcon>
+            <FiUserCheck />
+          </ListItemIcon>
+          <ListItemText primary="Image" />
+        </ListItem>
+        <ListItem button onClick={() => setActivePanel('format')}>
+          <ListItemIcon>
+            <FiUserCheck />
+          </ListItemIcon>
+          <ListItemText primary="Format" />
+        </ListItem>
+        <ListItem button onClick={() => setActivePanel('position')}>
+          <ListItemIcon>
+            <FiUserCheck />
+          </ListItemIcon>
+          <ListItemText primary="Position" />
+        </ListItem>
+        <ListItem button onClick={() => setActivePanel('role')}>
+          <ListItemIcon>
+            <FiUserCheck />
+          </ListItemIcon>
+          <ListItemText primary="Role" />
+        </ListItem>
+        <ListItem button onClick={() => setActivePanel('log')}>
+          <ListItemIcon>
+            <FiUserCheck />
+          </ListItemIcon>
+          <ListItemText primary="Logs" />
         </ListItem>
       </List>
     </div>

@@ -476,12 +476,6 @@ const Cart = () => {
                           <Typography>Cash</Typography>
                         </Box>
                       </MenuItem>
-                      <MenuItem value="invoice">
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <BsBank size={24} />
-                          <Typography>Invoice</Typography>
-                        </Box>
-                      </MenuItem>
                     </StyledSelect>
                   </FormControl>
                 </Grid>
