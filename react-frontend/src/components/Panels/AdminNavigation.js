@@ -19,6 +19,14 @@ import {
   FiCreditCard,
   FiUserCheck,
 } from 'react-icons/fi';
+import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
+import KeyboardOptionKeyIcon from '@mui/icons-material/KeyboardOptionKey';
+import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
+import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
+import MergeTypeOutlinedIcon from '@mui/icons-material/MergeTypeOutlined';
+import PostAddOutlinedIcon from '@mui/icons-material/PostAddOutlined';
+import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
+import PestControlOutlinedIcon from '@mui/icons-material/PestControlOutlined';
 
 function AdminNavigation({ setActivePanel }) {
   return (
@@ -87,60 +95,60 @@ function AdminNavigation({ setActivePanel }) {
           <ListItemIcon>
             <FiUserCheck />
           </ListItemIcon>
-          <ListItemText primary="Employee" />
+          <ListItemText primary="Employees" />
         </ListItem>
 
         <ListItem button onClick={() => setActivePanel('user')}>
           <ListItemIcon>
-            <FiUserCheck />
+            <PeopleOutlineIcon />
           </ListItemIcon>
-          <ListItemText primary="User" />
+          <ListItemText primary="Users" />
         </ListItem>
         <ListItem button onClick={() => setActivePanel('order-product')}>
           <ListItemIcon>
-            <FiUserCheck />
+            <KeyboardOptionKeyIcon />
           </ListItemIcon>
           <ListItemText primary="order-product" />
         </ListItem>
         <ListItem button onClick={() => setActivePanel('product-supplier')}>
           <ListItemIcon>
-            <FiUserCheck />
+            <KeyboardOptionKeyIcon />
           </ListItemIcon>
           <ListItemText primary="product-supplier" />
         </ListItem>
         <ListItem button onClick={() => setActivePanel('supplier')}>
           <ListItemIcon>
-            <FiUserCheck />
+            <LocalShippingOutlinedIcon />
           </ListItemIcon>
-          <ListItemText primary="Supplier" />
+          <ListItemText primary="Suppliers" />
         </ListItem>
         <ListItem button onClick={() => setActivePanel('image')}>
           <ListItemIcon>
-            <FiUserCheck />
+            <ImageOutlinedIcon />
           </ListItemIcon>
-          <ListItemText primary="Image" />
+          <ListItemText primary="Images" />
         </ListItem>
         <ListItem button onClick={() => setActivePanel('format')}>
           <ListItemIcon>
-            <FiUserCheck />
+            <MergeTypeOutlinedIcon />
           </ListItemIcon>
-          <ListItemText primary="Format" />
+          <ListItemText primary="Formats" />
         </ListItem>
         <ListItem button onClick={() => setActivePanel('position')}>
           <ListItemIcon>
-            <FiUserCheck />
+            <PostAddOutlinedIcon />
           </ListItemIcon>
-          <ListItemText primary="Position" />
+          <ListItemText primary="Positions" />
         </ListItem>
         <ListItem button onClick={() => setActivePanel('role')}>
           <ListItemIcon>
-            <FiUserCheck />
+            <AdminPanelSettingsOutlinedIcon />
           </ListItemIcon>
-          <ListItemText primary="Role" />
+          <ListItemText primary="Roles" />
         </ListItem>
         <ListItem button onClick={() => setActivePanel('log')}>
           <ListItemIcon>
-            <FiUserCheck />
+            <PestControlOutlinedIcon />
           </ListItemIcon>
           <ListItemText primary="Logs" />
         </ListItem>

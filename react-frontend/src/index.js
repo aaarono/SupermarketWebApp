@@ -5,6 +5,7 @@ import './index.css';
 import App from './App';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { EmulationProvider } from './contexts/EmulationContext';
 
 const theme = createTheme();
 
@@ -14,7 +15,9 @@ root.render(
     <React.StrictMode>
       <ThemeProvider theme={theme}>
         <AuthProvider>
-          <App />
+          {/* <EmulationProvider> */}
+            <App />
+          {/* </EmulationProvider> */}
         </AuthProvider>
       </ThemeProvider>
     </React.StrictMode>
