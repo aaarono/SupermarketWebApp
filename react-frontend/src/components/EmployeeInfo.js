@@ -159,22 +159,6 @@ const EmployeeInfo = () => {
     }
   };
 
-  // Загрузка иерархии сотрудников
-  const fetchHierarchy = async () => {
-    try {
-      const response = await api.get("/api/zamestnanci/hierarchy/1");
-      const tree = buildHierarchy(response);
-      setHierarchy(tree);
-    } catch (error) {
-      console.error("Ошибка загрузки иерархии сотрудников:", error);
-      setSnackbar({
-        open: true,
-        message: "Ошибка загрузки сотрудников",
-        severity: "error",
-      });
-    }
-  };
-
   // Загрузка средней зарплаты для всех сотрудников
   const fetchAverageSalaries = async (employees) => {
     const salaries = {};
@@ -196,6 +180,7 @@ const EmployeeInfo = () => {
     try {
       await fetchPositions();
       const response = await api.get("/api/zamestnanci/hierarchy/1");
+      console.log(response)
       const tree = buildHierarchy(response);
       setHierarchy(tree);
       await fetchAverageSalaries(response); // Загружаем зарплаты после иерархии

@@ -203,8 +203,6 @@ public class ZamestnanecService {
         return zamestnanec;
     }
 
-
-
     /**
      * Vytvoří nového zaměstnance.
      *
