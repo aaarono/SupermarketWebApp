@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.dao.DataAccessException;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -78,6 +79,22 @@ public class OrderController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Ошибка получения заказов: " + e.getMessage());
+        }
+    }
+
+    @PreAuthorize("hasRole('EMPLOYEE') or hasRole('ADMIN')")
+    @PostMapping("/filter")
+    public ResponseEntity<?> filterOrders(@RequestBody Map<String, String> filters) {
+        try {
+            String name = filters.get("name");
+            String phone = filters.get("phone");
+            String email = filters.get("email");
+
+            List<Map<String, Object>> orders = orderService.filterOrders(name, phone, email);
+            return ResponseEntity.ok(orders);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Ошибка при фильтрации заказов: " + e.getMessage());
         }
     }
 }

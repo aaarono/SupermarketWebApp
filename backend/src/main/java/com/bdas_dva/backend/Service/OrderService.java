@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.*;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +48,22 @@ public class OrderService {
         this.jdbcTemplate = jdbcTemplate;
         this.objectMapper = objectMapper;
     }
+
+    public List<Map<String, Object>> filterOrders(String name, String phone, String email) throws Exception {
+        String query = "SELECT * FROM ORDER_DETAILS_VIEW WHERE " +
+                "(:name IS NULL OR UPPER(CUSTOMER_NAME) LIKE UPPER('%' || :name || '%')) AND " +
+                "(:phone IS NULL OR CUSTOMER_PHONE = :phone) AND " +
+                "(:email IS NULL OR UPPER(CUSTOMER_EMAIL) LIKE UPPER('%' || :email || '%'))";
+
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("name", name)
+                .addValue("phone", phone)
+                .addValue("email", email);
+
+        // Используем NamedParameterJdbcTemplate для выполнения запроса и возврата результата в виде списка карт
+        return new NamedParameterJdbcTemplate(jdbcTemplate).queryForList(query, params);
+    }
+
 
     public List<Order> getUserOrders(Long userId, Long zakaznikId) throws Exception {
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)

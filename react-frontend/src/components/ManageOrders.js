@@ -6,19 +6,14 @@ import {
   Card,
   CardContent,
   Grid,
-  Collapse,
-  Avatar,
   Paper,
   Button,
-  Divider,
   Chip,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel
+  TextField
 } from "@mui/material";
 import { styled } from "@mui/system";
-import { FaAngleDown, FaAngleUp, FaTruck, FaMapMarkerAlt, FaPhone, FaEnvelope, FaUser } from "react-icons/fa";
+import { FaAngleDown, FaAngleUp } from "react-icons/fa";
+import api from "../services/api";
 
 const StyledCard = styled(Card)(({ theme }) => ({
   marginBottom: "1.5rem",
@@ -30,298 +25,173 @@ const StyledCard = styled(Card)(({ theme }) => ({
   }
 }));
 
-const ProductImage = styled(Avatar)(({ theme }) => ({
-  width: 120,
-  height: 120,
-  borderRadius: "12px",
-  boxShadow: "0 4px 8px rgba(0,0,0,0.1)"
-}));
-
-const InfoText = styled(Typography)(({ theme }) => ({
-  color: theme.palette.text.secondary,
-  marginBottom: 2,
-  fontSize: "0.9rem",
-  display: "flex",
-  alignItems: "center",
-  gap: "8px"
-}));
-
-const TotalCostBox = styled(Box)(({ theme }) => ({
-  backgroundColor: theme.palette.primary.main,
-  padding: "8px 16px",
-  borderRadius: "8px",
-  display: "inline-flex",
-  alignItems: "center",
-  boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
-}));
-
-const StatusChip = styled(Chip)(({ theme, status }) => ({
-  fontSize: "0.9rem",
-  padding: "4px 8px",
-  backgroundColor:
-    status === "Delivered"
-      ? theme.palette.success.light
-      : status === "Processed"
-      ? theme.palette.info.light
-      : theme.palette.warning.light,
-  color:
-    status === "Delivered"
-      ? theme.palette.success.dark
-      : status === "Processed"
-      ? theme.palette.info.dark
-      : theme.palette.warning.dark,
-  "& .MuiChip-label": {
-    fontWeight: 600
-  }
-}));
-
 const ManageOrders = () => {
+  const [orders, setOrders] = useState([]);
+  const [filters, setFilters] = useState({ name: "", phone: "", email: "" });
   const [expandedOrder, setExpandedOrder] = useState(null);
-  const [orders, setOrders] = useState([
-    {
-      id: 1,
-      userEmail: "john.doe@example.com",
-      products: [
-        {
-          name: "Wireless Headphones",
-          price: 129.99,
-          count: 2,
-          image: "images.unsplash.com/photo-1505740420928-5e560c06d30e"
-        },
-        {
-          name: "Smart Watch",
-          price: 199.99,
-          count: 1,
-          image: "images.unsplash.com/photo-1523275335684-37898b6baf30"
-        }
-      ],
-      date: "2024-01-15",
-      status: "In Transit",
-      deliveryInfo: {
-        firstName: "John",
-        lastName: "Doe",
-        phone: "+1 234 567 8900",
-        email: "john.doe@example.com",
-        streetAddress: "123 Main Street",
-        streetNumber: "45A",
-        postalCode: "10001",
-        city: "New York"
-      }
-    },
-    {
-      id: 2,
-      userEmail: "jane.smith@example.com",
-      products: [
-        {
-          name: "Gaming Mouse",
-          price: 79.99,
-          count: 1,
-          image: "images.unsplash.com/photo-1527864550417-7fd91fc51a46"
-        }
-      ],
-      date: "2024-01-10",
-      status: "Processed",
-      deliveryInfo: {
-        firstName: "Jane",
-        lastName: "Smith",
-        phone: "+1 234 567 8901",
-        email: "jane.smith@example.com",
-        streetAddress: "456 Oak Avenue",
-        streetNumber: "12B",
-        postalCode: "90210",
-        city: "Los Angeles"
-      }
-    }
-  ]);
+  const [loading, setLoading] = useState(false);
 
-  const [selectedStatus, setSelectedStatus] = useState({});
+  const fetchFilteredOrders = async () => {
+    try {
+      setLoading(true);
+      const response = await api.post("/api/orders/filter", {
+        name: filters.name || null,
+        phone: filters.phone || null,
+        email: filters.email || null
+      });
+      setOrders(response);
+    } catch (error) {
+      console.error("Ошибка при фильтрации заказов:", error);
+      alert("Произошла ошибка при загрузке заказов. Попробуйте позже.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      [name]: value
+    }));
+  };
 
   const handleExpand = (orderId) => {
     setExpandedOrder(expandedOrder === orderId ? null : orderId);
   };
 
-  const calculateOrderTotal = (products) => {
-    return products.reduce((total, product) => total + product.price * product.count, 0);
-  };
-
-  const handleStatusChange = (orderId, newStatus) => {
-    setSelectedStatus(prev => ({
-      ...prev,
-      [orderId]: newStatus
-    }));
-  };
-
-  const handleSubmitStatus = (orderId) => {
-    if (selectedStatus[orderId]) {
-      setOrders(orders.map(order =>
-        order.id === orderId ? { ...order, status: selectedStatus[orderId] } : order
-      ));
-      setSelectedStatus(prev => {
-        const newState = { ...prev };
-        delete newState[orderId];
-        return newState;
-      });
-    }
-  };
+  if (loading) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 5 }}>
+        <Typography variant="h5">Loading orders...</Typography>
+      </Container>
+    );
+  }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 5, px: { xs: 2, md: 3 }, minHeight: "100vh" }}>
+    <Container maxWidth="lg" sx={{ py: 5, minHeight: "100vh" }}>
       <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 4, fontWeight: 600 }}>
         Manage Orders
       </Typography>
 
-      <Paper elevation={0} sx={{ p: { xs: 2, md: 4 }, bgcolor: "background.paper", borderRadius: "16px" }}>
-        <Typography variant="h5" gutterBottom sx={{ mb: 4, fontWeight: 500 }}>
-          All Orders
+      <Paper elevation={0} sx={{ p: { xs: 2, md: 4 }, bgcolor: "background.paper", borderRadius: "16px", mb: 4 }}>
+        <Typography variant="h6" gutterBottom>
+          Filter Orders
         </Typography>
-        {orders.map((order) => (
-          <StyledCard key={order.id}>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={4}>
+            <TextField
+              label="Customer Name"
+              variant="outlined"
+              fullWidth
+              name="name"
+              value={filters.name}
+              onChange={handleFilterChange}
+            />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField
+              label="Phone"
+              variant="outlined"
+              fullWidth
+              name="phone"
+              value={filters.phone}
+              onChange={handleFilterChange}
+            />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField
+              label="Email"
+              variant="outlined"
+              fullWidth
+              name="email"
+              value={filters.email}
+              onChange={handleFilterChange}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={fetchFilteredOrders}
+              fullWidth
+            >
+              Apply Filters
+            </Button>
+          </Grid>
+        </Grid>
+      </Paper>
+
+      {orders.length === 0 ? (
+        <Typography variant="h6" color="text.secondary">
+          No orders found.
+        </Typography>
+      ) : (
+        orders.map((order) => (
+          <StyledCard key={order.ORDER_ID}>
             <CardContent sx={{ p: { xs: 2, md: 3 } }}>
               <Grid container spacing={2} alignItems="center">
                 <Grid item xs={12} sm={3}>
                   <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                     <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
-                      Order #{order.id}
+                      Order #{order.ORDER_ID}
                     </Typography>
-                    <Typography 
-                      variant="body2" 
-                      color="text.secondary"
-                      sx={{
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        maxWidth: "200px"
-                      }}
-                    >
-                      {order.userEmail}
+                    <Typography variant="body2" color="text.secondary">
+                      {order.CUSTOMER_EMAIL}
                     </Typography>
                   </Box>
                 </Grid>
-                
+
                 <Grid item xs={12} sm={3}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <FormControl size="small" sx={{ minWidth: 150 }}>
-                      <InputLabel>Status</InputLabel>
-                      <Select
-                        value={selectedStatus[order.id] || order.status}
-                        label="Status"
-                        onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                      >
-                        <MenuItem value="In Transit">In Transit</MenuItem>
-                        <MenuItem value="Processed">Processed</MenuItem>
-                        <MenuItem value="Delivered">Delivered</MenuItem>
-                      </Select>
-                    </FormControl>
-                    <Button
-                      variant="contained"
-                      size="small"
-                      onClick={() => handleSubmitStatus(order.id)}
-                      disabled={!selectedStatus[order.id]}
-                      sx={{ minWidth: "40px", height: "40px" }}
-                    >
-                      OK
-                    </Button>
-                  </Box>
+                  <Chip label={order.ORDER_STATUS} color="primary" />
                 </Grid>
 
                 <Grid item xs={12} sm={2}>
                   <Typography variant="body2" color="text.secondary">
-                    {order.date}
+                    {new Date(order.ORDER_DATE).toLocaleDateString()}
                   </Typography>
                 </Grid>
 
                 <Grid item xs={12} sm={4}>
                   <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 2 }}>
-                    <TotalCostBox>
-                      <Typography variant="subtitle2" color="common.white">
-                        ${calculateOrderTotal(order.products).toFixed(2)}
-                      </Typography>
-                    </TotalCostBox>
+                    <Typography variant="h6">
+                      ${order.TOTAL_PRICE.toFixed(2)}
+                    </Typography>
                     <Button
                       variant="outlined"
                       size="small"
-                      endIcon={expandedOrder === order.id ? <FaAngleUp size={16} /> : <FaAngleDown size={16} />}
-                      onClick={() => handleExpand(order.id)}
-                      sx={{ fontSize: "0.9rem" }}
+                      endIcon={expandedOrder === order.ORDER_ID ? <FaAngleUp size={16} /> : <FaAngleDown size={16} />}
+                      onClick={() => handleExpand(order.ORDER_ID)}
                     >
-                      {expandedOrder === order.id ? "Hide Details" : "Show Details"}
+                      {expandedOrder === order.ORDER_ID ? "Hide Details" : "Show Details"}
                     </Button>
                   </Box>
                 </Grid>
               </Grid>
 
-              <Collapse in={expandedOrder === order.id}>
-                <Divider sx={{ my: 3 }} />
-                <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 4 }}>
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="subtitle1" gutterBottom sx={{ mb: 3 }}>
-                      Products
-                    </Typography>
-                    {order.products.map((product, index) => (
-                      <Box
-                        key={index}
-                        sx={{
-                          display: "flex",
-                          flexDirection: { xs: "column", sm: "row" },
-                          alignItems: { xs: "center", sm: "flex-start" },
-                          gap: 3,
-                          mb: 2,
-                          p: 3,
-                          bgcolor: "grey.50",
-                          borderRadius: 2
-                        }}
-                      >
-                        <ProductImage
-                          src={`https://${product.image}`}
-                          alt={product.name}
-                          variant="square"
-                        />
-                        <Box sx={{ flex: 1, textAlign: { xs: "center", sm: "left" } }}>
-                          <Typography variant="subtitle1" sx={{ mb: 1 }}>{product.name}</Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                            Quantity: {product.count}
-                          </Typography>
-                          <Typography variant="subtitle2" color="primary.main">
-                            ${product.price.toFixed(2)}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    ))}
-                  </Box>
-                  <Box sx={{ width: { xs: "100%", md: "400px" }, borderLeft: { xs: "none", md: "2px solid" }, borderColor: "divider", pl: { xs: 0, md: 4 } }}>
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                      <FaTruck size={20} style={{ marginRight: "12px", color: "#1976d2" }} />
-                      <Typography variant="subtitle1">
-                        Shipping Details
-                      </Typography>
-                    </Box>
-                    <Box sx={{ bgcolor: "grey.50", p: 3, borderRadius: 2 }}>
-                      <InfoText>
-                        <FaUser />
-                        {order.deliveryInfo.firstName} {order.deliveryInfo.lastName}
-                      </InfoText>
-                      <InfoText>
-                        <FaMapMarkerAlt />
-                        {order.deliveryInfo.streetNumber} {order.deliveryInfo.streetAddress}
-                        <br />
-                        {order.deliveryInfo.city}, {order.deliveryInfo.postalCode}
-                      </InfoText>
-                      <InfoText>
-                        <FaPhone />
-                        {order.deliveryInfo.phone}
-                      </InfoText>
-                      <InfoText>
-                        <FaEnvelope />
-                        {order.deliveryInfo.email}
-                      </InfoText>
-                    </Box>
-                  </Box>
+              {expandedOrder === order.ORDER_ID && (
+                <Box sx={{ mt: 3 }}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Customer Details
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>Name:</strong> {order.CUSTOMER_NAME}
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>Address:</strong> {order.CUSTOMER_ADDRESS}, {order.CUSTOMER_CITY}, {order.CUSTOMER_POSTAL_CODE}
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>Phone:</strong> {order.CUSTOMER_PHONE}
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>Email:</strong> {order.CUSTOMER_EMAIL}
+                  </Typography>
                 </Box>
-              </Collapse>
+              )}
             </CardContent>
           </StyledCard>
-        ))}
-      </Paper>
+        ))
+      )}
     </Container>
   );
 };
