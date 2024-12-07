@@ -168,14 +168,12 @@ public class ProductService {
                 )
                 .returningResultSet("p_cursor", (rs, rowNum) -> {
                     Blob imageBlob = rs.getBlob("OBRAZEK");
-                    String imageType = rs.getString("TYP"); // Assuming TYP stores the MIME type
                     ImageData imageData = new ImageData();
                     if (imageBlob != null) {
                         byte[] imageBytes = imageBlob.getBytes(1, (int) imageBlob.length());
                         String base64Image = java.util.Base64.getEncoder().encodeToString(imageBytes);
                         imageData.setImage(base64Image);
                     }
-                    imageData.setImageType(imageType);
                     return imageData;
                 });
 

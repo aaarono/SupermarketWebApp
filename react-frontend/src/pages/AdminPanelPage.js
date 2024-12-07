@@ -21,6 +21,7 @@ import FormatPanel from '../components/Panels/FormatPanel';
 import PositionPanel from '../components/Panels/PositionPanel';
 import RolePanel from '../components/Panels/RolePanel';
 import LogPanel from '../components/Panels/LogPanel';
+import OrderStatusPanel from '../components/Panels/OrderStatusPanel'
 
 function AdminPanelPage({ AdminPanelRole }) {
   const [activePanel, setActivePanel] = useState('user');
@@ -65,6 +66,8 @@ function AdminPanelPage({ AdminPanelRole }) {
         return <CardPanel setActivePanel={setActivePanel} />;
       case 'cash':
         return <CashPanel setActivePanel={setActivePanel} />;
+      case 'statuses':
+        return <OrderStatusPanel setActivePanel={setActivePanel} />;
       default:
         return <UserPanel setActivePanel={setActivePanel} />;
     }

@@ -146,6 +146,12 @@ function AdminNavigation({ setActivePanel }) {
           </ListItemIcon>
           <ListItemText primary="Roles" />
         </ListItem>
+        <ListItem button onClick={() => setActivePanel('statuses')}>
+          <ListItemIcon>
+            <AdminPanelSettingsOutlinedIcon />
+          </ListItemIcon>
+          <ListItemText primary="Statuses" />
+        </ListItem>
         <ListItem button onClick={() => setActivePanel('log')}>
           <ListItemIcon>
             <PestControlOutlinedIcon />

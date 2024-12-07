@@ -31,6 +31,8 @@ function AdminPanelPage() {
         return <PaymentPanel setActivePanel={setActivePanel} />;
       case 'employee':
         return <EmployeePanel setActivePanel={setActivePanel} />;
+      case 'statuses':
+          return <OrderStatusPanel setActivePanel={setActivePanel}/> 
       default:
         return <WarehousePanel setActivePanel={setActivePanel} />;
     }

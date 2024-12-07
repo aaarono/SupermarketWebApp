@@ -35,7 +35,7 @@ function OrderPanel({ setActivePanel }) {
   const fetchOrders = async () => {
     try {
       const response = await api.get('/api/orders');
-      setOrders(response.data);
+      setOrders(response);
     } catch (error) {
       console.error('Ошибка при загрузке заказов:', error);
     }

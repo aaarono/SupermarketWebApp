@@ -1,5 +1,3 @@
-// SupplierPanel.js
-
 import React, { useState, useEffect } from 'react';
 import {
   Typography,
@@ -21,14 +19,17 @@ import {
   DialogActions,
   TextField,
   CircularProgress,
+  InputAdornment,
 } from '@mui/material';
-import { FiEdit2, FiTrash2, FiPlus } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiPlus, FiSearch } from 'react-icons/fi';
 import AdminNavigation from './AdminNavigation';
 import api from '../../services/api';
 
 function SupplierPanel({ setActivePanel }) {
   const [suppliers, setSuppliers] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [loading, setLoading] = useState(true);
 
   // Пагинация
   const [page, setPage] = useState(0);
@@ -37,41 +38,51 @@ function SupplierPanel({ setActivePanel }) {
   const [formOpen, setFormOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [formData, setFormData] = useState({
-    nazev: '',
-    kontaktni_osoba: '',
-    telefon: '',
-    email: '',
+    NAZEV: '',
+    KONTAKTNI_OSOBA: '',
+    TELEFON: '',
+    EMAIL: '',
   });
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loadingAction, setLoadingAction] = useState(false);
 
   useEffect(() => {
     fetchSuppliers();
   }, []);
 
   const fetchSuppliers = async () => {
+    setLoading(true);
     try {
-      const response = await api.get('/api/suppliers');
+      const response = await api.get('/api/dodavatele');
       setSuppliers(response);
-      setLoading(false);
     } catch (error) {
-      console.error('Ошибка при загрузке поставщиков:', error);
       setSnackbar({ open: true, message: 'Ошибка при загрузке поставщиков', severity: 'error' });
+    } finally {
       setLoading(false);
     }
   };
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value.toLowerCase());
+  };
+
+  const filteredSuppliers = suppliers.filter(
+    (supplier) =>
+      supplier.NAZEV.toLowerCase().includes(searchQuery) ||
+      supplier.KONTAKTNI_OSOBA.toLowerCase().includes(searchQuery)
+  );
 
   const handleFormOpen = (supplier = null) => {
     setSelectedSupplier(supplier);
     setFormData(
       supplier
         ? {
-            nazev: supplier.nazev,
-            kontaktni_osoba: supplier.kontaktni_osoba,
-            telefon: supplier.telefon,
-            email: supplier.email,
+            NAZEV: supplier.NAZEV,
+            KONTAKTNI_OSOBA: supplier.KONTAKTNI_OSOBA,
+            TELEFON: supplier.TELEFON,
+            EMAIL: supplier.EMAIL,
           }
-        : { nazev: '', kontaktni_osoba: '', telefon: '', email: '' }
+        : { NAZEV: '', KONTAKTNI_OSOBA: '', TELEFON: '', EMAIL: '' }
     );
     setFormOpen(true);
   };
@@ -79,32 +90,28 @@ function SupplierPanel({ setActivePanel }) {
   const handleFormClose = () => {
     setFormOpen(false);
     setSelectedSupplier(null);
-    setFormData({ nazev: '', kontaktni_osoba: '', telefon: '', email: '' });
+    setFormData({ NAZEV: '', KONTAKTNI_OSOBA: '', TELEFON: '', EMAIL: '' });
   };
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    setLoadingAction(true);
     try {
-      const dataToSend = {
-        nazev: formData.nazev,
-        kontaktni_osoba: formData.kontaktni_osoba,
-        telefon: parseInt(formData.telefon, 10),
-        email: formData.email,
-      };
+      const dataToSend = { ...formData };
 
       if (selectedSupplier) {
-        await api.put(`/api/suppliers/${selectedSupplier.id}`, dataToSend);
+        await api.put(`/api/dodavatele/${selectedSupplier.ID_DODAVATELU}`, dataToSend);
         setSnackbar({ open: true, message: 'Поставщик обновлен успешно', severity: 'success' });
       } else {
-        await api.post('/api/suppliers', dataToSend);
+        await api.post('/api/dodavatele', dataToSend);
         setSnackbar({ open: true, message: 'Поставщик добавлен успешно', severity: 'success' });
       }
       fetchSuppliers();
       handleFormClose();
     } catch (error) {
-      console.error('Ошибка при сохранении поставщика:', error);
-      const errorMessage = error.response?.data || 'Ошибка при сохранении поставщика';
-      setSnackbar({ open: true, message: errorMessage, severity: 'error' });
+      setSnackbar({ open: true, message: 'Ошибка при сохранении поставщика', severity: 'error' });
+    } finally {
+      setLoadingAction(false);
     }
   };
 
@@ -119,19 +126,19 @@ function SupplierPanel({ setActivePanel }) {
   };
 
   const handleDelete = async () => {
+    setLoadingAction(true);
     try {
-      await api.delete(`/api/suppliers/${selectedSupplier.id}`);
+      await api.delete(`/api/dodavatele/${selectedSupplier.ID_DODAVATELU}`);
       setSnackbar({ open: true, message: 'Поставщик удален успешно', severity: 'success' });
       fetchSuppliers();
       handleDeleteConfirmClose();
     } catch (error) {
-      console.error('Ошибка при удалении поставщика:', error);
-      const errorMessage = error.response?.data || 'Ошибка при удалении поставщика';
-      setSnackbar({ open: true, message: errorMessage, severity: 'error' });
+      setSnackbar({ open: true, message: 'Ошибка при удалении поставщика', severity: 'error' });
+    } finally {
+      setLoadingAction(false);
     }
   };
 
-  // Обработчики пагинации
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -141,7 +148,6 @@ function SupplierPanel({ setActivePanel }) {
     setPage(0);
   };
 
-  // Проверяем, загрузились ли данные
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', marginTop: '50px' }}>
@@ -152,14 +158,26 @@ function SupplierPanel({ setActivePanel }) {
 
   return (
     <div style={{ display: 'flex' }}>
-      {/* Навигация */}
       <AdminNavigation setActivePanel={setActivePanel} />
-
-      {/* Содержимое панели поставщиков */}
       <div style={{ flexGrow: 1, padding: '16px' }}>
         <Typography variant="h4" gutterBottom>
           Поставщики
         </Typography>
+        <TextField
+          placeholder="Поиск по названию или контактному лицу"
+          fullWidth
+          variant="outlined"
+          margin="normal"
+          value={searchQuery}
+          onChange={handleSearchChange}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <FiSearch />
+              </InputAdornment>
+            ),
+          }}
+        />
         <Button
           variant="contained"
           color="primary"
@@ -184,38 +202,29 @@ function SupplierPanel({ setActivePanel }) {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {suppliers.length > 0 ? (
-                  suppliers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((supplier) => (
-                    <TableRow hover key={supplier.id}>
-                      <TableCell>{supplier.id}</TableCell>
-                      <TableCell>{supplier.nazev}</TableCell>
-                      <TableCell>{supplier.kontaktni_osoba}</TableCell>
-                      <TableCell>{supplier.telefon}</TableCell>
-                      <TableCell>{supplier.email}</TableCell>
-                      <TableCell align="right">
-                        <IconButton onClick={() => handleFormOpen(supplier)} color="primary">
-                          <FiEdit2 />
-                        </IconButton>
-                        <IconButton onClick={() => handleDeleteConfirmOpen(supplier)} color="secondary">
-                          <FiTrash2 />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center">
-                      Нет данных
+                {filteredSuppliers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((supplier) => (
+                  <TableRow hover key={supplier.ID_DODAVATELU}>
+                    <TableCell>{supplier.ID_DODAVATELU}</TableCell>
+                    <TableCell>{supplier.NAZEV}</TableCell>
+                    <TableCell>{supplier.KONTAKTNI_OSOBA}</TableCell>
+                    <TableCell>{supplier.TELEFON}</TableCell>
+                    <TableCell>{supplier.EMAIL}</TableCell>
+                    <TableCell align="right">
+                      <IconButton onClick={() => handleFormOpen(supplier)} color="primary">
+                        <FiEdit2 />
+                      </IconButton>
+                      <IconButton onClick={() => handleDeleteConfirmOpen(supplier)} color="secondary">
+                        <FiTrash2 />
+                      </IconButton>
                     </TableCell>
                   </TableRow>
-                )}
+                ))}
               </TableBody>
             </Table>
           </TableContainer>
-
           <TablePagination
             component="div"
-            count={suppliers.length}
+            count={filteredSuppliers.length}
             page={page}
             onPageChange={handleChangePage}
             rowsPerPage={rowsPerPage}
@@ -224,7 +233,6 @@ function SupplierPanel({ setActivePanel }) {
           />
         </Paper>
 
-        {/* Форма добавления/редактирования поставщика */}
         <Dialog open={formOpen} onClose={handleFormClose} fullWidth maxWidth="sm">
           <DialogTitle>{selectedSupplier ? 'Редактировать поставщика' : 'Добавить поставщика'}</DialogTitle>
           <form onSubmit={handleFormSubmit}>
@@ -236,8 +244,8 @@ function SupplierPanel({ setActivePanel }) {
                 type="text"
                 fullWidth
                 required
-                value={formData.nazev}
-                onChange={(e) => setFormData({ ...formData, nazev: e.target.value })}
+                value={formData.NAZEV}
+                onChange={(e) => setFormData({ ...formData, NAZEV: e.target.value })}
               />
               <TextField
                 margin="dense"
@@ -245,8 +253,8 @@ function SupplierPanel({ setActivePanel }) {
                 type="text"
                 fullWidth
                 required
-                value={formData.kontaktni_osoba}
-                onChange={(e) => setFormData({ ...formData, kontaktni_osoba: e.target.value })}
+                value={formData.KONTAKTNI_OSOBA}
+                onChange={(e) => setFormData({ ...formData, KONTAKTNI_OSOBA: e.target.value })}
               />
               <TextField
                 margin="dense"
@@ -254,8 +262,8 @@ function SupplierPanel({ setActivePanel }) {
                 type="number"
                 fullWidth
                 required
-                value={formData.telefon}
-                onChange={(e) => setFormData({ ...formData, telefon: e.target.value })}
+                value={formData.TELEFON}
+                onChange={(e) => setFormData({ ...formData, TELEFON: e.target.value })}
               />
               <TextField
                 margin="dense"
@@ -263,36 +271,34 @@ function SupplierPanel({ setActivePanel }) {
                 type="email"
                 fullWidth
                 required
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                value={formData.EMAIL}
+                onChange={(e) => setFormData({ ...formData, EMAIL: e.target.value })}
               />
             </DialogContent>
             <DialogActions>
               <Button onClick={handleFormClose}>Отмена</Button>
-              <Button type="submit" color="primary">
-                Сохранить
+              <Button type="submit" color="primary" disabled={loadingAction}>
+                {loadingAction ? <CircularProgress size={20} /> : 'Сохранить'}
               </Button>
             </DialogActions>
           </form>
         </Dialog>
 
-        {/* Диалог подтверждения удаления */}
         <Dialog open={deleteConfirmOpen} onClose={handleDeleteConfirmClose}>
           <DialogTitle>Удалить поставщика?</DialogTitle>
           <DialogContent>
             <Typography>
-              Вы уверены, что хотите удалить поставщика с ID {selectedSupplier?.id}?
+              Вы уверены, что хотите удалить поставщика с ID {selectedSupplier?.ID_DODAVATELU}?
             </Typography>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleDeleteConfirmClose}>Отмена</Button>
-            <Button onClick={handleDelete} color="secondary">
-              Удалить
+            <Button onClick={handleDelete} color="secondary" disabled={loadingAction}>
+              {loadingAction ? <CircularProgress size={20} /> : 'Удалить'}
             </Button>
           </DialogActions>
         </Dialog>
 
-        {/* Уведомления */}
         <Snackbar
           open={snackbar.open}
           autoHideDuration={6000}
