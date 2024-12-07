@@ -9,6 +9,7 @@ import WarehousePanel from '../components/Panels/WarehousePanel';
 import SupermarketPanel from '../components/Panels/SupermarketPanel';
 import PaymentPanel from '../components/Panels/PaymentPanel';
 import EmployeePanel from '../components/Panels/EmployeePanel';
+import EmployeeSalaryPanel from '../components/Panels/EmployeeSalaryPanel';
 import NavBar from '../components/NavBar';
 import CardPanel from '../components/Panels/KartaPannel';
 import CashPanel from '../components/Panels/HotovostPannel';
@@ -33,6 +34,8 @@ function AdminPanelPage({ AdminPanelRole }) {
         return <UserPanel setActivePanel={setActivePanel} />; // TODO: реализовать UserPanel
       case 'employee':
         return <EmployeePanel setActivePanel={setActivePanel} />;
+      case 'employee_sal':
+        return <EmployeeSalaryPanel setActivePanel={setActivePanel} />;
       case 'product':
         return <ProductPanel setActivePanel={setActivePanel} />;
       case 'order-product':

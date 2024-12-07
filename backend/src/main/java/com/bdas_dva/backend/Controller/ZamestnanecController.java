@@ -236,4 +236,69 @@ public class ZamestnanecController {
             return ResponseEntity.status(500).body("Ошибка при удалении pozice: " + e.getMessage());
         }
     }
+
+    @GetMapping("/{id}/average-salary")
+    public ResponseEntity<?> getAverageSubordinateSalary(@PathVariable("id") Long idZamestnance) {
+        try {
+            Double averageSalary = zamestnanecService.getAverageSubordinateSalary(idZamestnance);
+            if (averageSalary != null) {
+                return ResponseEntity.ok(averageSalary);
+            } else {
+                return ResponseEntity.status(404).body("Данные о средней зарплате отсутствуют.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Ошибка при получении средней зарплаты: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Получение средней зарплаты подчиненных сотрудника через процедуру.
+     *
+     * @param idZamestnance ID сотрудника.
+     * @return Средняя зарплата подчиненных.
+     */
+    @GetMapping("/{id}/average-salary-procedure")
+    public ResponseEntity<?> getAverageSubordinateSalaryProcedure(@PathVariable("id") Long idZamestnance) {
+        try {
+            Double averageSalary = zamestnanecService.getAverageSubordinateSalaryProcedure(idZamestnance);
+            if (averageSalary != null) {
+                return ResponseEntity.ok(averageSalary);
+            } else {
+                return ResponseEntity.status(404).body("Данные о средней зарплате отсутствуют.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Ошибка при выполнении процедуры: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/apply-salary-indexation")
+    public ResponseEntity<?> applySalaryIndexation(@RequestBody Map<String, Double> indexationData) {
+        try {
+            Double minPercentage = indexationData.get("minPercentage");
+            Double maxPercentage = indexationData.get("maxPercentage");
+
+            if (minPercentage == null || maxPercentage == null) {
+                return ResponseEntity.badRequest().body("Missing minPercentage or maxPercentage.");
+            }
+
+            String result = zamestnanecService.applySalaryIndexationProcedure(minPercentage, maxPercentage);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Ошибка при выполнении процедуры: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/all-salaries")
+    public ResponseEntity<?> getAllEmployeesFromView() {
+        try {
+            List<Map<String, Object>> employees = zamestnanecService.getAllEmployeesFromView();
+            return ResponseEntity.ok(employees);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Ошибка при получении списка сотрудников из представления: " + e.getMessage());
+        }
+    }
 }

@@ -386,6 +386,76 @@ public class ZamestnanecService {
         String sql = "SELECT ID_POZICE, NAZEV FROM POZICE";
         return jdbcTemplate.queryForList(sql);
     }
+
+    /**
+     * Вызов процедуры для получения средней зарплаты подчиненных.
+     *
+     * @param idZamestnance ID сотрудника.
+     * @return Средняя зарплата подчиненных.
+     * @throws Exception При ошибке выполнения процедуры.
+     */
+    public Double getAverageSubordinateSalary(Long idZamestnance) throws Exception {
+        SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("proc_average_subordinate_salary")
+                .declareParameters(
+                        new SqlParameter("p_id_zamnestnance", Types.NUMERIC),
+                        new SqlOutParameter("p_average_salary", Types.NUMERIC)
+                );
+
+        MapSqlParameterSource inParams = new MapSqlParameterSource()
+                .addValue("p_id_zamnestnance", idZamestnance);
+
+        Map<String, Object> out = jdbcCall.execute(inParams);
+
+        // Получаем результат из параметра OUT
+        Number averageSalary = (Number) out.get("p_average_salary");
+        if (averageSalary != null) {
+            return averageSalary.doubleValue();
+        } else {
+            return null; // Если данных нет, возвращаем null
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public Double getAverageSubordinateSalaryProcedure(Long idZamestnance) throws Exception {
+        SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("proc_average_subordinate_salary")
+                .declareParameters(
+                        new SqlParameter("p_id_zamnestnance", Types.NUMERIC),
+                        new SqlOutParameter("p_average_salary", Types.NUMERIC)
+                );
+
+        MapSqlParameterSource inParams = new MapSqlParameterSource()
+                .addValue("p_id_zamnestnance", idZamestnance);
+
+        Map<String, Object> out = jdbcCall.execute(inParams);
+
+        Number averageSalary = (Number) out.get("p_average_salary");
+        return averageSalary != null ? averageSalary.doubleValue() : null;
+    }
+
+    public String applySalaryIndexationProcedure(Double minPercentage, Double maxPercentage) throws Exception {
+        SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("proc_apply_salary_indexation")
+                .declareParameters(
+                        new SqlParameter("p_min_percentage", Types.NUMERIC),
+                        new SqlParameter("p_max_percentage", Types.NUMERIC)
+                );
+
+        MapSqlParameterSource inParams = new MapSqlParameterSource()
+                .addValue("p_min_percentage", minPercentage)
+                .addValue("p_max_percentage", maxPercentage);
+
+        jdbcCall.execute(inParams);
+        return "Salary indexation applied successfully.";
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getAllEmployeesFromView() {
+        String sql = "SELECT * FROM vw_employee_details";
+        return jdbcTemplate.queryForList(sql);
+    }
+
 //
 //    /**
 //     * RowMapper pro mapování řádků z CURSOR na ZamestnanecResponse.

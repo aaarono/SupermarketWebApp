@@ -97,7 +97,12 @@ function AdminNavigation({ setActivePanel }) {
           </ListItemIcon>
           <ListItemText primary="Employees" />
         </ListItem>
-
+        <ListItem button onClick={() => setActivePanel('employee_sal')}>
+          <ListItemIcon>
+            <FiUserCheck />
+          </ListItemIcon>
+          <ListItemText primary="Employee Salary" />
+        </ListItem>
         <ListItem button onClick={() => setActivePanel('user')}>
           <ListItemIcon>
             <PeopleOutlineIcon />
