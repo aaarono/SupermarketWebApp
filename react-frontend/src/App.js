@@ -55,6 +55,7 @@ function App() {
       <Route path="/registration" element={<PublicElement> <RegistrationForm /> </PublicElement>} />
 
       <Route path="/test" element={<TestOutput />}/>
+
       <Route path="/*" element={<h1 className='pages-error'>Page Not Found</h1>}/>
     </Routes>
   );

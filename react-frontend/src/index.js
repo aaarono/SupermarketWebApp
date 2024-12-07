@@ -8,16 +8,15 @@ import { AuthProvider } from './contexts/AuthContext';
 import { EmulationProvider } from './contexts/EmulationContext';
 
 const theme = createTheme();
-
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <BrowserRouter>
     <React.StrictMode>
       <ThemeProvider theme={theme}>
         <AuthProvider>
-          {/* <EmulationProvider> */}
+          <EmulationProvider>
             <App />
-          {/* </EmulationProvider> */}
+          </EmulationProvider>
         </AuthProvider>
       </ThemeProvider>
     </React.StrictMode>

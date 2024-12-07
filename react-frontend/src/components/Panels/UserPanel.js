@@ -22,9 +22,11 @@ import {
   TextField,
   CircularProgress,
 } from '@mui/material';
-import { FiEdit2, FiTrash2, FiPlus } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiPlus, FiPlay } from 'react-icons/fi'; // Добавляем иконку для симуляции
 import AdminNavigation from './AdminNavigation';
 import api from '../../services/api';
+import { EmulationContext } from '../../contexts/EmulationContext'; // Убедитесь, что путь правильный
+import { useContext } from 'react';
 
 function UserPanel({ setActivePanel }) {
   const [users, setUsers] = useState([]);
@@ -47,6 +49,9 @@ function UserPanel({ setActivePanel }) {
   });
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Подключаем контекст эмуляции
+  const { startEmulation } = useContext(EmulationContext);
 
   useEffect(() => {
     fetchUsers();
@@ -161,6 +166,33 @@ function UserPanel({ setActivePanel }) {
     );
   }
 
+  // Обработчик для начала эмуляции
+  const handleStartSimulation = async (user) => {
+    try {
+      const response = await api.post('/api/auth/simulate', { userId: user.idUser });
+      const simulationToken = response.token;
+  
+      if (simulationToken) {
+        // Можно воспользоваться функцией из контекста
+        startEmulation(user);
+
+        const simulationWindow = window.open(`/simulation?token=${simulationToken}`, '_blank', 'width=800,height=600');
+        if (simulationWindow) {
+          simulationWindow.focus();
+        } else {
+          setSnackbar({ open: true, message: 'Не удалось открыть окно для эмуляции', severity: 'error' });
+        }
+      } else {
+        setSnackbar({ open: true, message: 'Не удалось получить токен для эмуляции', severity: 'error' });
+      }
+    } catch (error) {
+      console.error('Ошибка при начале эмуляции:', error);
+      const errorMessage = error.response?.data || 'Ошибка при начале эмуляции';
+      setSnackbar({ open: true, message: errorMessage, severity: 'error' });
+    }
+  };
+  
+
   return (
     <div style={{ display: 'flex' }}>
       {/* Навигация */}
@@ -213,6 +245,9 @@ function UserPanel({ setActivePanel }) {
                         </IconButton>
                         <IconButton onClick={() => handleDeleteConfirmOpen(user)} color="secondary">
                           <FiTrash2 />
+                        </IconButton>
+                        <IconButton onClick={() => handleStartSimulation(user)} color="info">
+                          <FiPlay />
                         </IconButton>
                       </TableCell>
                     </TableRow>

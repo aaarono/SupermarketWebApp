@@ -171,4 +171,24 @@ public class AuthController {
         response.put("role", roleName.toLowerCase(Locale.ROOT).substring(5));
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/simulate")
+    public ResponseEntity<?> simulateUser(@RequestBody Map<String, Object> payload) {
+        // Допустим, вы получаете userId из payload
+        Long userId = Long.valueOf(payload.get("userId").toString());
+
+        // Находим пользователя по userId (убедитесь что такой метод есть в UserService)
+        User user = userService.getUserById(userId);
+
+        if (user == null) {
+            return ResponseEntity.badRequest().body("Пользователь не найден.");
+        }
+
+        // Генерируем токен для этого пользователя
+        String simulationToken = jwtUtil.generateToken(user);
+
+        Map<String, String> response = new HashMap<>();
+        response.put("token", simulationToken);
+        return ResponseEntity.ok(response);
+    }
 }
