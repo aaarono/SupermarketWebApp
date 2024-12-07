@@ -1,13 +1,12 @@
+// src/App.js
 import React, { useContext } from 'react';
 import { AuthContext } from './contexts/AuthContext';
-import { Routes, Route, Switch } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import LoginForm from './components/Authorization/LoginForm';
 import RegistrationForm from './components/Authorization/RegistrationForm';
 import MainPage from './pages/MainPage';
 import CartPage from './pages/CartPage';
 import TestOutput from './pages/TestOutput';
-import { textAlign } from '@mui/system';
-import './App.css';
 import OrdersPage from './pages/OrdersPage';
 import ManageOrdersPage from './pages/ManageOrdersPage';
 import OrderSupplierPage from './pages/OrderSupplierPage';
@@ -15,15 +14,15 @@ import AdminPanelPage from './pages/AdminPanelPage';
 import EmployeeInfoPage from './pages/EmployeeInfoPage';
 
 function App() {
-  const { authData } = useContext(AuthContext);
+  const { role } = useContext(AuthContext);
 
   const USER_ROLE = {
     PUBLIC: 'public',
     USER: 'user',
     EMPLOYEE: 'employee',
     ADMIN: 'admin',
-  }
-  const CURRENT_USER_ROLE = authData.role || USER_ROLE.PUBLIC;
+  };
+  const CURRENT_USER_ROLE = role || USER_ROLE.PUBLIC;
 
   return (
     <Routes>

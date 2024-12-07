@@ -1,11 +1,10 @@
-// contexts/AuthContext.js
-import React, { createContext, useState, useEffect } from 'react';
+// src/contexts/EmulationContext.js
+import React, { createContext, useContext } from 'react';
 import { Box, Button, Typography } from "@mui/material";
 import { styled } from "@mui/system";
-import api from '../services/api';
-import { useNavigate } from 'react-router-dom';
+import { AuthContext } from './AuthContext';
 
-export const EmualtionContext = createContext();
+export const EmulationContext = createContext();
 
 const NotificationContainer = styled(Box)(({ theme }) => ({
     height: "50px",
@@ -27,29 +26,26 @@ const StyledButton = styled(Button)(({ theme }) => ({
 }));
 
 export const EmulationProvider = ({ children }) => {
-    const [authData, setAuthData] = useState({
-        token: localStorage.getItem('token') || null
-    });
+    const { isEmulating, simulationEmail, stopSimulation } = useContext(AuthContext);
 
     return (
-        <EmualtionContext.Provider value={{ authData }}>
-
-            <NotificationContainer role="alert" aria-live="polite">
-                <Typography variant="body1" color="white" sx={{ flexGrow: 1 }}>
-                    Emulating useremail@email.email...
-                </Typography>
-                <StyledButton
-                    variant="outlined"
-                    onClick={console.log('clicked')}
-                    aria-label="Stop emulation"
-                    size="small"
-                >
-                    Stop
-                </StyledButton>
-            </NotificationContainer>
-
+        <EmulationContext.Provider value={{}}>
+            {isEmulating && (
+                <NotificationContainer role="alert" aria-live="polite">
+                    <Typography variant="body1" color="white" sx={{ flexGrow: 1 }}>
+                        Emulating {simulationEmail}...
+                    </Typography>
+                    <StyledButton
+                        variant="outlined"
+                        onClick={stopSimulation}
+                        aria-label="Stop emulation"
+                        size="small"
+                    >
+                        Stop
+                    </StyledButton>
+                </NotificationContainer>
+            )}
             {children}
-
-        </EmualtionContext.Provider>
+        </EmulationContext.Provider>
     );
 };
