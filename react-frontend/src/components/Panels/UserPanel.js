@@ -1,6 +1,5 @@
 // src/components/Panels/UserPanel.js
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   Typography,
   Paper,
@@ -22,17 +21,15 @@ import {
   TextField,
   CircularProgress,
 } from '@mui/material';
-import { FiEdit2, FiTrash2, FiPlus, FiPlay } from 'react-icons/fi'; // Добавляем иконку для симуляции
+import { FiEdit2, FiTrash2, FiPlus, FiPlay } from 'react-icons/fi';
 import AdminNavigation from './AdminNavigation';
 import api from '../../services/api';
-import { EmulationContext } from '../../contexts/EmulationContext'; // Убедитесь, что путь правильный
-import { useContext } from 'react';
+import { AuthContext } from '../../contexts/AuthContext';
 
 function UserPanel({ setActivePanel }) {
   const [users, setUsers] = useState([]);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  // Пагинация
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
@@ -50,19 +47,16 @@ function UserPanel({ setActivePanel }) {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Подключаем контекст эмуляции
-  const { startEmulation } = useContext(EmulationContext);
+  const { simulateUser } = useContext(AuthContext);
 
   useEffect(() => {
     fetchUsers();
   }, []);
 
-  // Исправленный метод fetchUsers
   const fetchUsers = async () => {
     try {
       const response = await api.get('/api/users');
-      console.log('Полученные данные пользователей:', response); // Для отладки
-      setUsers(response); // Используем response
+      setUsers(response);
       setLoading(false);
     } catch (error) {
       console.error('Ошибка при загрузке пользователей:', error);
@@ -79,7 +73,7 @@ function UserPanel({ setActivePanel }) {
             jmeno: user.jmeno,
             prijmeni: user.prijmeni,
             email: user.email,
-            password: '', // Не отображаем пароль при редактировании
+            password: '',
             roleIdRole: user.roleIdRole,
             zakaznikIdZakazniku: user.zakaznikIdZakazniku,
             zamnestnanecIdZamnestnance: user.zamnestnanecIdZamnestnance,
@@ -147,7 +141,6 @@ function UserPanel({ setActivePanel }) {
     }
   };
 
-  // Обработчики пагинации
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -157,7 +150,6 @@ function UserPanel({ setActivePanel }) {
     setPage(0);
   };
 
-  // Проверяем, загрузились ли данные
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', marginTop: '50px' }}>
@@ -166,22 +158,15 @@ function UserPanel({ setActivePanel }) {
     );
   }
 
-  // Обработчик для начала эмуляции
   const handleStartSimulation = async (user) => {
     try {
       const response = await api.post('/api/auth/simulate', { userId: user.idUser });
       const simulationToken = response.token;
-  
-      if (simulationToken) {
-        // Можно воспользоваться функцией из контекста
-        startEmulation(user);
 
-        const simulationWindow = window.open(`/simulation?token=${simulationToken}`, '_blank', 'width=800,height=600');
-        if (simulationWindow) {
-          simulationWindow.focus();
-        } else {
-          setSnackbar({ open: true, message: 'Не удалось открыть окно для эмуляции', severity: 'error' });
-        }
+      if (simulationToken) {
+        // Запускаем симуляцию
+        simulateUser(simulationToken, user.email); 
+        setSnackbar({ open: true, message: `Эмуляция начата для ${user.email}`, severity: 'success' });
       } else {
         setSnackbar({ open: true, message: 'Не удалось получить токен для эмуляции', severity: 'error' });
       }
@@ -191,14 +176,11 @@ function UserPanel({ setActivePanel }) {
       setSnackbar({ open: true, message: errorMessage, severity: 'error' });
     }
   };
-  
 
   return (
     <div style={{ display: 'flex' }}>
-      {/* Навигация */}
       <AdminNavigation setActivePanel={setActivePanel} />
 
-      {/* Содержимое панели пользователей */}
       <div style={{ flexGrow: 1, padding: '16px' }}>
         <Typography variant="h4" gutterBottom>
           Пользователи
@@ -274,7 +256,6 @@ function UserPanel({ setActivePanel }) {
           />
         </Paper>
 
-        {/* Форма добавления/редактирования пользователя */}
         <Dialog open={formOpen} onClose={handleFormClose} fullWidth maxWidth="sm">
           <DialogTitle>{selectedUser ? 'Редактировать пользователя' : 'Добавить пользователя'}</DialogTitle>
           <form onSubmit={handleFormSubmit}>
@@ -353,7 +334,6 @@ function UserPanel({ setActivePanel }) {
           </form>
         </Dialog>
 
-        {/* Диалог подтверждения удаления */}
         <Dialog open={deleteConfirmOpen} onClose={handleDeleteConfirmClose}>
           <DialogTitle>Удалить пользователя?</DialogTitle>
           <DialogContent>
@@ -369,7 +349,6 @@ function UserPanel({ setActivePanel }) {
           </DialogActions>
         </Dialog>
 
-        {/* Уведомления */}
         <Snackbar
           open={snackbar.open}
           autoHideDuration={6000}

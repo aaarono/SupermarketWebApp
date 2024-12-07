@@ -1,8 +1,8 @@
-// EmulationContext.js
-import React, { createContext, useState, useEffect } from 'react';
+// src/contexts/EmulationContext.js
+import React, { createContext, useContext } from 'react';
 import { Box, Button, Typography } from "@mui/material";
 import { styled } from "@mui/system";
-import api from '../services/api';
+import { AuthContext } from './AuthContext';
 
 export const EmulationContext = createContext();
 
@@ -26,39 +26,10 @@ const StyledButton = styled(Button)(({ theme }) => ({
 }));
 
 export const EmulationProvider = ({ children }) => {
-    const [simulationEmail, setSimulationEmail] = useState('');
-    const [isEmulating, setIsEmulating] = useState(false);
-
-    useEffect(() => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const token = urlParams.get('token');
-
-        if (token) {
-            api.setAuthToken(token);
-            localStorage.setItem('simulationToken', token);
-            setIsEmulating(true);
-            // Получаем email или используем заглушку
-            setSimulationEmail("user@example.com");
-        } else {
-            // Нет токена — нет эмуляции
-            setIsEmulating(false);
-        }
-    }, []);
-
-    const handleStop = () => {
-        localStorage.removeItem('simulationToken');
-        setIsEmulating(false);
-        // Можно закрыть окно или сделать redirect
-        window.close();
-    };
-
-    const startEmulation = (user) => {
-        console.log('Эмулируем пользователя:', user);
-    };
+    const { isEmulating, simulationEmail, stopSimulation } = useContext(AuthContext);
 
     return (
-        <EmulationContext.Provider value={{ startEmulation }}>
-            {/* Отображаем панель только если есть эмуляция */}
+        <EmulationContext.Provider value={{}}>
             {isEmulating && (
                 <NotificationContainer role="alert" aria-live="polite">
                     <Typography variant="body1" color="white" sx={{ flexGrow: 1 }}>
@@ -66,7 +37,7 @@ export const EmulationProvider = ({ children }) => {
                     </Typography>
                     <StyledButton
                         variant="outlined"
-                        onClick={handleStop}
+                        onClick={stopSimulation}
                         aria-label="Stop emulation"
                         size="small"
                     >
