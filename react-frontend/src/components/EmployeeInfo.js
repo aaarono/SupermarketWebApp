@@ -54,11 +54,17 @@ const buildHierarchy = (employees) => {
 };
 
 // Рекурсивный компонент для отображения сотрудников
-const EmployeeListItem = ({ employee, positionsMap, level = 0 }) => {
+const EmployeeListItem = ({ employee, positionsMap, averageSalaries, level = 0 }) => {
   const [open, setOpen] = useState(false);
 
   const positionName = positionsMap[employee.poziceIdPozice] || "Неизвестная позиция";
   const positionIcon = positionIcons[employee.poziceIdPozice] || <PersonIcon color="primary" />;
+  const averageSalary = averageSalaries[employee.idZamestnance]; // Средняя зарплата из пропсов
+
+  // Обработчик раскрытия/сворачивания
+  const handleToggle = () => {
+    setOpen(!open);
+  };
 
   return (
     <>
@@ -90,11 +96,16 @@ const EmployeeListItem = ({ employee, positionsMap, level = 0 }) => {
                   📞 {employee.phone}
                 </Typography>
               )}
+              <Typography variant="body2" color="textSecondary">
+                {averageSalary !== null
+                  ? `Средняя зарплата подчиненных: ${averageSalary.toFixed(2)}`
+                  : "Средняя зарплата отсутствует"}
+              </Typography>
             </>
           }
         />
         {employee.children?.length > 0 && (
-          <IconButton edge="end" onClick={() => setOpen(!open)}>
+          <IconButton edge="end" onClick={handleToggle}>
             {open ? <ExpandLess /> : <ExpandMore />}
           </IconButton>
         )}
@@ -106,6 +117,7 @@ const EmployeeListItem = ({ employee, positionsMap, level = 0 }) => {
               key={child.idZamestnance}
               employee={child}
               positionsMap={positionsMap}
+              averageSalaries={averageSalaries} // Передаем зарплаты дальше
               level={level + 1}
             />
           ))}
@@ -115,10 +127,12 @@ const EmployeeListItem = ({ employee, positionsMap, level = 0 }) => {
   );
 };
 
+
 // Корневой компонент
 const EmployeeInfo = () => {
   const [hierarchy, setHierarchy] = useState([]);
   const [positions, setPositions] = useState({});
+  const [averageSalaries, setAverageSalaries] = useState({}); // Средние зарплаты подчиненных
   const [loading, setLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -149,9 +163,7 @@ const EmployeeInfo = () => {
   const fetchHierarchy = async () => {
     try {
       const response = await api.get("/api/zamestnanci/hierarchy/1");
-      console.log(response);
       const tree = buildHierarchy(response);
-      console.log(tree)
       setHierarchy(tree);
     } catch (error) {
       console.error("Ошибка загрузки иерархии сотрудников:", error);
@@ -160,16 +172,46 @@ const EmployeeInfo = () => {
         message: "Ошибка загрузки сотрудников",
         severity: "error",
       });
+    }
+  };
+
+  // Загрузка средней зарплаты для всех сотрудников
+  const fetchAverageSalaries = async (employees) => {
+    const salaries = {};
+    const promises = employees.map(async (employee) => {
+      try {
+        const response = await api.get(`/api/zamestnanci/${employee.idZamestnance}/average-salary`);
+        salaries[employee.idZamestnance] = response || null; // Предполагается, что API возвращает число
+      } catch (error) {
+        console.error(`Ошибка загрузки средней зарплаты для сотрудника ${employee.idZamestnance}:`, error);
+        salaries[employee.idZamestnance] = null; // В случае ошибки
+      }
+    });
+    await Promise.all(promises);
+    setAverageSalaries(salaries);
+  };
+
+  // Функция для загрузки всех данных
+  const fetchData = async () => {
+    try {
+      await fetchPositions();
+      const response = await api.get("/api/zamestnanci/hierarchy/1");
+      const tree = buildHierarchy(response);
+      setHierarchy(tree);
+      await fetchAverageSalaries(response); // Загружаем зарплаты после иерархии
+    } catch (error) {
+      console.error("Ошибка загрузки данных:", error);
+      setSnackbar({
+        open: true,
+        message: "Ошибка загрузки данных",
+        severity: "error",
+      });
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      await fetchPositions();
-      await fetchHierarchy();
-    };
     fetchData();
   }, []);
 
@@ -197,6 +239,7 @@ const EmployeeInfo = () => {
               key={employee.idZamestnance}
               employee={employee}
               positionsMap={positions}
+              averageSalaries={averageSalaries} // Передаем средние зарплаты
             />
           ))}
         </List>
