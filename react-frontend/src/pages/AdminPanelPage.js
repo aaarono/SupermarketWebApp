@@ -21,6 +21,7 @@ import FormatPanel from '../components/Panels/FormatPanel';
 import PositionPanel from '../components/Panels/PositionPanel';
 import RolePanel from '../components/Panels/RolePanel';
 import LogPanel from '../components/Panels/LogPanel';
+import SysCatalogPanel from '../components/Panels/SysCatalogPanel';
 import OrderStatusPanel from '../components/Panels/OrderStatusPanel'
 
 function AdminPanelPage({ AdminPanelRole }) {
@@ -50,6 +51,8 @@ function AdminPanelPage({ AdminPanelRole }) {
         return <RolePanel setActivePanel={setActivePanel} />;
       case 'log':
         return <LogPanel setActivePanel={setActivePanel} />;
+      case 'sys_kat':
+        return <SysCatalogPanel setActivePanel={setActivePanel} />;
       case 'order':
         return <OrderPanel setActivePanel={setActivePanel} />; // TODO реализовать OrderPanel
       case 'address':

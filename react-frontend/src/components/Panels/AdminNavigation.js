@@ -158,6 +158,12 @@ function AdminNavigation({ setActivePanel }) {
           </ListItemIcon>
           <ListItemText primary="Logs" />
         </ListItem>
+        <ListItem button onClick={() => setActivePanel('sys_kat')}>
+          <ListItemIcon>
+            <PestControlOutlinedIcon />
+          </ListItemIcon>
+          <ListItemText primary="Sys. Catalog" />
+        </ListItem>
       </List>
     </div>
   );
