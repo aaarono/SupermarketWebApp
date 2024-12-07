@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.CallableStatementCallback;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +35,33 @@ public class UserService {
             cs.setLong(7, 1); // ROLE_USER по умолчанию
             cs.setLong(8, user.getZakaznikIdZakazniku());
             cs.setObject(9, null); // p_zamnestnanec_id_zamnestnance
+            return cs;
+        });
+    }
+
+    /**
+     * Создание нового пользователя напрямую через SQL-запрос (для метода getAllUsers)
+     */
+    @Transactional(readOnly = true)
+    public List<User> getAllUsersDirect() {
+        String sql = "SELECT ID_USER, JMENO, PRIJMENI, EMAIL, PASSWORD, ROLE_ID_ROLE, ZAKAZNIK_ID_ZAKAZNIKU, ZAMNESTNANEC_ID_ZAMNESTNANCE FROM \"USER\"";
+        return jdbcTemplate.query(sql, (rs, rowNum) -> mapRowToUser(rs));
+    }
+
+
+    @Transactional(rollbackFor = Exception.class)
+    public void createUser(User user) {
+        jdbcTemplate.update((Connection conn) -> {
+            CallableStatement cs = conn.prepareCall("{call proc_user_cud(?, ?, ?, ?, ?, ?, ?, ?, ?)}"); // 9 параметров
+            cs.setString(1, "INSERT");
+            cs.setObject(2, null); // p_id_user
+            cs.setString(3, user.getJmeno());
+            cs.setString(4, user.getPrijmeni());
+            cs.setString(5, user.getEmail());
+            cs.setString(6, user.getPassword()); // Пароль должен быть хеширован перед вызовом
+            cs.setLong(7, user.getRoleIdRole());
+            cs.setLong(8, user.getZakaznikIdZakazniku());
+            cs.setLong(9, user.getZamnestnanecIdZamnestnance());
             return cs;
         });
     }
@@ -255,14 +283,14 @@ public class UserService {
     // Метод для маппинга строки ResultSet в объект User
     private User mapRowToUser(ResultSet rs) throws SQLException {
         User user = new User();
-        user.setIdUser(rs.getLong("id_user"));
-        user.setJmeno(rs.getString("jmeno"));
-        user.setPrijmeni(rs.getString("prijmeni"));
-        user.setEmail(rs.getString("email"));
-        user.setPassword(rs.getString("password"));
-        user.setRoleIdRole(rs.getLong("role_id_role"));
-        user.setZakaznikIdZakazniku(rs.getLong("zakaznik_id_zakazniku"));
-        user.setZamnestnanecIdZamnestnance(rs.getLong("zamnestnanec_id_zamnestnance"));
+        user.setIdUser(rs.getLong("ID_USER"));
+        user.setJmeno(rs.getString("JMENO"));
+        user.setPrijmeni(rs.getString("PRIJMENI"));
+        user.setEmail(rs.getString("EMAIL"));
+        user.setPassword(rs.getString("PASSWORD"));
+        user.setRoleIdRole(rs.getLong("ROLE_ID_ROLE"));
+        user.setZakaznikIdZakazniku(rs.getLong("ZAKAZNIK_ID_ZAKAZNIKU"));
+        user.setZamnestnanecIdZamnestnance(rs.getLong("ZAMNESTNANEC_ID_ZAMNESTNANCE"));
         return user;
     }
 }

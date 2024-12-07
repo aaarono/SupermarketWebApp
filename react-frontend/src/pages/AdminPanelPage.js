@@ -43,9 +43,9 @@ function AdminPanelPage({ AdminPanelRole }) {
       case 'product-supplier':
         return <ProductSupplierPanel setActivePanel={setActivePanel} />;
       case 'supplier':
-        return <SupplierPanel setActivePanel={setActivePanel} />; // TODO реализовать SupplierPanel
+        return <SupplierPanel setActivePanel={setActivePanel} />;
       case 'image':
-        return <ImagePanel setActivePanel={setActivePanel} />; // TODO реализовать ImagePanel
+        return <ImagePanel setActivePanel={setActivePanel} />;
       case 'format':
         return <FormatPanel setActivePanel={setActivePanel} />;
       case 'position':

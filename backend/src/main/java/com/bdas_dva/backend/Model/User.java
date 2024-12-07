@@ -8,7 +8,6 @@ public class User {
     private String prijmeni;
     private String email;
     private String telNumber;
-    @JsonIgnore
     private String password;
     private Long roleIdRole;
     private Long zakaznikIdZakazniku;

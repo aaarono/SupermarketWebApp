@@ -58,10 +58,10 @@ const LogoutButton = styled(Button)({
   }
 });
 
-const AdminNavBar = ({ NavBarTypeRole }) => {
+const AdminNavBar = ({ NavBarTypeRole, userName }) => {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState(0);
-  const userName = "John Admin";
+  // const userName = "John Admin";
 
   useEffect(() => {
     // Функция для обновления количества товаров

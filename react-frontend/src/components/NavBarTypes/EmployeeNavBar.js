@@ -57,10 +57,10 @@ const LogoutButton = styled(Button)({
   }
 });
 
-const EmployeeNavBar = ({ NavBarTypeRole }) => {
+const EmployeeNavBar = ({ NavBarTypeRole, userName }) => {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState(0);
-  const userName = "John Employee";
+  // const userName = "John Employee";
 
   useEffect(() => {
     const updateCartCount = () => {
