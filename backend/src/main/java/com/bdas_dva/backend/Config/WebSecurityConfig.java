@@ -76,7 +76,12 @@ public class WebSecurityConfig {
         // Разрешенные методы
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept", "X-Requested-With"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization",
+                "Content-Type",
+                "Accept",
+                "X-Requested-With",
+                "multipart/form-data",
+                "headers"));
 
         // Разрешить передачу учетных данных (cookies, authorization headers и т.д.)
         configuration.setAllowCredentials(true);
