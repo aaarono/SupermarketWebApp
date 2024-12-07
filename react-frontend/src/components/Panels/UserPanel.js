@@ -1,4 +1,4 @@
-// UserPanel.js
+// src/components/Panels/UserPanel.js
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -41,9 +41,9 @@ function UserPanel({ setActivePanel }) {
     prijmeni: '',
     email: '',
     password: '',
-    role_id_role: '',
-    zakaznik_id_zakazniku: '',
-    zamestnanec_id_zamestnance: '',
+    roleIdRole: '',
+    zakaznikIdZakazniku: '',
+    zamnestnanecIdZamnestnance: '',
   });
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -52,10 +52,12 @@ function UserPanel({ setActivePanel }) {
     fetchUsers();
   }, []);
 
+  // Исправленный метод fetchUsers
   const fetchUsers = async () => {
     try {
       const response = await api.get('/api/users');
-      setUsers(response);
+      console.log('Полученные данные пользователей:', response); // Для отладки
+      setUsers(response); // Используем response
       setLoading(false);
     } catch (error) {
       console.error('Ошибка при загрузке пользователей:', error);
@@ -73,11 +75,11 @@ function UserPanel({ setActivePanel }) {
             prijmeni: user.prijmeni,
             email: user.email,
             password: '', // Не отображаем пароль при редактировании
-            role_id_role: user.role_id_role,
-            zakaznik_id_zakazniku: user.zakaznik_id_zakazniku,
-            zamestnanec_id_zamestnance: user.zamestnanec_id_zamestnance,
+            roleIdRole: user.roleIdRole,
+            zakaznikIdZakazniku: user.zakaznikIdZakazniku,
+            zamnestnanecIdZamnestnance: user.zamnestnanecIdZamnestnance,
           }
-        : { jmeno: '', prijmeni: '', email: '', password: '', role_id_role: '', zakaznik_id_zakazniku: '', zamestnanec_id_zamestnance: '' }
+        : { jmeno: '', prijmeni: '', email: '', password: '', roleIdRole: '', zakaznikIdZakazniku: '', zamnestnanecIdZamnestnance: '' }
     );
     setFormOpen(true);
   };
@@ -85,7 +87,7 @@ function UserPanel({ setActivePanel }) {
   const handleFormClose = () => {
     setFormOpen(false);
     setSelectedUser(null);
-    setFormData({ jmeno: '', prijmeni: '', email: '', password: '', role_id_role: '', zakaznik_id_zakazniku: '', zamestnanec_id_zamestnance: '' });
+    setFormData({ jmeno: '', prijmeni: '', email: '', password: '', roleIdRole: '', zakaznikIdZakazniku: '', zamnestnanecIdZamnestnance: '' });
   };
 
   const handleFormSubmit = async (e) => {
@@ -96,13 +98,13 @@ function UserPanel({ setActivePanel }) {
         prijmeni: formData.prijmeni,
         email: formData.email,
         ...(selectedUser ? {} : { password: formData.password }),
-        role_id_role: formData.role_id_role,
-        zakaznik_id_zakazniku: formData.zakaznik_id_zakazniku,
-        zamestnanec_id_zamestnance: formData.zamestnanec_id_zamestnance,
+        roleIdRole: formData.roleIdRole,
+        zakaznikIdZakazniku: formData.zakaznikIdZakazniku,
+        zamnestnanecIdZamnestnance: formData.zamnestnanecIdZamnestnance,
       };
 
       if (selectedUser) {
-        await api.put(`/api/users/${selectedUser.id}`, dataToSend);
+        await api.put(`/api/users/${selectedUser.idUser}`, dataToSend);
         setSnackbar({ open: true, message: 'Пользователь обновлен успешно', severity: 'success' });
       } else {
         await api.post('/api/users', dataToSend);
@@ -129,7 +131,7 @@ function UserPanel({ setActivePanel }) {
 
   const handleDelete = async () => {
     try {
-      await api.delete(`/api/users/${selectedUser.id}`);
+      await api.delete(`/api/users/${selectedUser.idUser}`);
       setSnackbar({ open: true, message: 'Пользователь удален успешно', severity: 'success' });
       fetchUsers();
       handleDeleteConfirmClose();
@@ -197,14 +199,14 @@ function UserPanel({ setActivePanel }) {
               <TableBody>
                 {users.length > 0 ? (
                   users.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((user) => (
-                    <TableRow hover key={user.id}>
-                      <TableCell>{user.id}</TableCell>
+                    <TableRow hover key={user.idUser}>
+                      <TableCell>{user.idUser}</TableCell>
                       <TableCell>{user.jmeno}</TableCell>
                       <TableCell>{user.prijmeni}</TableCell>
                       <TableCell>{user.email}</TableCell>
-                      <TableCell>{user.role_id_role}</TableCell>
-                      <TableCell>{user.zakaznik_id_zakazniku}</TableCell>
-                      <TableCell>{user.zamestnanec_id_zamestnance}</TableCell>
+                      <TableCell>{user.roleIdRole}</TableCell>
+                      <TableCell>{user.zakaznikIdZakazniku}</TableCell>
+                      <TableCell>{user.zamnestnanecIdZamnestnance}</TableCell>
                       <TableCell align="right">
                         <IconButton onClick={() => handleFormOpen(user)} color="primary">
                           <FiEdit2 />
@@ -287,26 +289,24 @@ function UserPanel({ setActivePanel }) {
                 type="number"
                 fullWidth
                 required
-                value={formData.role_id_role}
-                onChange={(e) => setFormData({ ...formData, role_id_role: e.target.value })}
+                value={formData.roleIdRole}
+                onChange={(e) => setFormData({ ...formData, roleIdRole: e.target.value })}
               />
               <TextField
                 margin="dense"
                 label="ID Заказчика"
                 type="number"
                 fullWidth
-                required
-                value={formData.zakaznik_id_zakazniku}
-                onChange={(e) => setFormData({ ...formData, zakaznik_id_zakazniku: e.target.value })}
+                value={formData.zakaznikIdZakazniku}
+                onChange={(e) => setFormData({ ...formData, zakaznikIdZakazniku: e.target.value })}
               />
               <TextField
                 margin="dense"
                 label="ID Сотрудника"
                 type="number"
                 fullWidth
-                required
-                value={formData.zamestnanec_id_zamestnance}
-                onChange={(e) => setFormData({ ...formData, zamestnanec_id_zamestnance: e.target.value })}
+                value={formData.zamnestnanecIdZamnestnance}
+                onChange={(e) => setFormData({ ...formData, zamnestnanecIdZamnestnance: e.target.value })}
               />
             </DialogContent>
             <DialogActions>
@@ -323,7 +323,7 @@ function UserPanel({ setActivePanel }) {
           <DialogTitle>Удалить пользователя?</DialogTitle>
           <DialogContent>
             <Typography>
-              Вы уверены, что хотите удалить пользователя с ID {selectedUser?.id}?
+              Вы уверены, что хотите удалить пользователя с ID {selectedUser?.idUser}?
             </Typography>
           </DialogContent>
           <DialogActions>
