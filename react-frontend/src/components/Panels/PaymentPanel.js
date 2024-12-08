@@ -1,6 +1,6 @@
-// PaymentPanel.js
+// src/components/Panels/PaymentPanel.js
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Typography,
   Paper,
@@ -21,8 +21,9 @@ import {
   DialogActions,
   TextField,
   CircularProgress,
+  InputAdornment,
 } from '@mui/material';
-import { FiEdit2, FiTrash2, FiPlus } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiPlus, FiSearch, FiX } from 'react-icons/fi';
 import AdminNavigation from './AdminNavigation';
 import api from '../../services/api';
 
@@ -30,9 +31,12 @@ function PaymentPanel({ setActivePanel }) {
   const [payments, setPayments] = useState([]);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  // Пагинация
+  // Pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  // Search
+  const [searchTerm, setSearchTerm] = useState('');
 
   const [formOpen, setFormOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState(null);
@@ -49,18 +53,20 @@ function PaymentPanel({ setActivePanel }) {
     fetchPayments();
   }, []);
 
+  // Fetch payments from the backend
   const fetchPayments = async () => {
     try {
       const response = await api.get('/api/payments');
       setPayments(response);
       setLoading(false);
     } catch (error) {
-      console.error('Ошибка при загрузке платежей:', error);
-      setSnackbar({ open: true, message: 'Ошибка при загрузке платежей', severity: 'error' });
+      console.error('Error loading payments:', error);
+      setSnackbar({ open: true, message: 'Error loading payments', severity: 'error' });
       setLoading(false);
     }
   };
 
+  // Open the add/edit form
   const handleFormOpen = (payment = null) => {
     setSelectedPayment(payment);
     setFormData(
@@ -76,12 +82,14 @@ function PaymentPanel({ setActivePanel }) {
     setFormOpen(true);
   };
 
+  // Close the add/edit form
   const handleFormClose = () => {
     setFormOpen(false);
     setSelectedPayment(null);
     setFormData({ suma: '', datum: '', typ: '', objednavkaId: '' });
   };
 
+  // Handle form submission for add/edit
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -94,54 +102,115 @@ function PaymentPanel({ setActivePanel }) {
 
       if (selectedPayment) {
         await api.put(`/api/payments/${selectedPayment.id}`, dataToSend);
-        setSnackbar({ open: true, message: 'Платеж обновлен успешно', severity: 'success' });
+        setSnackbar({ open: true, message: 'Payment updated successfully', severity: 'success' });
       } else {
         await api.post('/api/payments', dataToSend);
-        setSnackbar({ open: true, message: 'Платеж добавлен успешно', severity: 'success' });
+        setSnackbar({ open: true, message: 'Payment added successfully', severity: 'success' });
       }
       fetchPayments();
       handleFormClose();
     } catch (error) {
-      console.error('Ошибка при сохранении платежа:', error);
-      const errorMessage = error.response?.data || 'Ошибка при сохранении платежа';
+      console.error('Error saving payment:', error);
+      const errorMessage = error.response?.data || 'Error saving payment';
       setSnackbar({ open: true, message: errorMessage, severity: 'error' });
     }
   };
 
+  // Open delete confirmation dialog
   const handleDeleteConfirmOpen = (payment) => {
     setSelectedPayment(payment);
     setDeleteConfirmOpen(true);
   };
 
+  // Close delete confirmation dialog
   const handleDeleteConfirmClose = () => {
     setDeleteConfirmOpen(false);
     setSelectedPayment(null);
   };
 
+  // Handle payment deletion
   const handleDelete = async () => {
     try {
       await api.delete(`/api/payments/${selectedPayment.id}`);
-      setSnackbar({ open: true, message: 'Платеж удален успешно', severity: 'success' });
+      setSnackbar({ open: true, message: 'Payment deleted successfully', severity: 'success' });
       fetchPayments();
       handleDeleteConfirmClose();
     } catch (error) {
-      console.error('Ошибка при удалении платежа:', error);
-      const errorMessage = error.response?.data || 'Ошибка при удалении платежа';
+      console.error('Error deleting payment:', error);
+      const errorMessage = error.response?.data || 'Error deleting payment';
       setSnackbar({ open: true, message: errorMessage, severity: 'error' });
     }
   };
 
-  // Обработчики пагинации
+  // Handle pagination page change
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
 
+  // Handle pagination rows per page change
   const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(+event.target.value);
+    setRowsPerPage(+event.target.value || 5);
     setPage(0);
   };
 
-  // Проверяем, загрузились ли данные
+  // Handle sorting (optional, can be removed if not needed)
+  // const [order, setOrder] = useState('asc'); // 'asc' or 'desc'
+  // const [orderBy, setOrderBy] = useState('id'); // Column to sort by
+
+  // // Handle sorting
+  // const handleRequestSort = (property) => {
+  //   const isAsc = orderBy === property && order === 'asc';
+  //   setOrder(isAsc ? 'desc' : 'asc');
+  //   setOrderBy(property);
+  // };
+
+  // // Sorting comparator function
+  // const comparator = (a, b) => {
+  //   if (a[orderBy] < b[orderBy]) {
+  //     return order === 'asc' ? -1 : 1;
+  //   }
+  //   if (a[orderBy] > b[orderBy]) {
+  //     return order === 'asc' ? 1 : -1;
+  //   }
+  //   return 0;
+  // };
+
+  // // Memoized filtered and sorted payments
+  // const filteredAndSortedPayments = useMemo(() => {
+  //   // Apply search filter
+  //   const filtered = payments.filter((payment) => {
+  //     const searchStr = searchTerm.toLowerCase();
+  //     return (
+  //       payment.id.toString().includes(searchStr) ||
+  //       payment.suma.toString().includes(searchStr) ||
+  //       (payment.datum && payment.datum.toLowerCase().includes(searchStr)) ||
+  //       payment.typ.toLowerCase().includes(searchStr) ||
+  //       payment.objednavkaId.toString().includes(searchStr)
+  //     );
+  //   });
+
+  //   // Sort the filtered payments
+  //   return filtered.slice().sort(comparator);
+  // }, [payments, order, orderBy, searchTerm]);
+
+  // Memoized filtered payments
+  const filteredPayments = useMemo(() => {
+    // Apply search filter
+    const filtered = payments.filter((payment) => {
+      const searchStr = searchTerm.toLowerCase();
+      return (
+        payment.id.toString().includes(searchStr) ||
+        payment.suma.toString().includes(searchStr) ||
+        (payment.datum && payment.datum.toLowerCase().includes(searchStr)) ||
+        payment.typ.toLowerCase().includes(searchStr) ||
+        payment.objednavkaId.toString().includes(searchStr)
+      );
+    });
+
+    return filtered;
+  }, [payments, searchTerm]);
+
+  // Check if data is still loading
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', marginTop: '50px' }}>
@@ -152,14 +221,16 @@ function PaymentPanel({ setActivePanel }) {
 
   return (
     <div style={{ display: 'flex' }}>
-      {/* Навигация */}
+      {/* Navigation */}
       <AdminNavigation setActivePanel={setActivePanel} />
 
-      {/* Содержимое панели платежей */}
+      {/* Payment Panel Content */}
       <div style={{ flexGrow: 1, padding: '16px' }}>
         <Typography variant="h4" gutterBottom>
-          Платежи
+          Payments
         </Typography>
+
+        {/* Add Payment Button */}
         <Button
           variant="contained"
           color="primary"
@@ -167,45 +238,77 @@ function PaymentPanel({ setActivePanel }) {
           onClick={() => handleFormOpen()}
           style={{ marginBottom: '16px' }}
         >
-          Добавить платеж
+          Add Payment
         </Button>
 
+        {/* Search Bar */}
+        <Paper
+          sx={{
+            padding: '8px 16px',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            borderRadius: '8px',
+          }}
+        >
+          <FiSearch style={{ marginRight: '8px', color: '#888' }} />
+          <TextField
+            placeholder="Search across all fields..."
+            variant="standard"
+            fullWidth
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{
+              endAdornment: searchTerm && (
+                <InputAdornment position="end">
+                  <IconButton onClick={() => setSearchTerm('')}>
+                    <FiX />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Paper>
+
+        {/* Payments Table */}
         <Paper sx={{ width: '100%', overflow: 'hidden', marginTop: 2 }}>
           <TableContainer>
             <Table stickyHeader aria-label="payments table">
               <TableHead>
                 <TableRow>
                   <TableCell>ID</TableCell>
-                  <TableCell>Сумма</TableCell>
-                  <TableCell>Дата</TableCell>
-                  <TableCell>Тип</TableCell>
-                  <TableCell>ID Заказа</TableCell>
-                  <TableCell align="right">Действия</TableCell>
+                  <TableCell>Amount</TableCell>
+                  <TableCell>Date</TableCell>
+                  <TableCell>Type</TableCell>
+                  <TableCell>Order ID</TableCell>
+                  <TableCell align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {payments.length > 0 ? (
-                  payments.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((payment) => (
-                    <TableRow hover key={payment.id}>
-                      <TableCell>{payment.id}</TableCell>
-                      <TableCell>{payment.suma}</TableCell>
-                      <TableCell>{new Date(payment.datum).toLocaleDateString()}</TableCell>
-                      <TableCell>{payment.typ}</TableCell>
-                      <TableCell>{payment.objednavkaId}</TableCell>
-                      <TableCell align="right">
-                        <IconButton onClick={() => handleFormOpen(payment)} color="primary">
-                          <FiEdit2 />
-                        </IconButton>
-                        <IconButton onClick={() => handleDeleteConfirmOpen(payment)} color="secondary">
-                          <FiTrash2 />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                {filteredPayments.length > 0 ? (
+                  filteredPayments
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((payment) => (
+                      <TableRow hover key={payment.id}>
+                        <TableCell>{payment.id}</TableCell>
+                        <TableCell>{payment.suma}</TableCell>
+                        <TableCell>{new Date(payment.datum).toLocaleDateString()}</TableCell>
+                        <TableCell>{payment.typ}</TableCell>
+                        <TableCell>{payment.objednavkaId}</TableCell>
+                        <TableCell align="right">
+                          <IconButton onClick={() => handleFormOpen(payment)} color="primary">
+                            <FiEdit2 />
+                          </IconButton>
+                          <IconButton onClick={() => handleDeleteConfirmOpen(payment)} color="secondary">
+                            <FiTrash2 />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
                 ) : (
                   <TableRow>
                     <TableCell colSpan={6} align="center">
-                      Нет данных
+                      No data available
                     </TableCell>
                   </TableRow>
                 )}
@@ -213,9 +316,10 @@ function PaymentPanel({ setActivePanel }) {
             </Table>
           </TableContainer>
 
+          {/* Pagination Controls */}
           <TablePagination
             component="div"
-            count={payments.length}
+            count={filteredPayments.length}
             page={page}
             onPageChange={handleChangePage}
             rowsPerPage={rowsPerPage}
@@ -223,23 +327,27 @@ function PaymentPanel({ setActivePanel }) {
             rowsPerPageOptions={[5, 10, 25]}
           />
         </Paper>
+
+        {/* Add/Edit Payment Dialog */}
         <Dialog open={formOpen} onClose={handleFormClose} fullWidth maxWidth="sm">
-          <DialogTitle>{selectedPayment ? 'Редактировать платеж' : 'Добавить платеж'}</DialogTitle>
+          <DialogTitle>{selectedPayment ? 'Edit Payment' : 'Add Payment'}</DialogTitle>
           <form onSubmit={handleFormSubmit}>
             <DialogContent>
+              {/* Amount Field */}
               <TextField
                 autoFocus
                 margin="dense"
-                label="Сумма"
+                label="Amount"
                 type="number"
                 fullWidth
                 required
                 value={formData.suma}
                 onChange={(e) => setFormData({ ...formData, suma: parseFloat(e.target.value) })}
               />
+              {/* Date Field */}
               <TextField
                 margin="dense"
-                label="Дата"
+                label="Date"
                 type="date"
                 fullWidth
                 required
@@ -249,18 +357,20 @@ function PaymentPanel({ setActivePanel }) {
                 value={formData.datum}
                 onChange={(e) => setFormData({ ...formData, datum: e.target.value })}
               />
+              {/* Type Field */}
               <TextField
                 margin="dense"
-                label="Тип"
+                label="Type"
                 type="text"
                 fullWidth
                 required
                 value={formData.typ}
                 onChange={(e) => setFormData({ ...formData, typ: e.target.value })}
               />
+              {/* Order ID Field */}
               <TextField
                 margin="dense"
-                label="ID Заказа"
+                label="Order ID"
                 type="number"
                 fullWidth
                 required
@@ -269,36 +379,41 @@ function PaymentPanel({ setActivePanel }) {
               />
             </DialogContent>
             <DialogActions>
-              <Button onClick={handleFormClose}>Отмена</Button>
+              <Button onClick={handleFormClose}>Cancel</Button>
               <Button type="submit" color="primary">
-                Сохранить
+                Save
               </Button>
             </DialogActions>
           </form>
         </Dialog>
 
+        {/* Delete Confirmation Dialog */}
         <Dialog open={deleteConfirmOpen} onClose={handleDeleteConfirmClose}>
-          <DialogTitle>Удалить платеж?</DialogTitle>
+          <DialogTitle>Delete Payment?</DialogTitle>
           <DialogContent>
             <Typography>
-              Вы уверены, что хотите удалить платеж с ID {selectedPayment?.id}?
+              Are you sure you want to delete the payment with ID {selectedPayment?.id}?
             </Typography>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleDeleteConfirmClose}>Отмена</Button>
+            <Button onClick={handleDeleteConfirmClose}>Cancel</Button>
             <Button onClick={handleDelete} color="secondary">
-              Удалить
+              Delete
             </Button>
           </DialogActions>
         </Dialog>
 
-        {/* Уведомления */}
+        {/* Snackbar for Notifications */}
         <Snackbar
           open={snackbar.open}
           autoHideDuration={6000}
           onClose={() => setSnackbar({ ...snackbar, open: false })}
         >
-          <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity}>
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+          >
             {snackbar.message}
           </Alert>
         </Snackbar>

@@ -1,6 +1,6 @@
-// KartaPanel.js
+// src/components/Panels/KartaPanel.js
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Typography,
   Paper,
@@ -11,26 +11,28 @@ import {
   TableHead,
   TableRow,
   TablePagination,
-  IconButton,
   Snackbar,
   Alert,
+  CircularProgress,
+  TextField,
   Button,
-  Dialog,
+  IconButton,
+  InputAdornment,
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
-  CircularProgress,
+  Dialog
 } from '@mui/material';
-import { FiEdit2, FiTrash2, FiPlus } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiPlus, FiSearch, FiX } from 'react-icons/fi';
 import AdminNavigation from './AdminNavigation';
 import api from '../../services/api';
 
 function KartaPanel({ setActivePanel }) {
-  const [karty, setKarty] = useState([]); // Инициализируем как пустой массив
+  const [karty, setKarty] = useState([]); // Initialize as empty array
+  const [filteredKarty, setFilteredKarty] = useState([]); // Filtered data
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  // Пагинация
+  // Pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
@@ -41,34 +43,43 @@ function KartaPanel({ setActivePanel }) {
   });
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingAction, setLoadingAction] = useState(false);
+
+  // Search Filters
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchKarty();
   }, []);
 
+  // Fetch karty from the backend
   const fetchKarty = async () => {
     try {
       const response = await api.get('/api/karta');
-      console.log('API Response:', response); // Добавляем для отладки
-      // Проверяем, существует ли response.data и является ли массивом
+      console.log('API Response:', response); // Added for debugging
+      // Check if response.data exists and is an array
       if (response && response.data && Array.isArray(response.data)) {
         setKarty(response.data);
+        setFilteredKarty(response.data);
       } else if (response && Array.isArray(response)) {
-        // В случае, если API возвращает массив напрямую
+        // If API returns an array directly
         setKarty(response);
+        setFilteredKarty(response);
       } else {
-        // Если данные не соответствуют ожидаемому формату
-        console.error('Неправильный формат данных от API:', response);
+        // If data format is incorrect
+        console.error('Incorrect data format from API:', response);
         setKarty([]);
+        setFilteredKarty([]);
       }
       setLoading(false);
     } catch (error) {
-      console.error('Ошибка при загрузке карт:', error);
-      setSnackbar({ open: true, message: 'Ошибка при загрузке карт', severity: 'error' });
+      console.error('Error fetching karty:', error);
+      setSnackbar({ open: true, message: 'Error fetching cards', severity: 'error' });
       setLoading(false);
     }
   };
 
+  // Open form for adding or editing a karta
   const handleFormOpen = (karta = null) => {
     setSelectedKarta(karta);
     setFormData(
@@ -81,14 +92,17 @@ function KartaPanel({ setActivePanel }) {
     setFormOpen(true);
   };
 
+  // Close the form and reset formData
   const handleFormClose = () => {
     setFormOpen(false);
     setSelectedKarta(null);
     setFormData({ cisloKarty: '' });
   };
 
+  // Handle form submission for adding or editing a karta
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    setLoadingAction(true);
     try {
       const dataToSend = {
         cisloKarty: formData.cisloKarty,
@@ -96,54 +110,82 @@ function KartaPanel({ setActivePanel }) {
 
       if (selectedKarta) {
         await api.put(`/api/karta/${selectedKarta.idPlatby}`, dataToSend);
-        setSnackbar({ open: true, message: 'Карта успешно обновлена', severity: 'success' });
+        setSnackbar({ open: true, message: 'Card updated successfully', severity: 'success' });
       } else {
         await api.post('/api/karta', dataToSend);
-        setSnackbar({ open: true, message: 'Карта успешно добавлена', severity: 'success' });
+        setSnackbar({ open: true, message: 'Card added successfully', severity: 'success' });
       }
       fetchKarty();
       handleFormClose();
     } catch (error) {
-      console.error('Ошибка при сохранении карты:', error);
-      const errorMessage = error.response?.data || 'Ошибка при сохранении карты';
+      console.error('Error saving card:', error);
+      const errorMessage = error.response?.data || 'Error saving card';
       setSnackbar({ open: true, message: errorMessage, severity: 'error' });
+    } finally {
+      setLoadingAction(false);
     }
   };
 
+  // Open delete confirmation dialog
   const handleDeleteConfirmOpen = (karta) => {
     setSelectedKarta(karta);
     setDeleteConfirmOpen(true);
   };
 
+  // Close delete confirmation dialog
   const handleDeleteConfirmClose = () => {
     setDeleteConfirmOpen(false);
     setSelectedKarta(null);
   };
 
+  // Handle deletion of a karta
   const handleDelete = async () => {
+    setLoadingAction(true);
     try {
       await api.delete(`/api/karta/${selectedKarta.idPlatby}`);
-      setSnackbar({ open: true, message: 'Карта успешно удалена', severity: 'success' });
+      setSnackbar({ open: true, message: 'Card deleted successfully', severity: 'success' });
       fetchKarty();
       handleDeleteConfirmClose();
     } catch (error) {
-      console.error('Ошибка при удалении карты:', error);
-      const errorMessage = error.response?.data || 'Ошибка при удалении карты';
+      console.error('Error deleting card:', error);
+      const errorMessage = error.response?.data || 'Error deleting card';
       setSnackbar({ open: true, message: errorMessage, severity: 'error' });
+    } finally {
+      setLoadingAction(false);
     }
   };
 
-  // Обработчики пагинации
+  // Handle pagination page change
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
 
+  // Handle pagination rows per page change
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(+event.target.value);
     setPage(0);
   };
 
-  // Проверяем, загрузились ли данные
+  // Handle search input change
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value.toLowerCase());
+  };
+
+  // Memoized filtered karty based on search term
+  const filteredKartyMemo = useMemo(() => {
+    return karty.filter(
+      (karta) =>
+        karta.idPlatby.toString().includes(searchTerm) ||
+        karta.cisloKarty.toLowerCase().includes(searchTerm)
+    );
+  }, [karty, searchTerm]);
+
+  // Update filteredKarty when filteredKartyMemo changes
+  useEffect(() => {
+    setFilteredKarty(filteredKartyMemo);
+  }, [filteredKartyMemo]);
+
+  // Show loading indicator if data is being fetched
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', marginTop: '50px' }}>
@@ -154,14 +196,45 @@ function KartaPanel({ setActivePanel }) {
 
   return (
     <div style={{ display: 'flex' }}>
-      {/* Навигация */}
+      {/* Navigation */}
       <AdminNavigation setActivePanel={setActivePanel} />
 
-      {/* Содержимое панели карт */}
+      {/* Karta Panel Content */}
       <div style={{ flexGrow: 1, padding: '16px' }}>
         <Typography variant="h4" gutterBottom>
-          Карты
+          Cards
         </Typography>
+
+        {/* Search Bar */}
+        <Paper
+          sx={{
+            padding: '8px 16px',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            borderRadius: '8px',
+          }}
+        >
+          <FiSearch style={{ marginRight: '8px', color: '#888' }} />
+          <TextField
+            placeholder="Search by ID or Card Number..."
+            variant="standard"
+            fullWidth
+            value={searchTerm}
+            onChange={handleSearchChange}
+            InputProps={{
+              endAdornment: searchTerm && (
+                <InputAdornment position="end">
+                  <IconButton onClick={() => setSearchTerm('')}>
+                    <FiX />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Paper>
+
+        {/* Add Card Button */}
         <Button
           variant="contained"
           color="primary"
@@ -169,22 +242,23 @@ function KartaPanel({ setActivePanel }) {
           onClick={() => handleFormOpen()}
           style={{ marginBottom: '16px' }}
         >
-          Добавить карту
+          Add Card
         </Button>
 
+        {/* Cards Table */}
         <Paper sx={{ width: '100%', overflow: 'hidden', marginTop: 2 }}>
           <TableContainer>
-            <Table stickyHeader aria-label="karta table">
+            <Table stickyHeader aria-label="cards table">
               <TableHead>
                 <TableRow>
-                  <TableCell>ID Карты</TableCell>
-                  <TableCell>Номер карты</TableCell>
-                  <TableCell align="right">Действия</TableCell>
+                  <TableCell>ID</TableCell>
+                  <TableCell>Card Number</TableCell>
+                  <TableCell align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {karty.length > 0 ? (
-                  karty
+                {filteredKarty.length > 0 ? (
+                  filteredKarty
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                     .map((karta) => (
                       <TableRow hover key={karta.idPlatby}>
@@ -203,7 +277,7 @@ function KartaPanel({ setActivePanel }) {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={3} align="center">
-                      Нет данных
+                      No data available
                     </TableCell>
                   </TableRow>
                 )}
@@ -211,9 +285,10 @@ function KartaPanel({ setActivePanel }) {
             </Table>
           </TableContainer>
 
+          {/* Pagination Controls */}
           <TablePagination
             component="div"
-            count={karty.length}
+            count={filteredKarty.length}
             page={page}
             onPageChange={handleChangePage}
             rowsPerPage={rowsPerPage}
@@ -222,15 +297,15 @@ function KartaPanel({ setActivePanel }) {
           />
         </Paper>
 
-        {/* Форма добавления/редактирования */}
+        {/* Add/Edit Card Dialog */}
         <Dialog open={formOpen} onClose={handleFormClose} fullWidth maxWidth="sm">
-          <DialogTitle>{selectedKarta ? 'Редактировать карту' : 'Добавить карту'}</DialogTitle>
+          <DialogTitle>{selectedKarta ? 'Edit Card' : 'Add Card'}</DialogTitle>
           <form onSubmit={handleFormSubmit}>
             <DialogContent>
               <TextField
                 autoFocus
                 margin="dense"
-                label="Номер карты"
+                label="Card Number"
                 type="text"
                 fullWidth
                 required
@@ -239,37 +314,41 @@ function KartaPanel({ setActivePanel }) {
               />
             </DialogContent>
             <DialogActions>
-              <Button onClick={handleFormClose}>Отмена</Button>
-              <Button type="submit" color="primary">
-                Сохранить
+              <Button onClick={handleFormClose}>Cancel</Button>
+              <Button type="submit" color="primary" disabled={loadingAction}>
+                {loadingAction ? <CircularProgress size={20} /> : 'Save'}
               </Button>
             </DialogActions>
           </form>
         </Dialog>
 
-        {/* Подтверждение удаления */}
+        {/* Delete Confirmation Dialog */}
         <Dialog open={deleteConfirmOpen} onClose={handleDeleteConfirmClose}>
-          <DialogTitle>Удалить карту?</DialogTitle>
+          <DialogTitle>Delete Card?</DialogTitle>
           <DialogContent>
             <Typography>
-              Вы уверены, что хотите удалить карту с ID {selectedKarta?.idPlatby}?
+              Are you sure you want to delete the card with ID {selectedKarta?.idPlatby}?
             </Typography>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleDeleteConfirmClose}>Отмена</Button>
-            <Button onClick={handleDelete} color="secondary">
-              Удалить
+            <Button onClick={handleDeleteConfirmClose}>Cancel</Button>
+            <Button onClick={handleDelete} color="secondary" disabled={loadingAction}>
+              {loadingAction ? <CircularProgress size={20} /> : 'Delete'}
             </Button>
           </DialogActions>
         </Dialog>
 
-        {/* Уведомления */}
+        {/* Notifications */}
         <Snackbar
           open={snackbar.open}
           autoHideDuration={6000}
           onClose={() => setSnackbar({ ...snackbar, open: false })}
         >
-          <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity}>
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+          >
             {snackbar.message}
           </Alert>
         </Snackbar>

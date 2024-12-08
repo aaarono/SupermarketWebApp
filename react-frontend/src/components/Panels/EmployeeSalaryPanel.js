@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+// src/components/Panels/EmployeeSalaryPanel.js
+
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Paper,
@@ -18,32 +20,35 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  InputAdornment,
+  IconButton,
 } from '@mui/material';
-import AdminNavigation from './AdminNavigation'; // Компонент бокового меню
+import { FiPlus, FiSearch, FiX } from 'react-icons/fi';
+import AdminNavigation from './AdminNavigation'; // Sidebar navigation component
 import api from '../../services/api';
 
 function EmployeeSalaryPanel({ setActivePanel }) {
-  const [employees, setEmployees] = useState([]); // Данные сотрудников
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' }); // Уведомления
-  const [page, setPage] = useState(0); // Текущая страница
-  const [rowsPerPage, setRowsPerPage] = useState(50); // Количество строк на странице
-  const [indexationDialogOpen, setIndexationDialogOpen] = useState(false); // Состояние диалога индексации
-  const [indexationData, setIndexationData] = useState({ min: '', max: '' }); // Данные для индексации
+  const [employees, setEmployees] = useState([]); // Employee salary data
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' }); // Notifications
+  const [page, setPage] = useState(0); // Current page for pagination
+  const [rowsPerPage, setRowsPerPage] = useState(50); // Rows per page for pagination
+  const [indexationDialogOpen, setIndexationDialogOpen] = useState(false); // Indexation dialog state
+  const [indexationData, setIndexationData] = useState({ min: '', max: '' }); // Indexation data
 
-  // Загрузка данных о зарплатах
+  // Search and Salary Range Filters
+  const [searchTerm, setSearchTerm] = useState(''); // Global search term
+  const [salaryRange, setSalaryRange] = useState({ min: '', max: '' }); // Salary range filter
+
+  // Load employee salary data on component mount
   useEffect(() => {
     fetchEmployees();
   }, []);
 
-  // Обработчик смены страницы
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
+  // Fetch employee salaries from the backend
   const fetchEmployees = async () => {
     try {
       const response = await api.get('/api/zamestnanci/all-salaries');
-      console.log(response)
+      console.log(response);
       setEmployees(response);
     } catch (error) {
       console.error('Error fetching employee salaries:', error);
@@ -51,24 +56,29 @@ function EmployeeSalaryPanel({ setActivePanel }) {
     }
   };
 
-  // Обработчик изменения количества строк на странице
+  // Handle pagination page change
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  // Handle pagination rows per page change
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(+event.target.value);
     setPage(0);
   };
 
-  // Открытие диалога индексации
+  // Open the indexation dialog
   const handleOpenIndexationDialog = () => {
     setIndexationDialogOpen(true);
   };
 
-  // Закрытие диалога индексации
+  // Close the indexation dialog
   const handleCloseIndexationDialog = () => {
     setIndexationDialogOpen(false);
     setIndexationData({ min: '', max: '' });
   };
 
-  // Обработка индексации зарплаты
+  // Apply salary indexation
   const handleApplyIndexation = async () => {
     if (!indexationData.min || !indexationData.max) {
       setSnackbar({ open: true, message: 'Please provide both minimum and maximum percentages.', severity: 'warning' });
@@ -89,21 +99,102 @@ function EmployeeSalaryPanel({ setActivePanel }) {
     }
   };
 
+  // Memoized filtered and sorted employees based on search and salary range
+  const filteredEmployees = useMemo(() => {
+    return employees.filter((employee) => {
+      const searchStr = searchTerm.toLowerCase();
+
+      const matchesSearch =
+        employee.EMPLOYEE_ID.toString().includes(searchStr) ||
+        (employee.FIRST_NAME && employee.FIRST_NAME.toLowerCase().includes(searchStr)) ||
+        (employee.LAST_NAME && employee.LAST_NAME.toLowerCase().includes(searchStr)) ||
+        (employee.HOURLY_WAGE && employee.HOURLY_WAGE.toString().includes(searchStr)) ||
+        (employee.WORKING_HOURS && employee.WORKING_HOURS.toString().includes(searchStr));
+
+      const matchesSalary =
+        (salaryRange.min === '' || (employee.HOURLY_WAGE && employee.HOURLY_WAGE >= parseFloat(salaryRange.min))) &&
+        (salaryRange.max === '' || (employee.HOURLY_WAGE && employee.HOURLY_WAGE <= parseFloat(salaryRange.max)));
+
+      return matchesSearch && matchesSalary;
+    });
+  }, [employees, searchTerm, salaryRange]);
+
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
-      {/* Боковая панель навигации */}
+      {/* Sidebar Navigation */}
       <AdminNavigation setActivePanel={setActivePanel} />
 
-      {/* Основное содержимое */}
-      <Box sx={{ flexGrow: 1, padding: 3 }}>
+      {/* Main Content */}
+      <Box sx={{ flexGrow: 1, padding: 3, overflowY: 'auto' }}>
         <Typography variant="h4" gutterBottom>
           Employee Salaries
         </Typography>
 
+        {/* Apply Salary Indexation Button */}
         <Button variant="contained" color="primary" onClick={handleOpenIndexationDialog} sx={{ marginBottom: 2 }}>
           Apply Salary Indexation
         </Button>
 
+        {/* Search and Salary Range Filters */}
+        <Paper
+          sx={{
+            padding: '16px',
+            marginBottom: '16px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+            borderRadius: '8px',
+          }}
+        >
+          {/* Global Search Bar */}
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <FiSearch style={{ marginRight: '8px', color: '#888' }} />
+            <TextField
+              placeholder="Search across all fields..."
+              variant="standard"
+              fullWidth
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              InputProps={{
+                endAdornment: searchTerm && (
+                  <InputAdornment position="end">
+                    <IconButton onClick={() => setSearchTerm('')}>
+                      <FiX />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Box>
+
+          {/* Salary Range Filter */}
+          <Box sx={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <TextField
+              label="Minimum Hourly Wage"
+              type="number"
+              variant="outlined"
+              fullWidth
+              value={salaryRange.min}
+              onChange={(e) => setSalaryRange({ ...salaryRange, min: e.target.value })}
+              InputProps={{
+                startAdornment: <InputAdornment position="start">$</InputAdornment>,
+              }}
+            />
+            <TextField
+              label="Maximum Hourly Wage"
+              type="number"
+              variant="outlined"
+              fullWidth
+              value={salaryRange.max}
+              onChange={(e) => setSalaryRange({ ...salaryRange, max: e.target.value })}
+              InputProps={{
+                startAdornment: <InputAdornment position="start">$</InputAdornment>,
+              }}
+            />
+          </Box>
+        </Paper>
+
+        {/* Employees Salary Table */}
         <Paper sx={{ width: '100%', overflow: 'hidden', marginTop: 2 }}>
           <TableContainer>
             <Table stickyHeader aria-label="employee salaries table">
@@ -117,48 +208,66 @@ function EmployeeSalaryPanel({ setActivePanel }) {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {employees.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((employee) => (
-                  <TableRow hover key={employee.EMPLOYEE_ID}>
-                    <TableCell>{employee.EMPLOYEE_ID}</TableCell>
-                    <TableCell>{employee.FIRST_NAME || 'Not Specified'}</TableCell>
-                    <TableCell>{employee.LAST_NAME || 'Not Specified'}</TableCell>
-                    <TableCell>{employee.HOURLY_WAGE || 'Not Specified'}</TableCell>
-                    <TableCell>{employee.WORKING_HOURS || 'Not Specified'}</TableCell>
+                {filteredEmployees.length > 0 ? (
+                  filteredEmployees
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((employee) => (
+                      <TableRow hover key={employee.EMPLOYEE_ID}>
+                        <TableCell>{employee.EMPLOYEE_ID}</TableCell>
+                        <TableCell>{employee.FIRST_NAME || 'Not Specified'}</TableCell>
+                        <TableCell>{employee.LAST_NAME || 'Not Specified'}</TableCell>
+                        <TableCell>${employee.HOURLY_WAGE?.toFixed(2) || 'Not Specified'}</TableCell>
+                        <TableCell>{employee.WORKING_HOURS || 'Not Specified'}</TableCell>
+                      </TableRow>
+                    ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} align="center">
+                      No data available
+                    </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </TableContainer>
 
+          {/* Pagination Controls */}
           <TablePagination
             component="div"
-            count={employees.length}
+            count={filteredEmployees.length}
             page={page}
             onPageChange={handleChangePage}
             rowsPerPage={rowsPerPage}
             onRowsPerPageChange={handleChangeRowsPerPage}
+            rowsPerPageOptions={[10, 25, 50, 100]}
           />
         </Paper>
 
-        {/* Диалог индексации зарплат */}
+        {/* Salary Indexation Dialog */}
         <Dialog open={indexationDialogOpen} onClose={handleCloseIndexationDialog}>
           <DialogTitle>Apply Salary Indexation</DialogTitle>
           <DialogContent>
             <TextField
               margin="dense"
-              label="Minimum Percentage"
+              label="Minimum Percentage (%)"
               type="number"
               fullWidth
               value={indexationData.min}
               onChange={(e) => setIndexationData({ ...indexationData, min: e.target.value })}
+              InputProps={{
+                endAdornment: <InputAdornment position="end">%</InputAdornment>,
+              }}
             />
             <TextField
               margin="dense"
-              label="Maximum Percentage"
+              label="Maximum Percentage (%)"
               type="number"
               fullWidth
               value={indexationData.max}
               onChange={(e) => setIndexationData({ ...indexationData, max: e.target.value })}
+              InputProps={{
+                endAdornment: <InputAdornment position="end">%</InputAdornment>,
+              }}
             />
           </DialogContent>
           <DialogActions>
@@ -169,7 +278,7 @@ function EmployeeSalaryPanel({ setActivePanel }) {
           </DialogActions>
         </Dialog>
 
-        {/* Snackbar для уведомлений */}
+        {/* Snackbar for Notifications */}
         <Snackbar
           open={snackbar.open}
           autoHideDuration={6000}

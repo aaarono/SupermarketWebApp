@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+// src/components/Panels/ImagePanel.js
+
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Typography,
   Paper,
@@ -23,8 +25,9 @@ import {
   MenuItem,
   InputLabel,
   FormControl,
+  InputAdornment,
 } from '@mui/material';
-import { FiEdit2, FiTrash2, FiPlus } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiPlus, FiSearch, FiX } from 'react-icons/fi';
 import AdminNavigation from './AdminNavigation';
 import api from '../../services/api';
 
@@ -57,6 +60,7 @@ function ImagePanel({ setActivePanel }) {
     produkt_id_produktu: '',
   });
   const [loading, setLoading] = useState(true);
+  const [loadingAction, setLoadingAction] = useState(false);
 
   useEffect(() => {
     fetchImages();
@@ -64,15 +68,15 @@ function ImagePanel({ setActivePanel }) {
     fetchFormats();
   }, []);
 
-const fetchImages = async () => {
+  const fetchImages = async () => {
     try {
       const response = await api.get('/api/images');
       setImages(response);
       setFilteredImages(response);
       setLoading(false);
     } catch (error) {
-      console.error('Ошибка при загрузке изображений:', error);
-      setSnackbar({ open: true, message: 'Ошибка при загрузке изображений', severity: 'error' });
+      console.error('Error fetching images:', error);
+      setSnackbar({ open: true, message: 'Error fetching images', severity: 'error' });
       setLoading(false);
     }
   };
@@ -80,21 +84,71 @@ const fetchImages = async () => {
   const fetchProducts = async () => {
     try {
       const response = await api.get('/api/products');
-      console.log(response)
+      console.log(response);
       setProducts(response);
     } catch (error) {
-      console.error('Ошибка при загрузке продуктов:', error);
+      console.error('Error fetching products:', error);
+      setSnackbar({ open: true, message: 'Error fetching products', severity: 'error' });
     }
   };
 
   const fetchFormats = async () => {
     try {
       const response = await api.get('/api/image-formats');
-      console.log(response)
+      console.log(response);
       setFormats(response);
     } catch (error) {
-      console.error('Ошибка при загрузке форматов:', error);
+      console.error('Error fetching formats:', error);
+      setSnackbar({ open: true, message: 'Error fetching formats', severity: 'error' });
     }
+  };
+
+  // Handle search input changes
+  const handleSearchChange = (e) => {
+    const { name, value } = e.target;
+    setSearchFilters({ ...searchFilters, [name]: value.toLowerCase() });
+  };
+
+  // Apply filters whenever searchFilters change
+  useEffect(() => {
+    applyFilters();
+    // eslint-disable-next-line
+  }, [searchFilters, images]);
+
+  const applyFilters = () => {
+    let results = [...images];
+
+    if (searchFilters.id) {
+      results = results.filter((image) =>
+        image.ID_OBRAZKU.toString().includes(searchFilters.id)
+      );
+    }
+    if (searchFilters.nazev) {
+      results = results.filter((image) =>
+        image.NAZEV.toLowerCase().includes(searchFilters.nazev)
+      );
+    }
+    if (searchFilters.typ) {
+      results = results.filter(
+        (image) => image.FORMAT_ID_FORMATU.toString() === searchFilters.typ
+      );
+    }
+    if (searchFilters.produkt) {
+      results = results.filter((image) =>
+        image.PRODUKT_ID_PRODUKTU.toString().includes(searchFilters.produkt)
+      );
+    }
+
+    setFilteredImages(results);
+  };
+
+  const handleSortToggle = () => {
+    const newSortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+    setSortOrder(newSortOrder);
+    const sortedImages = [...filteredImages].sort((a, b) =>
+      newSortOrder === 'asc' ? a.ID_OBRAZKU - b.ID_OBRAZKU : b.ID_OBRAZKU - a.ID_OBRAZKU
+    );
+    setFilteredImages(sortedImages);
   };
 
   const handleFormOpen = (image = null) => {
@@ -104,7 +158,7 @@ const fetchImages = async () => {
         ? {
             obrazek: null,
             nazev: image.NAZEV,
-            typ: image.FORMAT_ID_FORMATU || '', // ID формата выставляется в тип
+            typ: image.FORMAT_ID_FORMATU || '',
             format_id_formatu: image.FORMAT_ID_FORMATU || '',
             produkt_id_produktu: image.PRODUKT_ID_PRODUKTU || '',
           }
@@ -112,7 +166,7 @@ const fetchImages = async () => {
     );
     setFormOpen(true);
   };
-  
+
   const handleFormClose = () => {
     setFormOpen(false);
     setSelectedImage(null);
@@ -121,68 +175,70 @@ const fetchImages = async () => {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-  
+
     if (!formData.format_id_formatu) {
-      setSnackbar({ open: true, message: 'Выберите тип изображения.', severity: 'error' });
+      setSnackbar({ open: true, message: 'Please select an image type.', severity: 'error' });
       return;
     }
-  
+
     if (!formData.produkt_id_produktu && (!selectedImage || selectedImage.ID_OBRAZKU !== 1)) {
-      setSnackbar({ open: true, message: 'Укажите продукт для изображения.', severity: 'error' });
+      setSnackbar({ open: true, message: 'Please specify a product for the image.', severity: 'error' });
       return;
     }
-  
+
     try {
       const dataToSend = new FormData();
-  
-      // Проверка файла
+
+      // Check if a file is selected
       if (formData.obrazek instanceof File) {
         dataToSend.append('obrazek', formData.obrazek);
       } else {
-        console.warn('obrazek не является файлом');
+        console.warn('obrazek is not a file');
       }
-  
+
       dataToSend.append('nazev', formData.nazev || '');
       dataToSend.append('format_id_formatu', formData.format_id_formatu || '');
       dataToSend.append('produkt_id_produktu', formData.produkt_id_produktu || '');
-  
-      // Логирование содержимого FormData
+
+      // Log FormData contents for debugging
       for (const [key, value] of dataToSend.entries()) {
         console.log(`${key}:`, value);
       }
-  
+
       const config = {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       };
-  
+
       if (selectedImage) {
+        setLoadingAction(true);
         await api.put(`/api/images/${selectedImage.ID_OBRAZKU}`, dataToSend, config);
-        setSnackbar({ open: true, message: 'Изображение обновлено успешно', severity: 'success' });
+        setSnackbar({ open: true, message: 'Image updated successfully', severity: 'success' });
       } else {
+        setLoadingAction(true);
         await api.post('/api/images', dataToSend, config);
-        setSnackbar({ open: true, message: 'Изображение добавлено успешно', severity: 'success' });
+        setSnackbar({ open: true, message: 'Image added successfully', severity: 'success' });
       }
-  
+
       fetchImages();
       handleFormClose();
     } catch (error) {
-      console.error('Ошибка при сохранении изображения:', error);
-      setSnackbar({ open: true, message: 'Ошибка при сохранении изображения', severity: 'error' });
+      console.error('Error saving image:', error);
+      setSnackbar({ open: true, message: 'Error saving image', severity: 'error' });
+    } finally {
+      setLoadingAction(false);
     }
   };
-  
 
   const handleDeleteConfirmOpen = (image) => {
     if (image.ID_OBRAZKU === 1) {
-      setSnackbar({ open: true, message: 'Это изображение нельзя удалить.', severity: 'error' });
+      setSnackbar({ open: true, message: 'This image cannot be deleted.', severity: 'error' });
       return;
     }
     setSelectedImage(image);
     setDeleteConfirmOpen(true);
   };
-
 
   const handleDeleteConfirmClose = () => {
     setDeleteConfirmOpen(false);
@@ -190,14 +246,17 @@ const fetchImages = async () => {
   };
 
   const handleDelete = async () => {
+    setLoadingAction(true);
     try {
       await api.delete(`/api/images/${selectedImage.ID_OBRAZKU}`);
-      setSnackbar({ open: true, message: 'Изображение удалено успешно', severity: 'success' });
+      setSnackbar({ open: true, message: 'Image deleted successfully', severity: 'success' });
       fetchImages();
       handleDeleteConfirmClose();
     } catch (error) {
-      console.error('Ошибка при удалении изображения:', error);
-      setSnackbar({ open: true, message: 'Ошибка при удалении изображения', severity: 'error' });
+      console.error('Error deleting image:', error);
+      setSnackbar({ open: true, message: 'Error deleting image', severity: 'error' });
+    } finally {
+      setLoadingAction(false);
     }
   };
 
@@ -218,72 +277,39 @@ const fetchImages = async () => {
     );
   }
 
-  const applyFilters = () => {
-    let results = [...images];
-
-    if (searchFilters.id) {
-      results = results.filter((image) =>
-        image.ID_OBRAZKU.toString().includes(searchFilters.id)
-      );
-    }
-    if (searchFilters.nazev) {
-      results = results.filter((image) =>
-        image.NAZEV.toLowerCase().includes(searchFilters.nazev.toLowerCase())
-      );
-    }
-    if (searchFilters.typ) {
-      results = results.filter(
-        (image) => image.FORMAT_ID_FORMATU === parseInt(searchFilters.typ, 10)
-      );
-    }
-    if (searchFilters.produkt) {
-      results = results.filter((image) =>
-        products
-          .find((p) => p.id === image.PRODUKT_ID_PRODUKTU)
-          ?.name.toLowerCase()
-          .includes(searchFilters.produkt.toLowerCase())
-      );
-    }
-
-    setFilteredImages(results);
-  };
-
-  const handleSortToggle = () => {
-    setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-    setFilteredImages((prev) =>
-      [...prev].sort((a, b) =>
-        sortOrder === 'asc' ? b.ID_OBRAZKU - a.ID_OBRAZKU : a.ID_OBRAZKU - b.ID_OBRAZKU
-      )
-    );
-  };
-
   return (
     <div style={{ display: 'flex' }}>
       <AdminNavigation setActivePanel={setActivePanel} />
       <div style={{ flexGrow: 1, padding: '16px' }}>
         <Typography variant="h4" gutterBottom>
-          Изображения
+          Images
         </Typography>
         <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
           <TextField
-            label="Поиск по ID"
+            label="Search by ID"
             variant="outlined"
+            name="id"
             value={searchFilters.id}
-            onChange={(e) => setSearchFilters({ ...searchFilters, id: e.target.value })}
+            onChange={handleSearchChange}
           />
           <TextField
-            label="Поиск по названию"
+            label="Search by Name"
             variant="outlined"
+            name="nazev"
             value={searchFilters.nazev}
-            onChange={(e) => setSearchFilters({ ...searchFilters, nazev: e.target.value })}
+            onChange={handleSearchChange}
           />
-          <FormControl style={{ minWidth: '150px' }}>
-            <InputLabel>Тип</InputLabel>
+          <FormControl variant="outlined" style={{ minWidth: '150px' }}>
+            <InputLabel>Type</InputLabel>
             <Select
+              label="Type"
+              name="typ"
               value={searchFilters.typ}
-              onChange={(e) => setSearchFilters({ ...searchFilters, typ: e.target.value })}
+              onChange={handleSearchChange}
             >
-              <MenuItem value="">Все</MenuItem>
+              <MenuItem value="">
+                <em>All</em>
+              </MenuItem>
               {formats.map((format) => (
                 <MenuItem key={format.ID_FORMATU} value={format.ID_FORMATU}>
                   {`${format.ID_FORMATU}. ${format.ROZIRENI}`}
@@ -292,21 +318,13 @@ const fetchImages = async () => {
             </Select>
           </FormControl>
           <TextField
-            label="Поиск по продукту"
+            label="Search by Product ID"
             variant="outlined"
+            name="produkt"
             value={searchFilters.produkt}
-            onChange={(e) => setSearchFilters({ ...searchFilters, produkt: e.target.value })}
+            onChange={handleSearchChange}
           />
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={applyFilters}
-          >
-            Поиск
-          </Button>
         </div>
-
-              
 
         <Button
           variant="contained"
@@ -315,67 +333,76 @@ const fetchImages = async () => {
           onClick={() => handleFormOpen()}
           style={{ marginBottom: '16px' }}
         >
-          Добавить изображение
+          Add Image
         </Button>
         <Paper sx={{ width: '100%', overflow: 'hidden', marginTop: 2 }}>
           <TableContainer>
-          <Table stickyHeader aria-label="images table">
+            <Table stickyHeader aria-label="images table">
               <TableHead>
                 <TableRow>
                   <TableCell onClick={handleSortToggle} style={{ cursor: 'pointer' }}>
                     ID {sortOrder === 'asc' ? '↑' : '↓'}
                   </TableCell>
-                  <TableCell>Название</TableCell>
-                  <TableCell>Тип</TableCell>
-                  <TableCell>ID Формата</TableCell>
-                  <TableCell>ID Продукта</TableCell>
-                  <TableCell align="right">Действия</TableCell>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Type</TableCell>
+                  <TableCell>Format ID</TableCell>
+                  <TableCell>Product ID</TableCell>
+                  <TableCell align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredImages
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((image) => (
-                    <TableRow hover key={image.ID_OBRAZKU}>
-                      <TableCell>{image.ID_OBRAZKU}</TableCell>
-                      <TableCell>{image.NAZEV}</TableCell>
-                      <TableCell>
-                        {formats.find((f) => f.ID_FORMATU === image.FORMAT_ID_FORMATU)?.ROZIRENI || '—'}
-                      </TableCell>
-                      <TableCell>{image.FORMAT_ID_FORMATU}</TableCell>
-                      <TableCell>
-                        {products.find((p) => p.id === image.PRODUKT_ID_PRODUKTU)?.name || '—'}
-                      </TableCell>
-                      <TableCell align="right">
-                        <IconButton onClick={() => handleFormOpen(image)} color="primary">
-                          <FiEdit2 />
-                        </IconButton>
-                        <IconButton
-                          onClick={() => handleDeleteConfirmOpen(image)}
-                          color="secondary"
-                          disabled={image.ID_OBRAZKU === 1}
-                        >
-                          <FiTrash2 />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                {filteredImages.length > 0 ? (
+                  filteredImages
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((image) => (
+                      <TableRow hover key={image.ID_OBRAZKU}>
+                        <TableCell>{image.ID_OBRAZKU}</TableCell>
+                        <TableCell>{image.NAZEV}</TableCell>
+                        <TableCell>
+                          {formats.find((f) => f.ID_FORMATU === image.FORMAT_ID_FORMATU)?.ROZIRENI || '—'}
+                        </TableCell>
+                        <TableCell>{image.FORMAT_ID_FORMATU}</TableCell>
+                        <TableCell>
+                          {products.find((p) => p.id === image.PRODUKT_ID_PRODUKTU)?.name || '—'}
+                        </TableCell>
+                        <TableCell align="right">
+                          <IconButton onClick={() => handleFormOpen(image)} color="primary">
+                            <FiEdit2 />
+                          </IconButton>
+                          <IconButton
+                            onClick={() => handleDeleteConfirmOpen(image)}
+                            color="secondary"
+                            disabled={image.ID_OBRAZKU === 1}
+                          >
+                            <FiTrash2 />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center">
+                      No data available
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </TableContainer>
           <TablePagination
             component="div"
-            count={images.length}
+            count={filteredImages.length}
             page={page}
             onPageChange={handleChangePage}
             rowsPerPage={rowsPerPage}
             onRowsPerPageChange={handleChangeRowsPerPage}
-            rowsPerPageOptions={[5, 10, 25]}
+            rowsPerPageOptions={[5, 10, 25, 50]}
           />
         </Paper>
 
+        {/* Add/Edit Image Dialog */}
         <Dialog open={formOpen} onClose={handleFormClose} fullWidth maxWidth="sm">
-          <DialogTitle>{selectedImage ? 'Редактировать изображение' : 'Добавить изображение'}</DialogTitle>
+          <DialogTitle>{selectedImage ? 'Edit Image' : 'Add Image'}</DialogTitle>
           <form onSubmit={handleFormSubmit}>
             <DialogContent>
               <Button
@@ -385,13 +412,15 @@ const fetchImages = async () => {
                 style={{ marginBottom: '16px' }}
                 disabled={!formData.format_id_formatu}
               >
-                {selectedImage ? 'Обновить изображение' : 'Загрузить изображение'}
+                {selectedImage ? 'Update Image' : 'Upload Image'}
                 <input
                   type="file"
                   hidden
-                  accept={formats.find((f) => f.ID_FORMATU === parseInt(formData.format_id_formatu, 10))?.ROZIRENI
-                    ? `.${formats.find((f) => f.ID_FORMATU === parseInt(formData.format_id_formatu, 10))?.ROZIRENI}`
-                    : 'image/*'} // Ограничение по выбранному формату
+                  accept={
+                    formats.find((f) => f.ID_FORMATU === parseInt(formData.format_id_formatu, 10))?.ROZIRENI
+                      ? `.${formats.find((f) => f.ID_FORMATU === parseInt(formData.format_id_formatu, 10))?.ROZIRENI}`
+                      : 'image/*'
+                  } // Restrict to selected format
                   onChange={(e) => setFormData({ ...formData, obrazek: e.target.files[0] })}
                 />
               </Button>
@@ -399,7 +428,7 @@ const fetchImages = async () => {
               <TextField
                 autoFocus
                 margin="dense"
-                label="Название"
+                label="Name"
                 type="text"
                 fullWidth
                 required
@@ -407,32 +436,32 @@ const fetchImages = async () => {
                 onChange={(e) => setFormData({ ...formData, nazev: e.target.value })}
               />
               <FormControl fullWidth margin="dense">
-              <InputLabel>Тип</InputLabel>
+                <InputLabel>Type</InputLabel>
                 <Select
                   value={formData.format_id_formatu}
                   onChange={(e) => {
                     setFormData({
                       ...formData,
-                      typ: e.target.value, // ID формата
-                      format_id_formatu: e.target.value, // ID формата синхронизируется
+                      typ: e.target.value, // Synchronize Type with Format ID
+                      format_id_formatu: e.target.value,
                     });
                   }}
                   required
                 >
                   {formats.map((format) => (
                     <MenuItem key={format.ID_FORMATU} value={format.ID_FORMATU}>
-                      {`${format.ID_FORMATU}. ${format.ROZIRENI}`} {/* Отображаем ID и название */}
+                      {`${format.ID_FORMATU}. ${format.ROZIRENI}`} {/* Display ID and Name */}
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
 
               <FormControl fullWidth margin="dense">
-                <InputLabel>Продукт</InputLabel>
+                <InputLabel>Product</InputLabel>
                 <Select
                   value={formData.produkt_id_produktu}
                   onChange={(e) => setFormData({ ...formData, produkt_id_produktu: e.target.value })}
-                  disabled={selectedImage?.ID_OBRAZKU === 1} // Отключаем поле для ID 1
+                  disabled={selectedImage?.ID_OBRAZKU === 1} // Disable for ID 1
                 >
                   {products.map((product) => (
                     <MenuItem key={product.id} value={product.id}>
@@ -442,46 +471,52 @@ const fetchImages = async () => {
                 </Select>
                 {selectedImage?.ID_OBRAZKU === 1 && (
                   <Typography variant="body2" color="textSecondary">
-                    Продукт для этого изображения не обязателен.
+                    Product for this image is not required.
                   </Typography>
                 )}
               </FormControl>
             </DialogContent>
             <DialogActions>
-              <Button onClick={handleFormClose}>Отмена</Button>
-              <Button type="submit" color="primary">
-                {selectedImage ? 'Сохранить изменения' : 'Добавить изображение'}
+              <Button onClick={handleFormClose}>Cancel</Button>
+              <Button type="submit" color="primary" disabled={loadingAction}>
+                {loadingAction ? <CircularProgress size={20} /> : 'Save Changes'}
               </Button>
             </DialogActions>
           </form>
         </Dialog>
 
+        {/* Delete Confirmation Dialog */}
         <Dialog open={deleteConfirmOpen} onClose={handleDeleteConfirmClose}>
-          <DialogTitle>Удалить изображение?</DialogTitle>
+          <DialogTitle>Delete Image?</DialogTitle>
           <DialogContent>
             <Typography gutterBottom>
-              Вы уверены, что хотите удалить изображение с ID {selectedImage?.ID_OBRAZKU}?
+              Are you sure you want to delete the image with ID {selectedImage?.ID_OBRAZKU}?
             </Typography>
             {selectedImage && (
               <Typography variant="body2" color="textSecondary">
-                Название: {selectedImage?.NAZEV || 'Нет названия'}
+                Name: {selectedImage?.NAZEV || 'No Name'}
               </Typography>
             )}
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleDeleteConfirmClose}>Отмена</Button>
-            <Button onClick={handleDelete} color="secondary">
-              Удалить
+            <Button onClick={handleDeleteConfirmClose}>Cancel</Button>
+            <Button onClick={handleDelete} color="secondary" disabled={loadingAction}>
+              {loadingAction ? <CircularProgress size={20} /> : 'Delete'}
             </Button>
           </DialogActions>
         </Dialog>
 
+        {/* Snackbar for Notifications */}
         <Snackbar
           open={snackbar.open}
           autoHideDuration={6000}
           onClose={() => setSnackbar({ ...snackbar, open: false })}
         >
-          <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity}>
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+          >
             {snackbar.message}
           </Alert>
         </Snackbar>

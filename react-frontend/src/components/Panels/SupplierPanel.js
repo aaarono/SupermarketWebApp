@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+// src/components/Panels/SupplierPanel.js
+
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Typography,
   Paper,
@@ -21,7 +23,7 @@ import {
   CircularProgress,
   InputAdornment,
 } from '@mui/material';
-import { FiEdit2, FiTrash2, FiPlus, FiSearch } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiPlus, FiSearch, FiX } from 'react-icons/fi';
 import AdminNavigation from './AdminNavigation';
 import api from '../../services/api';
 
@@ -31,7 +33,7 @@ function SupplierPanel({ setActivePanel }) {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [loading, setLoading] = useState(true);
 
-  // Пагинация
+  // Pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
@@ -50,28 +52,37 @@ function SupplierPanel({ setActivePanel }) {
     fetchSuppliers();
   }, []);
 
+  // Fetch suppliers from the backend
   const fetchSuppliers = async () => {
     setLoading(true);
     try {
       const response = await api.get('/api/dodavatele');
       setSuppliers(response);
     } catch (error) {
-      setSnackbar({ open: true, message: 'Ошибка при загрузке поставщиков', severity: 'error' });
+      setSnackbar({ open: true, message: 'Error fetching suppliers', severity: 'error' });
     } finally {
       setLoading(false);
     }
   };
 
+  // Handle search input change
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value.toLowerCase());
   };
 
-  const filteredSuppliers = suppliers.filter(
-    (supplier) =>
-      supplier.NAZEV.toLowerCase().includes(searchQuery) ||
-      supplier.KONTAKTNI_OSOBA.toLowerCase().includes(searchQuery)
-  );
+  // Memoized filtered suppliers based on search query
+  const filteredSuppliers = useMemo(() => {
+    return suppliers.filter(
+      (supplier) =>
+        supplier.ID_DODAVATELU.toString().includes(searchQuery) ||
+        supplier.NAZEV.toLowerCase().includes(searchQuery) ||
+        supplier.KONTAKTNI_OSOBA.toLowerCase().includes(searchQuery) ||
+        supplier.TELEFON.toString().includes(searchQuery) ||
+        supplier.EMAIL.toLowerCase().includes(searchQuery)
+    );
+  }, [suppliers, searchQuery]);
 
+  // Open form for adding or editing a supplier
   const handleFormOpen = (supplier = null) => {
     setSelectedSupplier(supplier);
     setFormData(
@@ -87,12 +98,14 @@ function SupplierPanel({ setActivePanel }) {
     setFormOpen(true);
   };
 
+  // Close the form and reset formData
   const handleFormClose = () => {
     setFormOpen(false);
     setSelectedSupplier(null);
     setFormData({ NAZEV: '', KONTAKTNI_OSOBA: '', TELEFON: '', EMAIL: '' });
   };
 
+  // Handle form submission for adding or editing a supplier
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     setLoadingAction(true);
@@ -101,53 +114,59 @@ function SupplierPanel({ setActivePanel }) {
 
       if (selectedSupplier) {
         await api.put(`/api/dodavatele/${selectedSupplier.ID_DODAVATELU}`, dataToSend);
-        setSnackbar({ open: true, message: 'Поставщик обновлен успешно', severity: 'success' });
+        setSnackbar({ open: true, message: 'Supplier updated successfully', severity: 'success' });
       } else {
         await api.post('/api/dodavatele', dataToSend);
-        setSnackbar({ open: true, message: 'Поставщик добавлен успешно', severity: 'success' });
+        setSnackbar({ open: true, message: 'Supplier added successfully', severity: 'success' });
       }
       fetchSuppliers();
       handleFormClose();
     } catch (error) {
-      setSnackbar({ open: true, message: 'Ошибка при сохранении поставщика', severity: 'error' });
+      setSnackbar({ open: true, message: 'Error saving supplier', severity: 'error' });
     } finally {
       setLoadingAction(false);
     }
   };
 
+  // Open delete confirmation dialog
   const handleDeleteConfirmOpen = (supplier) => {
     setSelectedSupplier(supplier);
     setDeleteConfirmOpen(true);
   };
 
+  // Close delete confirmation dialog
   const handleDeleteConfirmClose = () => {
     setDeleteConfirmOpen(false);
     setSelectedSupplier(null);
   };
 
+  // Handle deletion of a supplier
   const handleDelete = async () => {
     setLoadingAction(true);
     try {
       await api.delete(`/api/dodavatele/${selectedSupplier.ID_DODAVATELU}`);
-      setSnackbar({ open: true, message: 'Поставщик удален успешно', severity: 'success' });
+      setSnackbar({ open: true, message: 'Supplier deleted successfully', severity: 'success' });
       fetchSuppliers();
       handleDeleteConfirmClose();
     } catch (error) {
-      setSnackbar({ open: true, message: 'Ошибка при удалении поставщика', severity: 'error' });
+      setSnackbar({ open: true, message: 'Error deleting supplier', severity: 'error' });
     } finally {
       setLoadingAction(false);
     }
   };
 
+  // Handle pagination page change
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
 
+  // Handle pagination rows per page change
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(+event.target.value);
     setPage(0);
   };
 
+  // Render loading indicator if data is being fetched
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', marginTop: '50px' }}>
@@ -158,26 +177,45 @@ function SupplierPanel({ setActivePanel }) {
 
   return (
     <div style={{ display: 'flex' }}>
+      {/* Sidebar Navigation */}
       <AdminNavigation setActivePanel={setActivePanel} />
+
+      {/* Main Content */}
       <div style={{ flexGrow: 1, padding: '16px' }}>
         <Typography variant="h4" gutterBottom>
-          Поставщики
+          Suppliers
         </Typography>
-        <TextField
-          placeholder="Поиск по названию или контактному лицу"
-          fullWidth
-          variant="outlined"
-          margin="normal"
-          value={searchQuery}
-          onChange={handleSearchChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <FiSearch />
-              </InputAdornment>
-            ),
+
+        {/* Search Bar */}
+        <Paper
+          sx={{
+            padding: '8px 16px',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            borderRadius: '8px',
           }}
-        />
+        >
+          <FiSearch style={{ marginRight: '8px', color: '#888' }} />
+          <TextField
+            placeholder="Search by ID, Name, Contact Person, Phone, or Email..."
+            variant="standard"
+            fullWidth
+            value={searchQuery}
+            onChange={handleSearchChange}
+            InputProps={{
+              endAdornment: searchQuery && (
+                <InputAdornment position="end">
+                  <IconButton onClick={() => setSearchQuery('')}>
+                    <FiX />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Paper>
+
+        {/* Add Supplier Button */}
         <Button
           variant="contained"
           color="primary"
@@ -185,43 +223,56 @@ function SupplierPanel({ setActivePanel }) {
           onClick={() => handleFormOpen()}
           style={{ marginBottom: '16px' }}
         >
-          Добавить поставщика
+          Add Supplier
         </Button>
 
+        {/* Suppliers Table */}
         <Paper sx={{ width: '100%', overflow: 'hidden', marginTop: 2 }}>
           <TableContainer>
             <Table stickyHeader aria-label="suppliers table">
               <TableHead>
                 <TableRow>
                   <TableCell>ID</TableCell>
-                  <TableCell>Название</TableCell>
-                  <TableCell>Контактное лицо</TableCell>
-                  <TableCell>Телефон</TableCell>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Contact Person</TableCell>
+                  <TableCell>Phone</TableCell>
                   <TableCell>Email</TableCell>
-                  <TableCell align="right">Действия</TableCell>
+                  <TableCell align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredSuppliers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((supplier) => (
-                  <TableRow hover key={supplier.ID_DODAVATELU}>
-                    <TableCell>{supplier.ID_DODAVATELU}</TableCell>
-                    <TableCell>{supplier.NAZEV}</TableCell>
-                    <TableCell>{supplier.KONTAKTNI_OSOBA}</TableCell>
-                    <TableCell>{supplier.TELEFON}</TableCell>
-                    <TableCell>{supplier.EMAIL}</TableCell>
-                    <TableCell align="right">
-                      <IconButton onClick={() => handleFormOpen(supplier)} color="primary">
-                        <FiEdit2 />
-                      </IconButton>
-                      <IconButton onClick={() => handleDeleteConfirmOpen(supplier)} color="secondary">
-                        <FiTrash2 />
-                      </IconButton>
+                {filteredSuppliers.length > 0 ? (
+                  filteredSuppliers
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((supplier) => (
+                      <TableRow hover key={supplier.ID_DODAVATELU}>
+                        <TableCell>{supplier.ID_DODAVATELU}</TableCell>
+                        <TableCell>{supplier.NAZEV}</TableCell>
+                        <TableCell>{supplier.KONTAKTNI_OSOBA}</TableCell>
+                        <TableCell>{supplier.TELEFON}</TableCell>
+                        <TableCell>{supplier.EMAIL}</TableCell>
+                        <TableCell align="right">
+                          <IconButton onClick={() => handleFormOpen(supplier)} color="primary">
+                            <FiEdit2 />
+                          </IconButton>
+                          <IconButton onClick={() => handleDeleteConfirmOpen(supplier)} color="secondary">
+                            <FiTrash2 />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center">
+                      No data available
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </TableContainer>
+
+          {/* Pagination Controls */}
           <TablePagination
             component="div"
             count={filteredSuppliers.length}
@@ -233,38 +284,43 @@ function SupplierPanel({ setActivePanel }) {
           />
         </Paper>
 
+        {/* Add/Edit Supplier Dialog */}
         <Dialog open={formOpen} onClose={handleFormClose} fullWidth maxWidth="sm">
-          <DialogTitle>{selectedSupplier ? 'Редактировать поставщика' : 'Добавить поставщика'}</DialogTitle>
+          <DialogTitle>{selectedSupplier ? 'Edit Supplier' : 'Add Supplier'}</DialogTitle>
           <form onSubmit={handleFormSubmit}>
             <DialogContent>
+              {/* Name Field */}
               <TextField
                 autoFocus
                 margin="dense"
-                label="Название"
+                label="Name"
                 type="text"
                 fullWidth
                 required
                 value={formData.NAZEV}
                 onChange={(e) => setFormData({ ...formData, NAZEV: e.target.value })}
               />
+              {/* Contact Person Field */}
               <TextField
                 margin="dense"
-                label="Контактное лицо"
+                label="Contact Person"
                 type="text"
                 fullWidth
                 required
                 value={formData.KONTAKTNI_OSOBA}
                 onChange={(e) => setFormData({ ...formData, KONTAKTNI_OSOBA: e.target.value })}
               />
+              {/* Phone Field */}
               <TextField
                 margin="dense"
-                label="Телефон"
+                label="Phone"
                 type="number"
                 fullWidth
                 required
                 value={formData.TELEFON}
                 onChange={(e) => setFormData({ ...formData, TELEFON: e.target.value })}
               />
+              {/* Email Field */}
               <TextField
                 margin="dense"
                 label="Email"
@@ -276,35 +332,41 @@ function SupplierPanel({ setActivePanel }) {
               />
             </DialogContent>
             <DialogActions>
-              <Button onClick={handleFormClose}>Отмена</Button>
+              <Button onClick={handleFormClose}>Cancel</Button>
               <Button type="submit" color="primary" disabled={loadingAction}>
-                {loadingAction ? <CircularProgress size={20} /> : 'Сохранить'}
+                {loadingAction ? <CircularProgress size={20} /> : 'Save'}
               </Button>
             </DialogActions>
           </form>
         </Dialog>
 
+        {/* Delete Confirmation Dialog */}
         <Dialog open={deleteConfirmOpen} onClose={handleDeleteConfirmClose}>
-          <DialogTitle>Удалить поставщика?</DialogTitle>
+          <DialogTitle>Delete Supplier?</DialogTitle>
           <DialogContent>
             <Typography>
-              Вы уверены, что хотите удалить поставщика с ID {selectedSupplier?.ID_DODAVATELU}?
+              Are you sure you want to delete supplier with ID {selectedSupplier?.ID_DODAVATELU}?
             </Typography>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleDeleteConfirmClose}>Отмена</Button>
+            <Button onClick={handleDeleteConfirmClose}>Cancel</Button>
             <Button onClick={handleDelete} color="secondary" disabled={loadingAction}>
-              {loadingAction ? <CircularProgress size={20} /> : 'Удалить'}
+              {loadingAction ? <CircularProgress size={20} /> : 'Delete'}
             </Button>
           </DialogActions>
         </Dialog>
 
+        {/* Snackbar for Notifications */}
         <Snackbar
           open={snackbar.open}
           autoHideDuration={6000}
           onClose={() => setSnackbar({ ...snackbar, open: false })}
         >
-          <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity}>
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+          >
             {snackbar.message}
           </Alert>
         </Snackbar>

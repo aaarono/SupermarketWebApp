@@ -1,6 +1,6 @@
-// FormatPanel.js
+// src/components/Panels/FormatPanel.js
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Typography,
   Paper,
@@ -11,7 +11,6 @@ import {
   TableHead,
   TableRow,
   TablePagination,
-  IconButton,
   Snackbar,
   Alert,
   Button,
@@ -21,16 +20,19 @@ import {
   DialogActions,
   TextField,
   CircularProgress,
+  IconButton,
+  InputAdornment,
 } from '@mui/material';
-import { FiEdit2, FiTrash2, FiPlus } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiPlus, FiSearch, FiX } from 'react-icons/fi';
 import AdminNavigation from './AdminNavigation';
 import api from '../../services/api';
 
 function FormatPanel({ setActivePanel }) {
   const [formats, setFormats] = useState([]);
+  const [filteredFormats, setFilteredFormats] = useState([]); // Filtered data
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  // Пагинация
+  // Pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
@@ -41,23 +43,49 @@ function FormatPanel({ setActivePanel }) {
   });
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingAction, setLoadingAction] = useState(false);
+
+  // Search Term
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchFormats();
   }, []);
 
+  // Fetch formats from the backend
   const fetchFormats = async () => {
     try {
       const response = await api.get('/api/image-formats');
       setFormats(response);
+      setFilteredFormats(response);
       setLoading(false);
     } catch (error) {
-      console.error('Ошибка при загрузке форматов:', error);
-      setSnackbar({ open: true, message: 'Ошибка при загрузке форматов', severity: 'error' });
+      console.error('Error fetching formats:', error);
+      setSnackbar({ open: true, message: 'Error fetching formats', severity: 'error' });
       setLoading(false);
     }
   };
 
+  // Handle search input change
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value.toLowerCase());
+  };
+
+  // Memoized filtered formats based on search term
+  const filteredFormatsMemo = useMemo(() => {
+    return formats.filter(
+      (format) =>
+        format.ID_FORMATU.toString().includes(searchTerm) ||
+        format.ROZIRENI.toLowerCase().includes(searchTerm)
+    );
+  }, [formats, searchTerm]);
+
+  // Update filteredFormats when filteredFormatsMemo changes
+  useEffect(() => {
+    setFilteredFormats(filteredFormatsMemo);
+  }, [filteredFormatsMemo]);
+
+  // Open form for adding or editing a format
   const handleFormOpen = (format = null) => {
     setSelectedFormat(format);
     setFormData(
@@ -70,14 +98,17 @@ function FormatPanel({ setActivePanel }) {
     setFormOpen(true);
   };
 
+  // Close the form and reset formData
   const handleFormClose = () => {
     setFormOpen(false);
     setSelectedFormat(null);
     setFormData({ ROZIRENI: '' });
   };
 
+  // Handle form submission for adding or editing a format
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    setLoadingAction(true);
     try {
       const dataToSend = {
         ROZIRENI: formData.ROZIRENI,
@@ -85,54 +116,63 @@ function FormatPanel({ setActivePanel }) {
 
       if (selectedFormat) {
         await api.put(`/api/formats/${selectedFormat.ID_FORMATU}`, dataToSend);
-        setSnackbar({ open: true, message: 'Формат обновлен успешно', severity: 'success' });
+        setSnackbar({ open: true, message: 'Format updated successfully', severity: 'success' });
       } else {
         await api.post('/api/formats', dataToSend);
-        setSnackbar({ open: true, message: 'Формат добавлен успешно', severity: 'success' });
+        setSnackbar({ open: true, message: 'Format added successfully', severity: 'success' });
       }
       fetchFormats();
       handleFormClose();
     } catch (error) {
-      console.error('Ошибка при сохранении формата:', error);
-      const errorMessage = error.response?.data || 'Ошибка при сохранении формата';
+      console.error('Error saving format:', error);
+      const errorMessage = error.response?.data || 'Error saving format';
       setSnackbar({ open: true, message: errorMessage, severity: 'error' });
+    } finally {
+      setLoadingAction(false);
     }
   };
 
+  // Open delete confirmation dialog
   const handleDeleteConfirmOpen = (format) => {
     setSelectedFormat(format);
     setDeleteConfirmOpen(true);
   };
 
+  // Close delete confirmation dialog
   const handleDeleteConfirmClose = () => {
     setDeleteConfirmOpen(false);
     setSelectedFormat(null);
   };
 
+  // Handle deletion of a format
   const handleDelete = async () => {
+    setLoadingAction(true);
     try {
       await api.delete(`/api/formats/${selectedFormat.ID_FORMATU}`);
-      setSnackbar({ open: true, message: 'Формат удален успешно', severity: 'success' });
+      setSnackbar({ open: true, message: 'Format deleted successfully', severity: 'success' });
       fetchFormats();
       handleDeleteConfirmClose();
     } catch (error) {
-      console.error('Ошибка при удалении формата:', error);
-      const errorMessage = error.response?.data || 'Ошибка при удалении формата';
+      console.error('Error deleting format:', error);
+      const errorMessage = error.response?.data || 'Error deleting format';
       setSnackbar({ open: true, message: errorMessage, severity: 'error' });
+    } finally {
+      setLoadingAction(false);
     }
   };
 
-  // Обработчики пагинации
+  // Handle pagination page change
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
 
+  // Handle pagination rows per page change
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(+event.target.value);
     setPage(0);
   };
 
-  // Проверяем, загрузились ли данные
+  // Show loading indicator if data is being fetched
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', marginTop: '50px' }}>
@@ -143,14 +183,45 @@ function FormatPanel({ setActivePanel }) {
 
   return (
     <div style={{ display: 'flex' }}>
-      {/* Навигация */}
+      {/* Navigation */}
       <AdminNavigation setActivePanel={setActivePanel} />
 
-      {/* Содержимое панели форматов */}
+      {/* Format Panel Content */}
       <div style={{ flexGrow: 1, padding: '16px' }}>
         <Typography variant="h4" gutterBottom>
-          Форматы
+          Formats
         </Typography>
+
+        {/* Search Bar */}
+        <Paper
+          sx={{
+            padding: '8px 16px',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            borderRadius: '8px',
+          }}
+        >
+          <FiSearch style={{ marginRight: '8px', color: '#888' }} />
+          <TextField
+            placeholder="Search by ID or Resolution..."
+            variant="standard"
+            fullWidth
+            value={searchTerm}
+            onChange={handleSearchChange}
+            InputProps={{
+              endAdornment: searchTerm && (
+                <InputAdornment position="end">
+                  <IconButton onClick={() => setSearchTerm('')}>
+                    <FiX />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Paper>
+
+        {/* Add Format Button */}
         <Button
           variant="contained"
           color="primary"
@@ -158,39 +229,42 @@ function FormatPanel({ setActivePanel }) {
           onClick={() => handleFormOpen()}
           style={{ marginBottom: '16px' }}
         >
-          Добавить формат
+          Add Format
         </Button>
 
+        {/* Formats Table */}
         <Paper sx={{ width: '100%', overflow: 'hidden', marginTop: 2 }}>
           <TableContainer>
             <Table stickyHeader aria-label="formats table">
               <TableHead>
                 <TableRow>
-                  <TableCell>ID Формата</TableCell>
-                  <TableCell>Разрешение</TableCell>
-                  <TableCell align="right">Действия</TableCell>
+                  <TableCell>ID</TableCell>
+                  <TableCell>Resolution</TableCell>
+                  <TableCell align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {formats.length > 0 ? (
-                  formats.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((format) => (
-                    <TableRow hover key={format.ID_FORMATU}>
-                      <TableCell>{format.ID_FORMATU}</TableCell>
-                      <TableCell>{format.ROZIRENI}</TableCell>
-                      <TableCell align="right">
-                        <IconButton onClick={() => handleFormOpen(format)} color="primary">
-                          <FiEdit2 />
-                        </IconButton>
-                        <IconButton onClick={() => handleDeleteConfirmOpen(format)} color="secondary">
-                          <FiTrash2 />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                {filteredFormats.length > 0 ? (
+                  filteredFormats
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((format) => (
+                      <TableRow hover key={format.ID_FORMATU}>
+                        <TableCell>{format.ID_FORMATU}</TableCell>
+                        <TableCell>{format.ROZIRENI}</TableCell>
+                        <TableCell align="right">
+                          <IconButton onClick={() => handleFormOpen(format)} color="primary">
+                            <FiEdit2 />
+                          </IconButton>
+                          <IconButton onClick={() => handleDeleteConfirmOpen(format)} color="secondary">
+                            <FiTrash2 />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
                 ) : (
                   <TableRow>
                     <TableCell colSpan={3} align="center">
-                      Нет данных
+                      No data available
                     </TableCell>
                   </TableRow>
                 )}
@@ -198,9 +272,10 @@ function FormatPanel({ setActivePanel }) {
             </Table>
           </TableContainer>
 
+          {/* Pagination Controls */}
           <TablePagination
             component="div"
-            count={formats.length}
+            count={filteredFormats.length}
             page={page}
             onPageChange={handleChangePage}
             rowsPerPage={rowsPerPage}
@@ -209,15 +284,15 @@ function FormatPanel({ setActivePanel }) {
           />
         </Paper>
 
-        {/* Форма добавления/редактирования формата */}
+        {/* Add/Edit Format Dialog */}
         <Dialog open={formOpen} onClose={handleFormClose} fullWidth maxWidth="sm">
-          <DialogTitle>{selectedFormat ? 'Редактировать формат' : 'Добавить формат'}</DialogTitle>
+          <DialogTitle>{selectedFormat ? 'Edit Format' : 'Add Format'}</DialogTitle>
           <form onSubmit={handleFormSubmit}>
             <DialogContent>
               <TextField
                 autoFocus
                 margin="dense"
-                label="Разрешение"
+                label="Resolution"
                 type="text"
                 fullWidth
                 required
@@ -226,37 +301,41 @@ function FormatPanel({ setActivePanel }) {
               />
             </DialogContent>
             <DialogActions>
-              <Button onClick={handleFormClose}>Отмена</Button>
-              <Button type="submit" color="primary">
-                Сохранить
+              <Button onClick={handleFormClose}>Cancel</Button>
+              <Button type="submit" color="primary" disabled={loadingAction}>
+                {loadingAction ? <CircularProgress size={20} /> : 'Save'}
               </Button>
             </DialogActions>
           </form>
         </Dialog>
 
-        {/* Диалог подтверждения удаления */}
+        {/* Delete Confirmation Dialog */}
         <Dialog open={deleteConfirmOpen} onClose={handleDeleteConfirmClose}>
-          <DialogTitle>Удалить формат?</DialogTitle>
+          <DialogTitle>Delete Format?</DialogTitle>
           <DialogContent>
             <Typography>
-              Вы уверены, что хотите удалить формат с ID {selectedFormat?.ID_FORMATU}?
+              Are you sure you want to delete the format with ID {selectedFormat?.ID_FORMATU}?
             </Typography>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleDeleteConfirmClose}>Отмена</Button>
-            <Button onClick={handleDelete} color="secondary">
-              Удалить
+            <Button onClick={handleDeleteConfirmClose}>Cancel</Button>
+            <Button onClick={handleDelete} color="secondary" disabled={loadingAction}>
+              {loadingAction ? <CircularProgress size={20} /> : 'Delete'}
             </Button>
           </DialogActions>
         </Dialog>
 
-        {/* Уведомления */}
+        {/* Notifications */}
         <Snackbar
           open={snackbar.open}
           autoHideDuration={6000}
           onClose={() => setSnackbar({ ...snackbar, open: false })}
         >
-          <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity}>
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+          >
             {snackbar.message}
           </Alert>
         </Snackbar>

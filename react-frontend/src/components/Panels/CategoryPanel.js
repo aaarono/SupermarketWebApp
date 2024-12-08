@@ -31,7 +31,7 @@ function CategoryPanel({ setActivePanel }) {
   const [formData, setFormData] = useState({ id: null, name: '' });
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  // Пагинация
+  // Pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
 
@@ -44,8 +44,8 @@ function CategoryPanel({ setActivePanel }) {
       const response = await api.get('/api/categories');
       setCategories(response);
     } catch (error) {
-      console.error('Ошибка при загрузке категорий:', error);
-      setSnackbar({ open: true, message: 'Ошибка при загрузке категорий', severity: 'error' });
+      console.error('Error loading categories:', error);
+      setSnackbar({ open: true, message: 'Error loading categories', severity: 'error' });
     }
   };
 
@@ -66,16 +66,16 @@ function CategoryPanel({ setActivePanel }) {
     try {
       if (selectedCategory) {
         await api.put(`/api/categories/${formData.id}`, { value: formData.name });
-        setSnackbar({ open: true, message: 'Категория обновлена успешно', severity: 'success' });
+        setSnackbar({ open: true, message: 'Category updated successfully', severity: 'success' });
       } else {
         await api.post('/api/categories', { value: formData.name });
-        setSnackbar({ open: true, message: 'Категория добавлена успешно', severity: 'success' });
+        setSnackbar({ open: true, message: 'Category added successfully', severity: 'success' });
       }
       fetchCategories();
       handleFormClose();
     } catch (error) {
-      console.error('Ошибка при сохранении категории:', error);
-      setSnackbar({ open: true, message: 'Ошибка при сохранении категории', severity: 'error' });
+      console.error('Error saving category:', error);
+      setSnackbar({ open: true, message: 'Error saving category', severity: 'error' });
     }
   };
 
@@ -92,16 +92,16 @@ function CategoryPanel({ setActivePanel }) {
   const handleDelete = async () => {
     try {
       await api.delete(`/api/categories/${selectedCategory.id}`);
-      setSnackbar({ open: true, message: 'Категория удалена успешно', severity: 'success' });
+      setSnackbar({ open: true, message: 'Category deleted successfully', severity: 'success' });
       fetchCategories();
       handleDeleteConfirmClose();
     } catch (error) {
-      console.error('Ошибка при удалении категории:', error);
-      setSnackbar({ open: true, message: 'Ошибка при удалении категории', severity: 'error' });
+      console.error('Error deleting category:', error);
+      setSnackbar({ open: true, message: 'Error deleting category', severity: 'error' });
     }
   };
 
-  // Обработчики пагинации
+  // Pagination handlers
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -113,17 +113,17 @@ function CategoryPanel({ setActivePanel }) {
 
   return (
     <div style={{ display: 'flex' }}>
-      {/* Навигация */}
+      {/* Navigation */}
       <AdminNavigation setActivePanel={setActivePanel} />
 
-      {/* Содержимое панели категорий */}
+      {/* Category Panel Content */}
       <div style={{ flexGrow: 1, padding: '16px' }}>
         <Typography variant="h4" gutterBottom>
-          Категории
+          Categories
         </Typography>
 
         <Button variant="contained" color="primary" startIcon={<FiPlus />} onClick={() => handleFormOpen()}>
-          Добавить категорию
+          Add Category
         </Button>
 
         <Paper sx={{ width: '100%', overflow: 'hidden', marginTop: 2 }}>
@@ -131,8 +131,8 @@ function CategoryPanel({ setActivePanel }) {
             <Table stickyHeader aria-label="categories table">
               <TableHead>
                 <TableRow>
-                  <TableCell>Название</TableCell>
-                  <TableCell align="right">Действия</TableCell>
+                  <TableCell>Name</TableCell>
+                  <TableCell align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -152,7 +152,7 @@ function CategoryPanel({ setActivePanel }) {
                 {categories.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={2} align="center">
-                      Нет данных
+                      No data
                     </TableCell>
                   </TableRow>
                 )}
@@ -170,15 +170,15 @@ function CategoryPanel({ setActivePanel }) {
           />
         </Paper>
 
-        {/* Диалоговая форма добавления/редактирования */}
+        {/* Add/Edit Category Dialog */}
         <Dialog open={formOpen} onClose={handleFormClose}>
-          <DialogTitle>{selectedCategory ? 'Редактировать категорию' : 'Добавить категорию'}</DialogTitle>
+          <DialogTitle>{selectedCategory ? 'Edit Category' : 'Add Category'}</DialogTitle>
           <form onSubmit={handleFormSubmit}>
             <DialogContent>
               <TextField
                 autoFocus
                 margin="dense"
-                label="Название"
+                label="Name"
                 type="text"
                 fullWidth
                 required
@@ -187,29 +187,29 @@ function CategoryPanel({ setActivePanel }) {
               />
             </DialogContent>
             <DialogActions>
-              <Button onClick={handleFormClose}>Отмена</Button>
+              <Button onClick={handleFormClose}>Cancel</Button>
               <Button type="submit" color="primary">
-                Сохранить
+                Save
               </Button>
             </DialogActions>
           </form>
         </Dialog>
 
-        {/* Диалог подтверждения удаления */}
+        {/* Delete Confirmation Dialog */}
         <Dialog open={deleteConfirmOpen} onClose={handleDeleteConfirmClose}>
-          <DialogTitle>Удалить категорию?</DialogTitle>
+          <DialogTitle>Delete Category?</DialogTitle>
           <DialogContent>
-            <Typography>Вы уверены, что хотите удалить категорию "{selectedCategory?.label}"?</Typography>
+            <Typography>Are you sure you want to delete the category "{selectedCategory?.label}"?</Typography>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleDeleteConfirmClose}>Отмена</Button>
+            <Button onClick={handleDeleteConfirmClose}>Cancel</Button>
             <Button onClick={handleDelete} color="secondary">
-              Удалить
+              Delete
             </Button>
           </DialogActions>
         </Dialog>
 
-        {/* Уведомления */}
+        {/* Snackbar Notifications */}
         <Snackbar
           open={snackbar.open}
           autoHideDuration={6000}
