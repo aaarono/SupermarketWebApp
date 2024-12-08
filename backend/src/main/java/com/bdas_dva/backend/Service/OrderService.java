@@ -21,6 +21,7 @@ import java.sql.Types;
 import java.sql.Timestamp;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Collections;
@@ -50,6 +51,56 @@ public class OrderService {
         this.jdbcTemplate = jdbcTemplate;
         this.objectMapper = objectMapper;
     }
+
+    /**
+     * Метод для создания, обновления или удаления заказа
+     *
+     * @param operation       Операция (INSERT, UPDATE, DELETE)
+     * @param orderData       Данные для заказа в виде Map
+     * @return ID созданного заказа для INSERT, или ответ для других операций
+     */
+    @Transactional
+    public Map<String, Object> handleOrderCUD(String operation, Map<String, Object> orderData) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            // Вызов процедуры proc_objednavka_cud
+            Map<String, Object> params = new HashMap<>();
+            params.put("p_operation", operation);
+            params.put("p_id_objednavky", orderData.get("idObjednavky"));
+            params.put("p_datum", orderData.get("datum"));
+            params.put("p_status_id", orderData.get("statusId"));
+            params.put("p_supermarket_id", orderData.get("supermarketId"));
+            params.put("p_zakaznik_id", orderData.get("zakaznikId"));
+
+            // Вызов хранимой процедуры
+            jdbcTemplate.call((CallableStatementCreator) conn -> {
+                CallableStatement cs = conn.prepareCall("{call proc_objednavka_cud(?, ?, ?, ?, ?, ?)}");
+                cs.setString(1, (String) params.get("p_operation"));
+                cs.setObject(2, params.get("p_id_objednavky"));
+                cs.setObject(3, params.get("p_datum"));
+                cs.setObject(4, params.get("p_status_id"));
+                cs.setObject(5, params.get("p_supermarket_id"));
+                cs.setObject(6, params.get("p_zakaznik_id"));
+                return cs;
+            }, (List<SqlParameter>) params);
+
+            response.put("message", operation + " operation completed successfully.");
+            response.put("id_objednavky", params.get("p_id_objednavky"));
+        } catch (DataAccessException e) {
+            response.put("message", "Error executing CUD operation: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return response;
+    }
+
+    /**
+     * Получить всех пользователей из USER_VIEW.
+     */
+    public List<Map<String, Object>> getAllObjednavky() {
+        String query = "SELECT * FROM OBJEDNAVKA";
+        return jdbcTemplate.queryForList(query);
+    }
+
 
     public List<Map<String, Object>> filterOrders(String name, String phone, String email, Long statusId) throws Exception {
         String query = "SELECT * FROM ORDER_DETAILS_VIEW WHERE " +

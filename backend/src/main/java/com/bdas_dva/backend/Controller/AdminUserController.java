@@ -67,9 +67,8 @@ public class AdminUserController {
                     user.getPrijmeni() == null || user.getPrijmeni().isEmpty() ||
                     user.getEmail() == null || user.getEmail().isEmpty() ||
                     user.getPassword() == null || user.getPassword().isEmpty() ||
-                    user.getRoleIdRole() == null ||
-                    user.getZakaznikIdZakazniku() == null ||
-                    user.getZamnestnanecIdZamnestnance() == null) {
+                    user.getTelNumber() == null || user.getTelNumber().isEmpty() ||
+                    user.getRoleIdRole() == null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body("Некорректные входные данные");
             }

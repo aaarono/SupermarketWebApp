@@ -100,6 +100,7 @@ function UserPanel({ setActivePanel }) {
             jmeno: user.jmeno,
             prijmeni: user.prijmeni,
             email: user.email,
+            telNumber: '',
             password: '',
             roleIdRole: user.roleIdRole,
             zakaznikIdZakazniku: user.zakaznikIdZakazniku || '',
@@ -109,6 +110,7 @@ function UserPanel({ setActivePanel }) {
             jmeno: '', 
             prijmeni: '', 
             email: '', 
+            telNumber: '',
             password: '', 
             roleIdRole: 1, // Роль по умолчанию
             zakaznikIdZakazniku: '', 
@@ -136,9 +138,12 @@ function UserPanel({ setActivePanel }) {
         email: formData.email,
         ...(selectedUser ? {} : { password: formData.password }), // Отправляется пароль только при создании нового пользователя
         roleIdRole: formData.roleIdRole,
+        ...(!selectedUser ? { telNumber: formData.telNumber } : {}),
         zakaznikIdZakazniku: formData.zakaznikIdZakazniku || null,
-        zamnestnanecIdZamnestnance: formData.zamnestnanecIdZamnestnance || null,
+        zamnestnanecIdZamnestnance: ([2, 3].includes(formData.roleIdRole) ?  formData.zamnestnanecIdZamnestnance  : null) || null,
       };      
+
+      console.log(dataToSend)
 
       if (selectedUser) {
         await api.put(`/api/users/${selectedUser.idUser}`, dataToSend);
@@ -417,6 +422,17 @@ function UserPanel({ setActivePanel }) {
               {!selectedUser && (
                 <TextField
                   margin="dense"
+                  label="Telephone"
+                  type="telephone"
+                  fullWidth
+                  required
+                  value={formData.telNumber}
+                  onChange={(e) => setFormData({ ...formData, telNumber: e.target.value })}
+                />
+              )}
+              {!selectedUser && (
+                <TextField
+                  margin="dense"
                   label="Пароль"
                   type="password"
                   fullWidth
@@ -452,6 +468,7 @@ function UserPanel({ setActivePanel }) {
                   style={{ marginBottom: '16px' }}
                 />
               )}
+              {[2, 3].includes(formData.roleIdRole) && (
               <TextField
                 margin="dense"
                 label="ID Сотрудника"
@@ -460,6 +477,7 @@ function UserPanel({ setActivePanel }) {
                 value={formData.zamnestnanecIdZamnestnance}
                 onChange={(e) => setFormData({ ...formData, zamnestnanecIdZamnestnance: e.target.value })}
               />
+            )}
             </DialogContent>
             <DialogActions>
               <Button onClick={handleFormClose}>Отмена</Button>

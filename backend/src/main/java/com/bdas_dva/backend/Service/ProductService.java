@@ -68,6 +68,7 @@ public class ProductService {
             product.setId(rs.getLong("ID_PRODUKTU"));
             product.setName(rs.getString("NAZEV"));
             product.setPrice(rs.getDouble("CENA"));
+            product.setDescription((rs.getClob("POPIS").toString()));
             product.setCategoryId(rs.getLong("KAT_PROD_ID_KATEGORIE"));
             product.setSkladId(rs.getLong("SKLAD_ID_SKLADU"));
             return product;
@@ -266,12 +267,16 @@ public class ProductService {
         jdbcCall.execute(inParams);
     }
 
-    private RowMapper<Product> productRowMapper = (rs, rowNum) -> {
+    private final RowMapper<Product> productRowMapper = (rs, rowNum) -> {
         Product product = new Product();
         product.setId(rs.getLong("id"));
         product.setName(rs.getString("name"));
         product.setPrice(rs.getDouble("price"));
         product.setCategory(rs.getString("category"));
+        Clob clob = rs.getClob("description");
+        String description = clob != null ? clob.getSubString(1, (int) clob.length()) : null;
+        product.setDescription(description);
+        System.out.println("rs.getClob(\"description\") = " + rs.getClob("description"));
 
         // Handling the image
         Blob imageBlob = rs.getBlob("image");

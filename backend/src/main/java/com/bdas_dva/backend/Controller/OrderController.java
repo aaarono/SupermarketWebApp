@@ -147,4 +147,48 @@ public class OrderController {
             return ResponseEntity.status(500).body("Ошибка при получении продуктов для заказа: " + e.getMessage());
         }
     }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/admin-panel/create")
+    public ResponseEntity<?> createOrderAdmin(@RequestBody Map<String, Object> orderData) {
+        try {
+            Map<String, Object> response = orderService.handleOrderCUD("INSERT", orderData);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error creating order: " + e.getMessage());
+        }
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/admin-panel/update")
+    public ResponseEntity<?> updateOrder(@RequestBody Map<String, Object> orderData) {
+        try {
+            Map<String, Object> response = orderService.handleOrderCUD("UPDATE", orderData);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error updating order: " + e.getMessage());
+        }
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/admin-panel/delete")
+    public ResponseEntity<?> deleteOrder(@RequestBody Map<String, Object> orderData) {
+        try {
+            Map<String, Object> response = orderService.handleOrderCUD("DELETE", orderData);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error deleting order: " + e.getMessage());
+        }
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin-panel")
+    public ResponseEntity<?> getAllOrders() {
+        try {
+            List<Map<String, Object>> orders = orderService.getAllObjednavky();
+            return ResponseEntity.ok(orders);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error retrieving users: " + e.getMessage());
+        }
+    }
 }

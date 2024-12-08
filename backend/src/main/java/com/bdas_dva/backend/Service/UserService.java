@@ -52,16 +52,17 @@ public class UserService {
     @Transactional(rollbackFor = Exception.class)
     public void createUser(User user) {
         jdbcTemplate.update((Connection conn) -> {
-            CallableStatement cs = conn.prepareCall("{call proc_user_cud(?, ?, ?, ?, ?, ?, ?, ?, ?)}"); // 9 параметров
+            CallableStatement cs = conn.prepareCall("{call proc_user_cud(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}"); // 9 параметров
             cs.setString(1, "INSERT");
             cs.setObject(2, null); // p_id_user
             cs.setString(3, user.getJmeno());
             cs.setString(4, user.getPrijmeni());
             cs.setString(5, user.getEmail());
-            cs.setString(6, user.getPassword()); // Пароль должен быть хеширован перед вызовом
-            cs.setLong(7, user.getRoleIdRole());
-            cs.setLong(8, user.getZakaznikIdZakazniku());
-            cs.setLong(9, user.getZamnestnanecIdZamnestnance());
+            cs.setObject(6, user.getTelNumber());
+            cs.setString(7, user.getPassword()); // Пароль должен быть хеширован перед вызовом
+            cs.setLong(8, user.getRoleIdRole());
+            cs.setObject(9, user.getZakaznikIdZakazniku());
+            cs.setObject(10, user.getZamnestnanecIdZamnestnance());
             return cs;
         });
     }
@@ -72,18 +73,18 @@ public class UserService {
         if (user.getIdUser() == null) {
             throw new IllegalArgumentException("ID пользователя не может быть null для обновления.");
         }
-
         jdbcTemplate.update((Connection conn) -> {
-            CallableStatement cs = conn.prepareCall("{call proc_user_cud(?, ?, ?, ?, ?, ?, ?, ?, ?)}"); // 9 параметров
+            CallableStatement cs = conn.prepareCall("{call proc_user_cud(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}"); // 9 параметров
             cs.setString(1, "UPDATE");
             cs.setLong(2, user.getIdUser());
             cs.setString(3, user.getJmeno());
             cs.setString(4, user.getPrijmeni());
             cs.setString(5, user.getEmail());
-            cs.setString(6, user.getPassword());
-            cs.setLong(7, user.getRoleIdRole());
-            cs.setObject(8, user.getZakaznikIdZakazniku());
-            cs.setObject(9, user.getZamnestnanecIdZamnestnance());
+            cs.setObject(6, user.getTelNumber());
+            cs.setString(7, user.getPassword());
+            cs.setLong(8, user.getRoleIdRole());
+            cs.setObject(9, user.getZakaznikIdZakazniku());
+            cs.setObject(10, user.getZamnestnanecIdZamnestnance());
             return cs;
         });
     }

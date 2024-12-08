@@ -9,6 +9,15 @@ public class Product {
     private Long skladId;
     private String image;
     private Integer quantity;
+    private String description;
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
     public Integer getQuantity() {
         return quantity;
