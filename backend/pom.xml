@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.bdas_dva</groupId>
 	<artifactId>backend</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.Final</version>
 	<name>backend</name>
 	<description>backend part for bdas 2</description>
 	<url/>

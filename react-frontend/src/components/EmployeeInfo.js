@@ -31,28 +31,43 @@ const positionIcons = {
   4: <FaPhone color="warning" />, // Employee
 };
 
-// Build hierarchy
 const buildHierarchy = (employees) => {
   const map = {};
   const roots = [];
 
+  console.log("Исходные данные:", employees);
+
+
+  // Обновляем zamestnanecIdZamestnance для сотрудников с уровнем 1
+  employees.forEach((employee) => {
+    if (employee.level === 1) {
+      employee.zamestnanecIdZamestnance = null;
+    }
+  });
+
+  // Создаем карту сотрудников
   employees.forEach((employee) => {
     map[employee.idZamestnance] = { ...employee, children: [] };
   });
-
+  // Формируем иерархию
   employees.forEach((employee) => {
     if (employee.zamestnanecIdZamestnance) {
       const parent = map[employee.zamestnanecIdZamestnance];
       if (parent) {
         parent.children.push(map[employee.idZamestnance]);
+      } else {
+        console.warn(`Родитель с ID ${employee.zamestnanecIdZamestnance} не найден для сотрудника с ID ${employee.idZamestnance}`);
       }
     } else {
       roots.push(map[employee.idZamestnance]);
     }
   });
 
+  console.log("Корни до удаления поля zamestnanecIdZamestnance:", roots);
+
   return roots;
 };
+
 
 // Recursive component for employees
 const EmployeeListItem = ({ employee, positionsMap, averageSalaries, level = 0 }) => {
@@ -163,7 +178,7 @@ const EmployeeInfo = () => {
     const promises = employees.map(async (employee) => {
       try {
         const response = await api.get(`/api/zamestnanci/${employee.idZamestnance}/average-salary`);
-        salaries[employee.idZamestnance] = response || null;
+        salaries[employee.idZamestnance] = response;
       } catch (error) {
         console.error(`Error loading average salary for employee ${employee.idZamestnance}:`, error);
         salaries[employee.idZamestnance] = null;
@@ -184,7 +199,8 @@ const EmployeeInfo = () => {
       await fetchPositions();
 
       const hierarchyResponse = await api.get(`/api/zamestnanci/hierarchy/${userId}`);
-      const tree = buildHierarchy(hierarchyResponse || []);
+      const tree = buildHierarchy(hierarchyResponse);
+      
       setHierarchy(tree);
 
       const employeeResponse = await api.get(`/api/zamestnanci/${userId}`);
