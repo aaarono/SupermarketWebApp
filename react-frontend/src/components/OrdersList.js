@@ -11,6 +11,7 @@ import {
   Button,
   Divider,
   Chip,
+  TextField,
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { FaAngleDown, FaAngleUp } from "react-icons/fa";
@@ -31,20 +32,21 @@ const ProductImage = styled(Avatar)(({ theme }) => ({
   height: 120,
   borderRadius: "12px",
   boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
-  backgroundSize: "cover", // Для изображения как фона
-  backgroundPosition: "center", // Центрировать изображение
+  backgroundSize: "cover", // Background image
+  backgroundPosition: "center", // Center the image
 }));
 
 const OrdersList = () => {
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const fetchProductImage = async (productId) => {
-      const response = await api.get(`/api/products/image/${productId}`);
-        const base64Image = response; // Строка Base64
-        const imageSrc = `data:image/png;base64,${base64Image}`; // Создаем строку для src
-        return imageSrc;
+    const response = await api.get(`/api/products/image/${productId}`);
+    const base64Image = response; // Base64 string
+    const imageSrc = `data:image/png;base64,${base64Image}`; // Construct the image source string
+    return imageSrc;
   };
 
   useEffect(() => {
@@ -57,10 +59,10 @@ const OrdersList = () => {
           response.map(async (order) => {
             const productsWithImages = await Promise.all(
               order.products.map(async (product) => {
-                const imageUrl = await fetchProductImage(product.id); // Получаем изображение
+                const imageUrl = await fetchProductImage(product.id); // Fetch image
                 return {
                   ...product,
-                  imageUrl, // Добавляем URL изображения
+                  imageUrl, // Add image URL
                 };
               })
             );
@@ -69,8 +71,8 @@ const OrdersList = () => {
         );
         setOrders(ordersWithImages);
       } catch (error) {
-        console.error("Ошибка при загрузке заказов:", error);
-        alert("Произошла ошибка при загрузке заказов. Попробуйте позже.");
+        console.error("Error fetching orders:", error);
+        alert("An error occurred while loading orders. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -82,6 +84,22 @@ const OrdersList = () => {
   const handleExpand = (orderId) => {
     setExpandedOrder(expandedOrder === orderId ? null : orderId);
   };
+
+  const handleSearch = (event) => {
+    setSearchTerm(event.target.value.toLowerCase());
+  };
+
+  const filteredOrders = orders.filter((order) => {
+    return (
+      order.idObjednavky.toString().includes(searchTerm) || // Search by Order ID
+      order.stav.toLowerCase().includes(searchTerm) || // Search by Status
+      order.datum.toLocaleString().includes(searchTerm) || // Search by Date
+      order.products.some((product) =>
+        product.name.toLowerCase().includes(searchTerm) || // Search by Product Name
+        product.id.toString().includes(searchTerm) // Search by Product ID
+      )
+    );
+  });
 
   if (loading) {
     return (
@@ -101,7 +119,17 @@ const OrdersList = () => {
         <Typography variant="h5" gutterBottom sx={{ mb: 4, fontWeight: 500 }}>
           Order History
         </Typography>
-        {orders.map((order) => (
+
+        {/* Search Field */}
+        <TextField
+          label="Search Orders"
+          variant="outlined"
+          fullWidth
+          onChange={handleSearch}
+          sx={{ mb: 3 }}
+        />
+
+        {filteredOrders.map((order) => (
           <StyledCard key={order.idObjednavky}>
             <CardContent>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -145,7 +173,7 @@ const OrdersList = () => {
                       }}
                     >
                       <ProductImage>
-                        {/* Отображаем изображение, используя тэг <img /> */}
+                        {/* Display the image using <img /> tag */}
                         <img src={product.imageUrl} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       </ProductImage>
                       <Box>
