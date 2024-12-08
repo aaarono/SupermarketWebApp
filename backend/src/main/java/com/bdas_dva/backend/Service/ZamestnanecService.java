@@ -384,7 +384,6 @@ public class ZamestnanecService {
         String sql = "SELECT ID_POZICE, NAZEV FROM POZICE";
         return jdbcTemplate.queryForList(sql);
     }
-
     /**
      * Вызов процедуры для получения средней зарплаты подчиненных.
      *
@@ -454,26 +453,9 @@ public class ZamestnanecService {
         return jdbcTemplate.queryForList(sql);
     }
 
-//
-//    /**
-//     * RowMapper pro mapování řádků z CURSOR na ZamestnanecResponse.
-//     */
-//    private static class ZamestnanecRowMapper implements RowMapper<ZamestnanecResponse> {
-//        @Override
-//        public ZamestnanecResponse mapRow(ResultSet rs, int rowNum) throws SQLException {
-//            ZamestnanecResponse zamestnanec = new ZamestnanecResponse();
-//            zamestnanec.setIdZamestnance(rs.getLong("ID_ZAMNESTNANCE"));
-//            zamestnanec.setDatumZamestnani(rs.getDate("DATUMZAMESTNANI"));
-//            zamestnanec.setPracovnidoba(rs.getInt("PRACOVNIDOBA"));
-//            zamestnanec.setSupermarketIdSupermarketu(rs.getLong("SUPERMARKET_ID_SUPERMARKETU"));
-//            zamestnanec.setSkladIdSkladu(rs.getLong("SKLAD_ID_SKLADU"));
-//            zamestnanec.setZamestnanecIdZamestnance(rs.getLong("ZAMNESTNANEC_ID_ZAMNESTNANCE"));
-//            zamestnanec.setAdresaIdAdresy(rs.getLong("ADRESA_ID_ADRESY"));
-//            zamestnanec.setJmeno(rs.getString("JMENO"));
-//            zamestnanec.setPrijmeni(rs.getString("PRIJMENI"));
-//            zamestnanec.setMzda(rs.getDouble("MZDA"));
-//            zamestnanec.setPoziceIdPozice(rs.getLong("POZICE_ID_POZICE"));
-//            return zamestnanec;
-//        }
-//    }
+    @Transactional(readOnly = true)
+    public Map<String, Object> getEmployeeFromViewDetails(Long id) {
+        String sql = "SELECT * FROM EMPLOYEE_INFO_VIEW WHERE EMPLOYEE_ID = ?";
+        return jdbcTemplate.queryForMap(sql, id);
+    }
 }

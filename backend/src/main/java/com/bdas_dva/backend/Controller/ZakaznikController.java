@@ -60,6 +60,7 @@ public class ZakaznikController {
             return ResponseEntity.status(500).body("Ошибка при обновлении заказчика: " + e.getMessage());
         }
     }
+
     /**
      * Удаление заказчика.
      */

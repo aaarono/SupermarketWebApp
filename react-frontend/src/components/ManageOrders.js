@@ -157,7 +157,7 @@ const ManageOrders = () => {
   const handleUpdateStatus = async () => {
     try {
       if (currentOrder) {
-        const currentStatusId = currentOrder.ORDER_STATUS;
+        const currentStatusId = currentOrder.STATUS_ID;
         const newStatusName = selectedStatus[currentOrder.ORDER_ID] || currentOrder.ORDER_STATUS;
         const newStatus = statuses.find((status) => status.NAZEV === newStatusName);
 
@@ -168,11 +168,14 @@ const ManageOrders = () => {
 
         // Validation based on status transition rules
         const validTransitions = {
-          "1": ["2", "3"],
-          "2": ["3", "4"],
-          "3": [],
-          "4": [],
+          1: [2, 3],
+          2: [3, 4],
+          3: [],
+          4: [],
         };
+
+        console.log(currentStatusId)
+        console.log(newStatus)
 
         if (!validTransitions[currentStatusId]?.includes(newStatus.ID_STATUS)) {
           alert("Изменение на выбранный статус невозможно в соответствии с правилами.");

@@ -22,6 +22,33 @@ public class ZamestnanecController {
 
     @Autowired
     private UtilService utilService;
+
+
+    /**
+     * Získá detail zaměstnanca podle jeho ID.
+     *
+     * @param idZamestnance ID zaměstnanca.
+     * @return Detail zaměstnanca ve formátu JSON.
+     */
+    @PreAuthorize("hasRole('EMPLOYEE') or hasRole('ADMIN')")
+    @GetMapping("/{idZamestnance}")
+    public ResponseEntity<?> getZamestnanecById(@PathVariable Long idZamestnance) {
+        try {
+            Map<String, Object> zamestnanec = zamestnanecService.getEmployeeFromViewDetails(idZamestnance);
+            if (zamestnanec != null && !zamestnanec.isEmpty()) {
+                return ResponseEntity.ok(zamestnanec);
+            } else {
+                return ResponseEntity.status(404).body("Zaměstnanec s tímto ID nebyl nalezen.");
+            }
+        } catch (DataAccessException dae) {
+            dae.printStackTrace();
+            return ResponseEntity.status(500).body("Databázová chyba při získávání zaměstnance.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Chyba při získávání zaměstnance: " + e.getMessage());
+        }
+    }
+
     /**
      * Získá detail zaměstnanca podle jeho ID.
      *
@@ -30,7 +57,7 @@ public class ZamestnanecController {
      */
     @PreAuthorize("hasRole('EMPLOYEE') or hasRole('ADMIN')")
     @GetMapping("/hierarchy/{idZamestnance}")
-    public ResponseEntity<?> getZamestnanecById(@PathVariable Long idZamestnance) {
+    public ResponseEntity<?> getZamestnanecHierarchyById(@PathVariable Long idZamestnance) {
         try {
             List<Zamestnanec> zamestnanecList = zamestnanecService.getEmployeeHierarchy(idZamestnance);
             if (zamestnanecList != null && !zamestnanecList.isEmpty()) {

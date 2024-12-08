@@ -50,13 +50,10 @@ public class UserController {
             if (!jwtUtil.validateToken(token)) {
                 return ResponseEntity.status(401).body("Недействительный или просроченный JWT токен");
             }
-
-            // Извлекаем email пользователя из токена
             String email = jwtUtil.getUserNameFromJwtToken(token);
-            // Получаем данные пользователя из базы данных
+
             User user = userService.getUserByEmail(email);
-            // Получаем данные о заказчике по ID из пользователя
-            System.out.println("user.getZakaznikIdZakazniku() = " + user.getZakaznikIdZakazniku());
+
             Zakaznik zakaznik = null;
             if (user.getZakaznikIdZakazniku() != null && user.getZakaznikIdZakazniku() != 0L) {
                 zakaznik = zakaznikService.getZakaznikById(user.getZakaznikIdZakazniku());

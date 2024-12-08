@@ -13,24 +13,25 @@ import {
   ListItemText,
   IconButton,
   Collapse,
+  Paper,
 } from "@mui/material";
 import {
   ExpandLess,
   ExpandMore,
   Person as PersonIcon,
 } from "@mui/icons-material";
-import { FaUserTie, FaUsers, FaEnvelope, FaPhone } from "react-icons/fa"; // Иконки для позиций
-import api from "../services/api"; // Предполагается, что у вас настроен axios или другой клиент API
+import { FaUserTie, FaUsers, FaEnvelope, FaPhone } from "react-icons/fa"; // Icons for positions
+import api from "../services/api"; // Your API client
 
-// Карта иконок для позиций
+// Icons map
 const positionIcons = {
-  1: <FaUserTie color="primary" />, // Менеджер
-  2: <FaUsers color="secondary" />, // Командир
-  3: <FaEnvelope color="success" />, // Администратор
-  4: <FaPhone color="warning" />, // Сотрудник
+  1: <FaUserTie color="primary" />, // Manager
+  2: <FaUsers color="secondary" />, // Commander
+  3: <FaEnvelope color="success" />, // Administrator
+  4: <FaPhone color="warning" />, // Employee
 };
 
-// Функция для построения дерева иерархии
+// Build hierarchy
 const buildHierarchy = (employees) => {
   const map = {};
   const roots = [];
@@ -53,15 +54,14 @@ const buildHierarchy = (employees) => {
   return roots;
 };
 
-// Рекурсивный компонент для отображения сотрудников
+// Recursive component for employees
 const EmployeeListItem = ({ employee, positionsMap, averageSalaries, level = 0 }) => {
   const [open, setOpen] = useState(false);
 
-  const positionName = positionsMap[employee.poziceIdPozice] || "Неизвестная позиция";
+  const positionName = positionsMap[employee.poziceIdPozice] || "Unknown position";
   const positionIcon = positionIcons[employee.poziceIdPozice] || <PersonIcon color="primary" />;
-  const averageSalary = averageSalaries[employee.idZamestnance]; // Средняя зарплата из пропсов
+  const averageSalary = averageSalaries[employee.idZamestnance];
 
-  // Обработчик раскрытия/сворачивания
   const handleToggle = () => {
     setOpen(!open);
   };
@@ -98,8 +98,8 @@ const EmployeeListItem = ({ employee, positionsMap, averageSalaries, level = 0 }
               )}
               <Typography variant="body2" color="textSecondary">
                 {averageSalary !== null
-                  ? `Средняя зарплата подчиненных: ${averageSalary.toFixed(2)}`
-                  : "Средняя зарплата отсутствует"}
+                  ? `Average subordinate salary: ${averageSalary.toFixed(2)}`
+                  : "No average salary data"}
               </Typography>
             </>
           }
@@ -117,7 +117,7 @@ const EmployeeListItem = ({ employee, positionsMap, averageSalaries, level = 0 }
               key={child.idZamestnance}
               employee={child}
               positionsMap={positionsMap}
-              averageSalaries={averageSalaries} // Передаем зарплаты дальше
+              averageSalaries={averageSalaries}
               level={level + 1}
             />
           ))}
@@ -127,20 +127,19 @@ const EmployeeListItem = ({ employee, positionsMap, averageSalaries, level = 0 }
   );
 };
 
-
-// Корневой компонент
+// Root component
 const EmployeeInfo = () => {
   const [hierarchy, setHierarchy] = useState([]);
   const [positions, setPositions] = useState({});
-  const [averageSalaries, setAverageSalaries] = useState({}); // Средние зарплаты подчиненных
+  const [averageSalaries, setAverageSalaries] = useState({});
   const [loading, setLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "success",
   });
+  const [currentEmployee, setCurrentEmployee] = useState(null);
 
-  // Загрузка позиций
   const fetchPositions = async () => {
     try {
       const response = await api.get("/api/zamestnanci/pozice");
@@ -150,45 +149,53 @@ const EmployeeInfo = () => {
       }, {});
       setPositions(map);
     } catch (error) {
-      console.error("Ошибка загрузки позиций:", error);
+      console.error("Error loading positions:", error);
       setSnackbar({
         open: true,
-        message: "Ошибка загрузки позиций",
+        message: "Error loading positions",
         severity: "error",
       });
     }
   };
 
-  // Загрузка средней зарплаты для всех сотрудников
   const fetchAverageSalaries = async (employees) => {
     const salaries = {};
     const promises = employees.map(async (employee) => {
       try {
         const response = await api.get(`/api/zamestnanci/${employee.idZamestnance}/average-salary`);
-        salaries[employee.idZamestnance] = response || null; // Предполагается, что API возвращает число
+        salaries[employee.idZamestnance] = response || null;
       } catch (error) {
-        console.error(`Ошибка загрузки средней зарплаты для сотрудника ${employee.idZamestnance}:`, error);
-        salaries[employee.idZamestnance] = null; // В случае ошибки
+        console.error(`Error loading average salary for employee ${employee.idZamestnance}:`, error);
+        salaries[employee.idZamestnance] = null;
       }
     });
     await Promise.all(promises);
     setAverageSalaries(salaries);
   };
 
-  // Функция для загрузки всех данных
   const fetchData = async () => {
     try {
+      setLoading(true);
+      const userResponse = await api.get("/api/user/customer");
+      const userId = userResponse.user.zamnestnanecIdZamnestnance;
+
+      if (!userId) throw new Error("Failed to get the current user's ID");
+
       await fetchPositions();
-      const response = await api.get("/api/zamestnanci/hierarchy/1");
-      console.log(response)
-      const tree = buildHierarchy(response);
+
+      const hierarchyResponse = await api.get(`/api/zamestnanci/hierarchy/${userId}`);
+      const tree = buildHierarchy(hierarchyResponse || []);
       setHierarchy(tree);
-      await fetchAverageSalaries(response); // Загружаем зарплаты после иерархии
+
+      const employeeResponse = await api.get(`/api/zamestnanci/${userId}`);
+      setCurrentEmployee(employeeResponse);
+
+      await fetchAverageSalaries(hierarchyResponse || []);
     } catch (error) {
-      console.error("Ошибка загрузки данных:", error);
+      console.error("Error loading data:", error);
       setSnackbar({
         open: true,
-        message: "Ошибка загрузки данных",
+        message: "Error loading data",
         severity: "error",
       });
     } finally {
@@ -208,26 +215,43 @@ const EmployeeInfo = () => {
         padding: 3,
       }}
       role="main"
-      aria-label="Отображение иерархии сотрудников"
+      aria-label="Employee hierarchy display"
     >
       <Typography variant="h4" component="h1" gutterBottom align="center">
-        Справочник сотрудников
+        Employee Directory
       </Typography>
+
       {loading ? (
         <Box display="flex" justifyContent="center" alignItems="center" padding={2}>
           <CircularProgress />
         </Box>
       ) : (
-        <List>
-          {hierarchy.map((employee) => (
-            <EmployeeListItem
-              key={employee.idZamestnance}
-              employee={employee}
-              positionsMap={positions}
-              averageSalaries={averageSalaries} // Передаем средние зарплаты
-            />
-          ))}
-        </List>
+        <>
+          {currentEmployee && (
+            <Paper sx={{ padding: 2, marginBottom: 2 }}>
+              <Typography variant="h6">Current employee information:</Typography>
+              <Typography>First Name: {currentEmployee.EMPLOYEE_FIRST_NAME}</Typography>
+              <Typography>Last Name: {currentEmployee.EMPLOYEE_LAST_NAME}</Typography>
+              <Typography>Email: {currentEmployee.EMPLOYEE_EMAIL}</Typography>
+              <Typography>Position: {currentEmployee.POSITION_NAME}</Typography>
+              <Typography>Address: {currentEmployee.EMPLOYEE_ADDRESS}</Typography>
+              <Typography>Location: {currentEmployee.LOCATION_NAME}</Typography>
+              <Typography>Salary/Hour: {currentEmployee.SALARY_PER_HOUR}</Typography>
+              <Typography>Working hours: {currentEmployee.WORKING_HOURS}</Typography>
+              <Typography>Start date: {currentEmployee.START_DATE}</Typography>
+            </Paper>
+          )}
+          <List>
+            {hierarchy.map((employee) => (
+              <EmployeeListItem
+                key={employee.idZamestnance}
+                employee={employee}
+                positionsMap={positions}
+                averageSalaries={averageSalaries}
+              />
+            ))}
+          </List>
+        </>
       )}
       <Snackbar
         open={snackbar.open}
