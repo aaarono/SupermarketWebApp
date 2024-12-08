@@ -109,6 +109,12 @@ function AdminNavigation({ setActivePanel }) {
           </ListItemIcon>
           <ListItemText primary="Users" />
         </ListItem>
+        <ListItem button onClick={() => setActivePanel('customer')}>
+          <ListItemIcon>
+            <PeopleOutlineIcon />
+          </ListItemIcon>
+          <ListItemText primary="Customer" />
+        </ListItem>
         <ListItem button onClick={() => setActivePanel('order-product')}>
           <ListItemIcon>
             <KeyboardOptionKeyIcon />

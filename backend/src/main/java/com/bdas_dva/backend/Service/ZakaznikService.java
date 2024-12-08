@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ZakaznikService {
@@ -187,6 +188,14 @@ public class ZakaznikService {
         } catch (DataAccessException e) {
             throw new ResourceNotFoundException("ZAKAZNIK с ID " + zakaznikId + " не найден.", "zakaznikId", zakaznikId.toString());
         }
+    }
+
+    /**
+     * Получить всех пользователей из USER_VIEW.
+     */
+    public List<Map<String, Object>> getAllUsers() {
+        String query = "SELECT * FROM USER_VIEW";
+        return jdbcTemplate.queryForList(query);
     }
 
     // Метод для маппинга строки ResultSet в объект Zakaznik

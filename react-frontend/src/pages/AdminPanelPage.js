@@ -24,6 +24,7 @@ import RolePanel from '../components/Panels/RolePanel';
 import LogPanel from '../components/Panels/LogPanel';
 import SysCatalogPanel from '../components/Panels/SysCatalogPanel';
 import OrderStatusPanel from '../components/Panels/OrderStatusPanel'
+import CustomerPanel from '../components/Panels/CustomerPanel';
 
 function AdminPanelPage({ AdminPanelRole }) {
   const [activePanel, setActivePanel] = useState('user');
@@ -74,6 +75,8 @@ function AdminPanelPage({ AdminPanelRole }) {
         return <CashPanel setActivePanel={setActivePanel} />;
       case 'statuses':
         return <OrderStatusPanel setActivePanel={setActivePanel} />;
+      case 'customer':
+        return <CustomerPanel setActivePanel={setActivePanel} />;
       default:
         return <UserPanel setActivePanel={setActivePanel} />;
     }

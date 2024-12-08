@@ -47,10 +47,11 @@ function UserPanel({ setActivePanel }) {
     prijmeni: '',
     email: '',
     password: '',
-    roleIdRole: '',
+    roleIdRole: 1, // Добавлено: Роль по умолчанию
     zakaznikIdZakazniku: '',
     zamnestnanecIdZamnestnance: '',
   });
+  
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -104,10 +105,19 @@ function UserPanel({ setActivePanel }) {
             zakaznikIdZakazniku: user.zakaznikIdZakazniku || '',
             zamnestnanecIdZamnestnance: user.zamnestnanecIdZamnestnance || '',
           }
-        : { jmeno: '', prijmeni: '', email: '', password: '', roleIdRole: '', zakaznikIdZakazniku: '', zamnestnanecIdZamnestnance: '' }
+        : { 
+            jmeno: '', 
+            prijmeni: '', 
+            email: '', 
+            password: '', 
+            roleIdRole: 1, // Роль по умолчанию
+            zakaznikIdZakazniku: '', 
+            zamnestnanecIdZamnestnance: '' 
+        }
     );
     setFormOpen(true);
   };
+  
 
   // Close the user form
   const handleFormClose = () => {
@@ -124,11 +134,11 @@ function UserPanel({ setActivePanel }) {
         jmeno: formData.jmeno,
         prijmeni: formData.prijmeni,
         email: formData.email,
-        ...(selectedUser ? {} : { password: formData.password }),
+        ...(selectedUser ? {} : { password: formData.password }), // Отправляется пароль только при создании нового пользователя
         roleIdRole: formData.roleIdRole,
         zakaznikIdZakazniku: formData.zakaznikIdZakazniku || null,
         zamnestnanecIdZamnestnance: formData.zamnestnanecIdZamnestnance || null,
-      };
+      };      
 
       if (selectedUser) {
         await api.put(`/api/users/${selectedUser.idUser}`, dataToSend);
@@ -432,14 +442,16 @@ function UserPanel({ setActivePanel }) {
                 </Select>
               </FormControl>
               {/* Optional Fields */}
-              <TextField
-                margin="dense"
-                label="ID Заказчика"
-                type="number"
-                fullWidth
-                value={formData.zakaznikIdZakazniku}
-                onChange={(e) => setFormData({ ...formData, zakaznikIdZakazniku: e.target.value })}
-              />
+              {selectedUser && (
+                <TextField
+                  label="ID заказчика"
+                  variant="outlined"
+                  fullWidth
+                  value={formData.zakaznikIdZakazniku}
+                  onChange={(e) => setFormData({ ...formData, zakaznikIdZakazniku: e.target.value })}
+                  style={{ marginBottom: '16px' }}
+                />
+              )}
               <TextField
                 margin="dense"
                 label="ID Сотрудника"
