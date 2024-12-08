@@ -4,6 +4,7 @@ import com.bdas_dva.backend.Service.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -63,6 +64,7 @@ public class ImageController {
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> createImage(
             @RequestParam("obrazek") MultipartFile file,
             @RequestParam("nazev") String nazev,
@@ -88,6 +90,7 @@ public class ImageController {
     /**
      * Обновление изображения
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> updateImage(
             @PathVariable Long id,
@@ -115,6 +118,7 @@ public class ImageController {
      * Удаление изображения
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deleteImage(@PathVariable Long id) {
         try {
             imageService.deleteImage(id);

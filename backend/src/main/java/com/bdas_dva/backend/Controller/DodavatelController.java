@@ -3,6 +3,7 @@ package com.bdas_dva.backend.Controller;
 import com.bdas_dva.backend.Service.DodavatelService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,6 +18,7 @@ public class DodavatelController {
     private DodavatelService dodavatelService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> createDodavatel(@RequestBody Map<String, Object> dodavatel) {
         try {
             dodavatelService.addDodavatel(
@@ -33,6 +35,7 @@ public class DodavatelController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> updateDodavatel(
             @PathVariable("id") Long id,
             @RequestBody Map<String, Object> dodavatel) {
@@ -52,6 +55,7 @@ public class DodavatelController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deleteDodavatel(@PathVariable("id") Long id) {
         try {
             dodavatelService.deleteDodavatel(id);
@@ -63,6 +67,7 @@ public class DodavatelController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('EMPLOYEE') or hasRole('ADMIN')")
     public ResponseEntity<List<Map<String, Object>>> getAllDodavatele() {
         try {
             List<Map<String, Object>> dodavatele = dodavatelService.getAllDodavatele();
@@ -74,6 +79,7 @@ public class DodavatelController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('EMPLOYEE') or hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> getDodavatelById(@PathVariable("id") Long id) {
         try {
             Map<String, Object> dodavatel = dodavatelService.getDodavatelById(id);

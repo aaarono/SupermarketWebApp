@@ -1,4 +1,9 @@
-package com.bdas_dva.backend.Model;
+package com.bdas_dva.backend.Model.OrderProduct;
+
+import com.bdas_dva.backend.Model.Address;
+import com.bdas_dva.backend.Model.Customer;
+import com.bdas_dva.backend.Model.OrderProduct.Platba.Payment;
+import com.bdas_dva.backend.Model.OrderProduct.Product.Product;
 
 import java.util.Date;
 import java.util.List;

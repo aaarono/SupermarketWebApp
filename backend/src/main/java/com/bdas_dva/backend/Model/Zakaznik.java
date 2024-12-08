@@ -5,7 +5,6 @@ public class Zakaznik {
     private Long telefon;
     private Long adresaIdAdresy = 0L;
 
-    // Конструкторы
     public Zakaznik() {}
 
     public Zakaznik(Long idZakazniku, Long telefon, Long adresaIdAdresy) {
@@ -14,7 +13,6 @@ public class Zakaznik {
         this.adresaIdAdresy = adresaIdAdresy;
     }
 
-    // Геттеры и Сеттеры
     public Long getIdZakazniku() {
         return idZakazniku;
     }

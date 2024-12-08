@@ -3,9 +3,9 @@ package com.bdas_dva.backend.Controller;
 
 import com.bdas_dva.backend.Model.Log;
 import com.bdas_dva.backend.Service.UtilService;
-import com.bdas_dva.backend.Model.Pozice;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -14,6 +14,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/util")
+@PreAuthorize("hasRole('ADMIN')")
 public class UtilController {
 
     @Autowired

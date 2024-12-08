@@ -110,7 +110,6 @@ public class User {
         this.roleName = roleName;
     }
 
-    // Метод для получения username (email)
     public String getUsername() {
         return email;
     }

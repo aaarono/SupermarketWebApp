@@ -5,6 +5,7 @@ import com.bdas_dva.backend.Model.Zakaznik;
 import com.bdas_dva.backend.Service.ZakaznikService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,6 +31,7 @@ public class ZakaznikController {
      * Создание нового заказчика.
      */
     @PostMapping("/create")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> createZakaznik(@RequestBody Zakaznik zakaznik) {
         try {
             Long generatedId = zakaznikService.createZakaznik(zakaznik);
@@ -40,6 +42,7 @@ public class ZakaznikController {
         }
     }
     @PutMapping("/update")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> updateZakaznik(@RequestBody Map<String, Object> requestBody) {
         try {
             Long idZakazniku = Integer.toUnsignedLong((Integer) requestBody.get("ID_ZAKAZNIKU")); // Получаем ID заказчика
@@ -65,6 +68,7 @@ public class ZakaznikController {
      * Удаление заказчика.
      */
     @DeleteMapping("/delete/{idZakazniku}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deleteZakaznik(@PathVariable Long idZakazniku) {
         try {
             zakaznikService.deleteZakaznik(idZakazniku);

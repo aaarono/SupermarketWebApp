@@ -1,12 +1,11 @@
 package com.bdas_dva.backend.Controller;
 
-import com.bdas_dva.backend.Model.Order;
-import com.bdas_dva.backend.Model.OrderRequest;
-import com.bdas_dva.backend.Model.Product;
+import com.bdas_dva.backend.Model.OrderProduct.Order;
+import com.bdas_dva.backend.Model.OrderProduct.OrderRequest;
+import com.bdas_dva.backend.Model.OrderProduct.Product.Product;
 import com.bdas_dva.backend.Model.User;
 import com.bdas_dva.backend.Service.OrderService;
 import com.bdas_dva.backend.Service.UserService;
-import com.bdas_dva.backend.Service.ZakaznikService;
 import com.bdas_dva.backend.Util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -53,6 +52,7 @@ public class OrderController {
     }
 
     @GetMapping("/user")
+    @PreAuthorize("hasRole('USER') or hasRole('EMPLOYEE') or hasRole('ADMIN')")
     public ResponseEntity<?> getUserOrders(@RequestParam(required = false) Long userId,
                                            @RequestParam(required = false) Long zakaznikId,
                                            @RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -95,16 +95,13 @@ public class OrderController {
             String email = filters.get("email");
             Long statusId = filters.get("statusId") != null ? Long.valueOf(filters.get("statusId")) : null;
 
-            // Получение списка заказов
             List<Map<String, Object>> orders = orderService.filterOrders(name, phone, email, statusId);
 
-            // Проверяем текущую роль пользователя
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             boolean isEmployee = authentication.getAuthorities().stream()
                     .map(GrantedAuthority::getAuthority)
                     .anyMatch(role -> role.equals("ROLE_EMPLOYEE"));
 
-            // Если пользователь с ролью EMPLOYEE, скрываем телефоны
             if (isEmployee) {
                 orders.forEach(order -> {
                     if (order.containsKey("CUSTOMER_PHONE")) {
@@ -119,7 +116,7 @@ public class OrderController {
             return ResponseEntity.ok(orders);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(500).body("Ошибка при фильтрации заказов: " + e.getMessage());
+            return ResponseEntity.status(500).body("Filtration error: " + e.getMessage());
         }
     }
 

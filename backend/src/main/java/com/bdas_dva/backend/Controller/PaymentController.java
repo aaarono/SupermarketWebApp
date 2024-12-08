@@ -6,14 +6,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import com.bdas_dva.backend.Model.Payment;
+import com.bdas_dva.backend.Model.OrderProduct.Platba.Payment;
 
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -29,6 +28,7 @@ public class PaymentController {
 
     // Получение всех платежей
     @GetMapping
+    @PreAuthorize("hasRole('EMPLOYEE') or hasRole('ADMIN')")
     public ResponseEntity<List<Payment>> getPayments() {
         List<Payment> payments = paymentService.getAllPayments();
         return ResponseEntity.ok(payments);
@@ -36,6 +36,7 @@ public class PaymentController {
 
     // Добавление нового платежа
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> addPayment(@RequestBody Map<String, Object> paymentDTO) {
         try {
             Double suma = paymentDTO.get("suma") != null ? Double.parseDouble(paymentDTO.get("suma").toString()) : null;
@@ -60,6 +61,7 @@ public class PaymentController {
 
     // Обновление платежа
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> updatePayment(@PathVariable("id") Long id, @RequestBody Map<String, Object> paymentDTO) {
         try {
             Double suma = paymentDTO.get("suma") != null ? Double.parseDouble(paymentDTO.get("suma").toString()) : null;
@@ -84,6 +86,7 @@ public class PaymentController {
 
     // Удаление платежа
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deletePayment(@PathVariable("id") Long id) {
         try {
             paymentService.deletePayment(id);
@@ -98,6 +101,7 @@ public class PaymentController {
      * Фильтрация платежей
      */
     @GetMapping("/filter")
+    @PreAuthorize("hasRole('USER') or hasRole('EMPLOYEE') or hasRole('ADMIN')")
     public ResponseEntity<List<Map<String, Object>>> getPaymentsByFilters(
             @RequestParam(value = "type", required = false) String type,
             @RequestParam(value = "date", required = false) String date,
@@ -112,6 +116,7 @@ public class PaymentController {
      * Получение платежа по ID
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('USER') or hasRole('EMPLOYEE') or hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> getPaymentById(@PathVariable("id") Long id) {
         try {
             Map<String, Object> payment = paymentService.getPaymentById(id);

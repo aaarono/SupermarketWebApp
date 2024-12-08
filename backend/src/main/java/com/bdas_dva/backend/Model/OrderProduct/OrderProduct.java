@@ -1,4 +1,6 @@
-package com.bdas_dva.backend.Model;
+package com.bdas_dva.backend.Model.OrderProduct;
+
+import com.bdas_dva.backend.Model.OrderProduct.Product.ImageData;
 
 public class OrderProduct {
     private Long orderId;

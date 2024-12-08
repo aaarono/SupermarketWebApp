@@ -3,10 +3,11 @@
 package com.bdas_dva.backend.Controller;
 
 import com.bdas_dva.backend.Exception.ResourceNotFoundException;
-import com.bdas_dva.backend.Model.OrderProduct;
+import com.bdas_dva.backend.Model.OrderProduct.OrderProduct;
 import com.bdas_dva.backend.Service.OrderProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.dao.DataAccessException;
 
@@ -65,6 +66,7 @@ public class OrderProductController {
      * }
      */
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> createOrderProduct(@RequestBody OrderProduct orderProduct) {
         try {
             // Валидация входных данных
@@ -100,6 +102,7 @@ public class OrderProductController {
      * }
      */
     @PutMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> updateOrderProduct(@RequestBody OrderProduct orderProduct) {
         try {
             // Валидация входных данных
@@ -128,6 +131,7 @@ public class OrderProductController {
      * Пример: DELETE /api/order-products?objednavkaIdObjednavky=1&produktIdProduktu=2
      */
     @DeleteMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deleteOrderProduct(
             @RequestParam("objednavkaIdObjednavky") Long objednavkaIdObjednavky,
             @RequestParam("produktIdProduktu") Long produktIdProduktu
@@ -151,6 +155,7 @@ public class OrderProductController {
      * Пример: GET /api/order-products/search?objednavkaIdObjednavky=1&produktIdProduktu=2
      */
     @GetMapping("/search")
+    @PreAuthorize("hasRole('USER') or hasRole('EMPLOYEE') or hasRole('ADMIN')")
     public ResponseEntity<?> searchOrderProducts(
             @RequestParam(value = "objednavkaIdObjednavky", required = false) Long objednavkaIdObjednavky,
             @RequestParam(value = "produktIdProduktu", required = false) Long produktIdProduktu,

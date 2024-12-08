@@ -1,4 +1,4 @@
-package com.bdas_dva.backend.Model;
+package com.bdas_dva.backend.Model.OrderProduct.Product;
 
 public class Product {
     private Long id;

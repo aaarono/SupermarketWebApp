@@ -2,7 +2,7 @@
 
 package com.bdas_dva.backend.Service;
 
-import com.bdas_dva.backend.Model.Karta;
+import com.bdas_dva.backend.Model.OrderProduct.Platba.Karta;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.*;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;

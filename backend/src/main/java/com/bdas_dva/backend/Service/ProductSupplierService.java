@@ -3,7 +3,7 @@
 package com.bdas_dva.backend.Service;
 
 import com.bdas_dva.backend.Exception.ResourceNotFoundException;
-import com.bdas_dva.backend.Model.ProductSupplier;
+import com.bdas_dva.backend.Model.OrderProduct.Product.ProductSupplier;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;

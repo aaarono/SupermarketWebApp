@@ -5,6 +5,7 @@ import com.bdas_dva.backend.Model.Address;
 import com.bdas_dva.backend.Service.AddressService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +21,7 @@ public class AddressController {
      * Получение всех адресов с фильтрацией по параметрам
      */
     @GetMapping
+    @PreAuthorize("hasRole('USER') or hasRole('EMPLOYEE') or hasRole('ADMIN')")
     public ResponseEntity<List<Address>> getAddresses(
             @RequestParam(value = "ulice", required = false) String ulice,
             @RequestParam(value = "psc", required = false) String psc,
@@ -47,6 +49,7 @@ public class AddressController {
      * Создание нового адреса
      */
     @PostMapping
+    @PreAuthorize("hasRole('USER') or hasRole('EMPLOYEE') or hasRole('ADMIN')")
     public ResponseEntity<String> createAddress(@RequestBody Address address) {
         try {
             addressService.createAddress(
@@ -65,6 +68,7 @@ public class AddressController {
      * Обновление существующего адреса
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('USER') or hasRole('EMPLOYEE') or hasRole('ADMIN')")
     public ResponseEntity<String> updateAddress(
             @PathVariable("id") Long id,
             @RequestBody Address address) {
@@ -88,6 +92,7 @@ public class AddressController {
      * Удаление адреса по ID
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('USER') or hasRole('EMPLOYEE') or hasRole('ADMIN')")
     public ResponseEntity<String> deleteAddress(@PathVariable("id") Long id) {
         try {
             addressService.deleteAddress(id);

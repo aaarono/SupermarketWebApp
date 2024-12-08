@@ -1,6 +1,6 @@
 // Hotovost.java
 
-package com.bdas_dva.backend.Model;
+package com.bdas_dva.backend.Model.OrderProduct.Platba;
 
 public class Hotovost {
     private Long idPlatby;

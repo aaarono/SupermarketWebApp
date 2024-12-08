@@ -21,6 +21,7 @@ public class OrderStatusController {
      * Создание нового статуса заказа.
      */
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> createStatus(@RequestBody Map<String, String> statusRequest) {
         try {
             String nazev = statusRequest.get("NAZEV");
@@ -36,6 +37,7 @@ public class OrderStatusController {
      * Обновление существующего статуса заказа.
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('EMPLOYEE') or hasRole('ADMIN')")
     public ResponseEntity<?> updateStatus(@PathVariable Long id, @RequestBody Map<String, String> statusRequest) {
         try {
             String nazev = statusRequest.get("NAZEV");
@@ -51,6 +53,7 @@ public class OrderStatusController {
      * Удаление статуса заказа.
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deleteStatus(@PathVariable Long id) {
         try {
             orderStatusService.executeCUD("DELETE", id, null);
@@ -65,6 +68,7 @@ public class OrderStatusController {
      * Получение статуса по ID.
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('USER') or hasRole('EMPLOYEE') or hasRole('ADMIN')")
     public ResponseEntity<?> getStatusById(@PathVariable Long id) {
         try {
             Map<String, Object> status = orderStatusService.executeRead(id);
@@ -79,6 +83,7 @@ public class OrderStatusController {
      * Получение всех статусов заказов.
      */
     @GetMapping
+    @PreAuthorize("hasRole('USER') or hasRole('EMPLOYEE') or hasRole('ADMIN')")
     public ResponseEntity<?> getAllStatuses() {
         try {
             List<Map<String, Object>> statuses = orderStatusService.executeReadAll();

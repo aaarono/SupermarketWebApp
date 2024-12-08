@@ -10,7 +10,6 @@ public class Supermarket {
     private String city; // Optional
     private Integer buildingNumber; // Optional
 
-    // Getters and Setters
     public String getName() {
         return name;
     }

@@ -5,6 +5,7 @@ import com.bdas_dva.backend.Model.User;
 import com.bdas_dva.backend.Service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
@@ -14,6 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/users") // Маршрут для административных операций
 @CrossOrigin(origins = "http://localhost:3000") // Добавьте эту строку
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminUserController {
 
     @Autowired

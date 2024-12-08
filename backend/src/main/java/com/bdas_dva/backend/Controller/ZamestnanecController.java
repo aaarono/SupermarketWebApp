@@ -1,9 +1,8 @@
 package com.bdas_dva.backend.Controller;
 
-import com.bdas_dva.backend.Model.*;
+import com.bdas_dva.backend.Model.Zamestnanec.*;
 import com.bdas_dva.backend.Service.UtilService;
 import com.bdas_dva.backend.Service.ZamestnanecService;
-import org.aspectj.util.UtilClassLoader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

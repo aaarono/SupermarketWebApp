@@ -1,5 +1,5 @@
 // Pozice.java
-package com.bdas_dva.backend.Model;
+package com.bdas_dva.backend.Model.Zamestnanec;
 
 public class Pozice {
     private Long idPozice;

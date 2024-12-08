@@ -1,10 +1,10 @@
 package com.bdas_dva.backend.Service;
 
-import com.bdas_dva.backend.Model.Zamestnanec;
-import com.bdas_dva.backend.Model.ZamestnanecRequest;
-import com.bdas_dva.backend.Model.ZamestnanecResponse;
-import com.bdas_dva.backend.Model.ZamestnanecUserLinkRequest;
-import com.bdas_dva.backend.Model.ZamestnanecRegisterRequest;
+import com.bdas_dva.backend.Model.Zamestnanec.Zamestnanec;
+import com.bdas_dva.backend.Model.Zamestnanec.ZamestnanecRequest;
+import com.bdas_dva.backend.Model.Zamestnanec.ZamestnanecResponse;
+import com.bdas_dva.backend.Model.Zamestnanec.ZamestnanecUserLinkRequest;
+import com.bdas_dva.backend.Model.Zamestnanec.ZamestnanecRegisterRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +13,6 @@ import org.springframework.jdbc.core.*;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Service;
-import org.springframework.dao.DataAccessException;
 import org.springframework.transaction.annotation.Transactional;
 import java.sql.Date;
 

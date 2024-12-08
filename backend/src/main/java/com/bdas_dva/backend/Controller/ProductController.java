@@ -1,13 +1,14 @@
 package com.bdas_dva.backend.Controller;
 
-import com.bdas_dva.backend.Model.ImageData;
-import com.bdas_dva.backend.Model.Product;
+import com.bdas_dva.backend.Model.OrderProduct.Product.ImageData;
+import com.bdas_dva.backend.Model.OrderProduct.Product.Product;
 import com.bdas_dva.backend.Service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,6 +24,7 @@ public class ProductController {
     private ProductService productService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> addProduct(@RequestBody Map<String, Object> productDTO) {
         productService.addProduct(
                 (String) productDTO.get("name"),
@@ -35,6 +37,7 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> updateProduct(@PathVariable("id") Long id, @RequestBody Map<String, Object> productDTO) {
         productService.updateProduct(
                 id,
@@ -48,6 +51,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deleteProduct(@PathVariable("id") Long id) {
         productService.deleteProduct(id);
         return ResponseEntity.ok("Продукт успешно удален.");
@@ -102,6 +106,7 @@ public class ProductController {
     }
 
     @PostMapping("/image")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> addProductImage(
             @RequestParam("file") MultipartFile file,
             @RequestParam("productId") Long productId,
@@ -136,6 +141,7 @@ public class ProductController {
     }
 
     @PutMapping("/image")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> updateProductImage(
             @RequestParam("file") MultipartFile file,
             @RequestParam("productId") Long productId,
@@ -170,6 +176,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/image/{productId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deleteProductImage(@PathVariable Long productId) {
         try {
             productService.deleteProductImage(productId);

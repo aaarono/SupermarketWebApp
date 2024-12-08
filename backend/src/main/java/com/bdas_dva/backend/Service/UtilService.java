@@ -2,7 +2,7 @@
 package com.bdas_dva.backend.Service;
 
 import com.bdas_dva.backend.Model.Log;
-import com.bdas_dva.backend.Model.Pozice;
+import com.bdas_dva.backend.Model.Zamestnanec.Pozice;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.sql.CallableStatement;
 import java.sql.Connection;
-import java.sql.SQLException;
+
 import org.springframework.transaction.annotation.Transactional;
 
 @Service

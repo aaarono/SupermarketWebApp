@@ -1,5 +1,5 @@
 // ImageData.java
-package com.bdas_dva.backend.Model;
+package com.bdas_dva.backend.Model.OrderProduct.Product;
 
 import java.sql.Blob;
 

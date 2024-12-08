@@ -3,13 +3,14 @@
 package com.bdas_dva.backend.Controller;
 
 import com.bdas_dva.backend.Service.KartaService;
-import com.bdas_dva.backend.Model.Karta;
+import com.bdas_dva.backend.Model.OrderProduct.Platba.Karta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 // Импортировать другие необходимые классы
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,6 +28,7 @@ public class KartaController {
 
     // Получение всех карт
     @GetMapping
+    @PreAuthorize("hasRole('EMPLOYEE') or hasRole('ADMIN')")
     public ResponseEntity<List<Karta>> getKarty() {
         try {
             List<Karta> karty = kartaService.getAllKarty();
@@ -39,6 +41,7 @@ public class KartaController {
 
     // Добавление новой карты
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> addKarta(@RequestBody Map<String, Object> kartaDTO) {
         try {
             String cisloKarty = (String) kartaDTO.get("cisloKarty");
@@ -57,6 +60,7 @@ public class KartaController {
 
     // Обновление карты
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> updateKarta(@PathVariable("id") Long id, @RequestBody Map<String, Object> kartaDTO) {
         try {
             String cisloKarty = (String) kartaDTO.get("cisloKarty");
@@ -75,6 +79,7 @@ public class KartaController {
 
     // Удаление карты
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deleteKarta(@PathVariable("id") Long id) {
         try {
             kartaService.deleteKarta(id);

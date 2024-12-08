@@ -1,6 +1,6 @@
 // src/main/java/com/bdas_dva/backend/Model/ProductSupplier.java
 
-package com.bdas_dva.backend.Model;
+package com.bdas_dva.backend.Model.OrderProduct.Product;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

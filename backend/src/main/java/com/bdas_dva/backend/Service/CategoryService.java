@@ -1,7 +1,7 @@
 // CategoryService.java
 package com.bdas_dva.backend.Service;
 
-import com.bdas_dva.backend.Model.Category;
+import com.bdas_dva.backend.Model.OrderProduct.Product.Category;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.CallableStatementCallback;

@@ -1,4 +1,4 @@
-package com.bdas_dva.backend.Model;
+package com.bdas_dva.backend.Model.Zamestnanec;
 
 public class ZamestnanecUserLinkRequest {
     private Long idZamestnance;

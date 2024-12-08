@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import static com.bdas_dva.backend.Util.HashingUtil.checkPassword;
 
 @RestController
 @RequestMapping("/api/auth")

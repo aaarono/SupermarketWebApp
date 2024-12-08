@@ -10,6 +10,7 @@ import com.bdas_dva.backend.Service.AddressService;
 import com.bdas_dva.backend.Util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpHeaders;
 
@@ -37,6 +38,7 @@ public class UserController {
      * JWT токен должен быть передан в заголовке Authorization в формате "Bearer <token>".
      */
     @GetMapping("/customer")
+    @PreAuthorize("hasRole('USER') or hasRole('EMPLOYEE') or hasRole('ADMIN')")
     public ResponseEntity<?> getUserAndCustomer(@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader) {
         try {
             // Проверяем наличие токена в заголовке
@@ -76,6 +78,7 @@ public class UserController {
      * Эндпоинт для получения адреса по ID заказчика.
      */
     @GetMapping("/customer/{id}/address")
+    @PreAuthorize("hasRole('USER') or hasRole('EMPLOYEE') or hasRole('ADMIN')")
     public ResponseEntity<?> getAddressByCustomerId(@PathVariable("id") Long customerId) {
         try {
             // Получаем заказчика по ID

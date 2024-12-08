@@ -1,9 +1,9 @@
 package com.bdas_dva.backend.Controller;
 
-import com.bdas_dva.backend.Model.Sklad;
 import com.bdas_dva.backend.Service.SkladService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +18,7 @@ public class SkladController {
     private SkladService skladService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> addSklad(@RequestBody Map<String, Object> skladDTO) {
         skladService.addSklad(
                 (String) skladDTO.get("NAZEV"),
@@ -29,6 +30,7 @@ public class SkladController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> updateSklad(@PathVariable("id") Long id, @RequestBody Map<String, Object> skladDTO) {
         skladService.updateSklad(
                 id,
@@ -41,6 +43,7 @@ public class SkladController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deleteSklad(@PathVariable("id") Long id) {
         skladService.deleteSklad(id);
         return ResponseEntity.ok("Склад успешно удален.");

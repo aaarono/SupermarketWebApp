@@ -1,4 +1,4 @@
-package com.bdas_dva.backend.Model;
+package com.bdas_dva.backend.Model.OrderProduct.Platba;
 
 import java.util.Date;
 
@@ -6,10 +6,9 @@ public class Payment {
     private Long id;
     private Double suma;
     private Date datum;
-    private String typ;  // Тип оплаты ('kp' — карта, 'hp' — наличные, 'fp' — счёт)
+    private String typ;
     private Long objednavkaId;
 
-    // Конструкторы
     public Payment() {
     }
 

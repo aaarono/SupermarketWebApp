@@ -1,6 +1,10 @@
 package com.bdas_dva.backend.Service;
 
 import com.bdas_dva.backend.Model.*;
+import com.bdas_dva.backend.Model.OrderProduct.Order;
+import com.bdas_dva.backend.Model.OrderProduct.OrderRequest;
+import com.bdas_dva.backend.Model.OrderProduct.Platba.Payment;
+import com.bdas_dva.backend.Model.OrderProduct.Product.Product;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.dao.DataAccessException;
 
 import java.sql.CallableStatement;
-import java.sql.Connection;
 import java.sql.Types;
 import java.sql.Timestamp;
 import java.time.ZoneId;

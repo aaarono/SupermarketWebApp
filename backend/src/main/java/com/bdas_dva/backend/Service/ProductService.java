@@ -1,8 +1,8 @@
 // ProductService.java
 package com.bdas_dva.backend.Service;
 
-import com.bdas_dva.backend.Model.ImageData;
-import com.bdas_dva.backend.Model.Product;
+import com.bdas_dva.backend.Model.OrderProduct.Product.ImageData;
+import com.bdas_dva.backend.Model.OrderProduct.Product.Product;
 import org.hibernate.dialect.OracleTypes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.*;

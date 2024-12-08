@@ -1,6 +1,6 @@
 // Karta.java
 
-package com.bdas_dva.backend.Model;
+package com.bdas_dva.backend.Model.OrderProduct.Platba;
 
 public class Karta {
     private Long idPlatby;

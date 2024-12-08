@@ -3,10 +3,11 @@
 package com.bdas_dva.backend.Controller;
 
 import com.bdas_dva.backend.Exception.ResourceNotFoundException;
-import com.bdas_dva.backend.Model.ProductSupplier;
+import com.bdas_dva.backend.Model.OrderProduct.Product.ProductSupplier;
 import com.bdas_dva.backend.Service.ProductSupplierService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.dao.DataAccessException;
 
@@ -66,6 +67,7 @@ public class ProductSupplierController {
      * }
      */
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> createProductSupplier(@RequestBody ProductSupplier productSupplier) {
         try {
             // Валидация входных данных
@@ -99,6 +101,7 @@ public class ProductSupplierController {
      * }
      */
     @PutMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> updateProductSupplier(@RequestBody ProductSupplier productSupplier) {
         try {
             // Валидация входных данных
@@ -130,6 +133,7 @@ public class ProductSupplierController {
      * Пример: DELETE /api/product-suppliers?produktIdProduktu=1&DodavatelIdDodavatelyu=2
      */
     @DeleteMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deleteProductSupplier(
             @RequestParam("produktIdProduktu") Long produktIdProduktu,
             @RequestParam("DodavatelIdDodavatelyu") Long dodavatelIdDodavatelyu
@@ -153,6 +157,7 @@ public class ProductSupplierController {
      * Пример: GET /api/product-suppliers/search?produktIdProduktu=1&DodavatelIdDodavatelyu=2&supplyPrice=100.50&supplyDate=2023-01-01
      */
     @GetMapping("/search")
+    @PreAuthorize("hasRole('USER') or hasRole('EMPLOYEE') or hasRole('ADMIN')")
     public ResponseEntity<?> searchProductSuppliers(
             @RequestParam(value = "produktIdProduktu", required = false) Long produktIdProduktu,
             @RequestParam(value = "DodavatelIdDodavatelyu", required = false) Long dodavatelIdDodavatelyu

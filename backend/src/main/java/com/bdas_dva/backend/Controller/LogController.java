@@ -3,6 +3,7 @@ package com.bdas_dva.backend.Controller;
 import com.bdas_dva.backend.Service.LogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +21,7 @@ public class LogController {
      * Получение всех записей логов
      */
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Map<String, Object>>> getAllLogs() {
         List<Map<String, Object>> logs = logService.getAllLogs();
         return ResponseEntity.ok(logs);
@@ -29,6 +31,7 @@ public class LogController {
      * Получение записи лога по ID
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> getLogById(@PathVariable("id") Long id) {
         try {
             Map<String, Object> log = logService.getLogById(id);
@@ -42,6 +45,7 @@ public class LogController {
      * Фильтрация записей логов
      */
     @GetMapping("/filter")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Map<String, Object>>> getLogsByFilters(
             @RequestParam(value = "operation", required = false) String operation,
             @RequestParam(value = "tableName", required = false) String tableName,
