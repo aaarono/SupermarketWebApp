@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.dao.DataAccessException;
 
+import java.sql.CallableStatement;
+import java.sql.Connection;
 import java.sql.Types;
 import java.sql.Timestamp;
 import java.time.ZoneId;
@@ -49,16 +51,18 @@ public class OrderService {
         this.objectMapper = objectMapper;
     }
 
-    public List<Map<String, Object>> filterOrders(String name, String phone, String email) throws Exception {
+    public List<Map<String, Object>> filterOrders(String name, String phone, String email, Long statusId) throws Exception {
         String query = "SELECT * FROM ORDER_DETAILS_VIEW WHERE " +
                 "(:name IS NULL OR UPPER(CUSTOMER_NAME) LIKE UPPER('%' || :name || '%')) AND " +
                 "(:phone IS NULL OR CUSTOMER_PHONE = :phone) AND " +
-                "(:email IS NULL OR UPPER(CUSTOMER_EMAIL) LIKE UPPER('%' || :email || '%'))";
+                "(:email IS NULL OR UPPER(CUSTOMER_EMAIL) LIKE UPPER('%' || :email || '%')) AND " +
+                "(:statusId IS NULL OR STATUS_ID = :statusId)";
 
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("name", name)
                 .addValue("phone", phone)
-                .addValue("email", email);
+                .addValue("email", email)
+                .addValue("statusId", statusId);
 
         // Используем NamedParameterJdbcTemplate для выполнения запроса и возврата результата в виде списка карт
         return new NamedParameterJdbcTemplate(jdbcTemplate).queryForList(query, params);
@@ -497,5 +501,32 @@ public class OrderService {
                 .sum();
         logger.info("Vypočítaná celková částka: {}", total);
         return total;
+    }
+
+    public List<Product> getProductsByOrderId(Long orderId) {
+        String query = "SELECT " +
+                "P.ID_PRODUKTU AS id, " +
+                "P.NAZEV AS name, " +
+                "P.CENA AS price, " +
+                "P.POPIS AS description, " +
+                "P.KAT_PROD_ID_KATEGORIE AS categoryId, " +
+                "P.SKLAD_ID_SKLADU AS skladId, " +
+                "(SELECT NAZEV FROM OBRAZEK WHERE PRODUKT_ID_PRODUKTU = P.ID_PRODUKTU AND ROWNUM = 1) AS image, " +
+                "OP.QUANTITY AS quantity " +
+                "FROM OBJEDNAVKA_PRODUKT OP " +
+                "JOIN PRODUKT P ON OP.PRODUKT_ID_PRODUKTU = P.ID_PRODUKTU " +
+                "WHERE OP.OBJEDNAVKA_ID_OBJEDNAVKY = ?";
+
+        return jdbcTemplate.query(query, new Object[]{orderId}, (rs, rowNum) -> {
+            Product product = new Product();
+            product.setId(rs.getLong("id"));
+            product.setName(rs.getString("name"));
+            product.setPrice(rs.getDouble("price"));
+            product.setCategoryId(rs.getLong("categoryId"));
+            product.setSkladId(rs.getLong("skladId"));
+            product.setImage(rs.getString("image"));
+            product.setQuantity(rs.getInt("quantity"));
+            return product;
+        });
     }
 }

@@ -2,6 +2,7 @@ package com.bdas_dva.backend.Controller;
 
 import com.bdas_dva.backend.Model.Order;
 import com.bdas_dva.backend.Model.OrderRequest;
+import com.bdas_dva.backend.Model.Product;
 import com.bdas_dva.backend.Model.User;
 import com.bdas_dva.backend.Service.OrderService;
 import com.bdas_dva.backend.Service.UserService;
@@ -10,8 +11,11 @@ import com.bdas_dva.backend.Util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.dao.DataAccessException;
+import org.springframework.security.core.GrantedAuthority;
 
 import java.util.List;
 import java.util.Map;
@@ -89,12 +93,58 @@ public class OrderController {
             String name = filters.get("name");
             String phone = filters.get("phone");
             String email = filters.get("email");
+            Long statusId = filters.get("statusId") != null ? Long.valueOf(filters.get("statusId")) : null;
 
-            List<Map<String, Object>> orders = orderService.filterOrders(name, phone, email);
+            // Получение списка заказов
+            List<Map<String, Object>> orders = orderService.filterOrders(name, phone, email, statusId);
+
+            // Проверяем текущую роль пользователя
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            boolean isEmployee = authentication.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .anyMatch(role -> role.equals("ROLE_EMPLOYEE"));
+
+            // Если пользователь с ролью EMPLOYEE, скрываем телефоны
+            if (isEmployee) {
+                orders.forEach(order -> {
+                    if (order.containsKey("CUSTOMER_PHONE")) {
+                        String originalPhone = order.get("CUSTOMER_PHONE").toString();
+                        if (originalPhone != null && !originalPhone.isEmpty()) {
+                            order.put("CUSTOMER_PHONE", maskPhoneNumber(originalPhone));
+                        }
+                    }
+                });
+            }
+
             return ResponseEntity.ok(orders);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Ошибка при фильтрации заказов: " + e.getMessage());
+        }
+    }
+
+
+    private String maskPhoneNumber(String phoneNumber) {
+        if (phoneNumber.length() > 4) {
+            return phoneNumber.substring(0, phoneNumber.length() - 4).replaceAll("[0-9]", "*")
+                    + phoneNumber.substring(phoneNumber.length() - 4);
+        }
+        return phoneNumber.replaceAll("[0-9]", "*");
+    }
+
+
+    @PreAuthorize("hasRole('EMPLOYEE') or hasRole('ADMIN')")
+    @GetMapping("/{orderId}/products")
+    public ResponseEntity<?> getProductsByOrderId(@PathVariable("orderId") Long orderId) {
+        try {
+            List<Product> products = orderService.getProductsByOrderId(orderId);
+            if (products.isEmpty()) {
+                return ResponseEntity.status(404).body("Продукты для заказа с ID " + orderId + " не найдены.");
+            }
+            return ResponseEntity.ok(products);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Ошибка при получении продуктов для заказа: " + e.getMessage());
         }
     }
 }

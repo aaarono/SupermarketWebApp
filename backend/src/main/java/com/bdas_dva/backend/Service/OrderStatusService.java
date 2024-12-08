@@ -89,4 +89,17 @@ public class OrderStatusService {
             return results;
         });
     }
+
+    /**
+     * Метод для изменения статуса заказа.
+     */
+    public void updateOrderStatus(Long orderId, Long newStatusId) {
+        jdbcTemplate.execute((Connection connection) -> {
+            CallableStatement callableStatement = connection.prepareCall("{call UpdateOrderStatus(?, ?)}");
+            callableStatement.setLong(1, orderId);
+            callableStatement.setLong(2, newStatusId);
+            callableStatement.execute();
+            return null;
+        });
+    }
 }

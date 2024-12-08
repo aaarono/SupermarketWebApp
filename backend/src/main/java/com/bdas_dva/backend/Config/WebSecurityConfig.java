@@ -81,6 +81,7 @@ public class WebSecurityConfig {
                 "Accept",
                 "X-Requested-With",
                 "multipart/form-data",
+                "application/octet-stream",
                 "headers"));
 
         // Разрешить передачу учетных данных (cookies, authorization headers и т.д.)

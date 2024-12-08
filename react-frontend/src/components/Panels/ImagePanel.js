@@ -127,7 +127,6 @@ const fetchImages = async () => {
       return;
     }
   
-    // Разрешаем пустой ID продукта только для изображения с ID 1
     if (!formData.produkt_id_produktu && (!selectedImage || selectedImage.ID_OBRAZKU !== 1)) {
       setSnackbar({ open: true, message: 'Укажите продукт для изображения.', severity: 'error' });
       return;
@@ -135,12 +134,22 @@ const fetchImages = async () => {
   
     try {
       const dataToSend = new FormData();
-      if (formData.obrazek) {
+  
+      // Проверка файла
+      if (formData.obrazek instanceof File) {
         dataToSend.append('obrazek', formData.obrazek);
+      } else {
+        console.warn('obrazek не является файлом');
       }
+  
       dataToSend.append('nazev', formData.nazev || '');
       dataToSend.append('format_id_formatu', formData.format_id_formatu || '');
       dataToSend.append('produkt_id_produktu', formData.produkt_id_produktu || '');
+  
+      // Логирование содержимого FormData
+      for (const [key, value] of dataToSend.entries()) {
+        console.log(`${key}:`, value);
+      }
   
       const config = {
         headers: {

@@ -94,9 +94,14 @@ public class ImageController {
             @RequestParam(value = "obrazek", required = false) MultipartFile file,
             @RequestParam("nazev") String nazev,
             @RequestParam("format_id_formatu") Integer formatId,
-            @RequestParam(value = "produkt_id_produktu", required = false) Long productId
+            @RequestParam(value = "produkt_id_produktu") Long productId
     ) {
         try {
+            System.out.println("Обработчик вызван с параметрами:");
+            System.out.println("Файл: " + (file != null ? file.getOriginalFilename() : "null"));
+            System.out.println("Название: " + nazev);
+            System.out.println("Формат: " + formatId);
+            System.out.println("Продукт: " + productId);
             byte[] obrazek = file != null ? file.getBytes() : null;
             imageService.updateImage(id, obrazek, nazev, formatId, productId);
             return ResponseEntity.ok("Изображение успешно обновлено.");

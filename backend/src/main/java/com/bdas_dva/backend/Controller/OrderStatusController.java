@@ -3,6 +3,7 @@ package com.bdas_dva.backend.Controller;
 import com.bdas_dva.backend.Service.OrderStatusService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -85,6 +86,26 @@ public class OrderStatusController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Ошибка при получении статусов: " + e.getMessage());
+        }
+    }
+
+
+    @PreAuthorize("hasRole('EMPLOYEE') or hasRole('ADMIN')")
+    @PutMapping("/{orderId}/status")
+    public ResponseEntity<?> updateOrderStatus(
+            @PathVariable("orderId") Long orderId,
+            @RequestBody Map<String, Long> requestBody) {
+        try {
+            Long newStatusId = requestBody.get("status");
+            if (newStatusId == null) {
+                return ResponseEntity.status(400).body("Новый статус обязателен.");
+            }
+
+            orderStatusService.updateOrderStatus(orderId, newStatusId);
+            return ResponseEntity.ok("Статус заказа успешно обновлен.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Ошибка при обновлении статуса заказа: " + e.getMessage());
         }
     }
 }
