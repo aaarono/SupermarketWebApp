@@ -149,7 +149,7 @@ public class OrderController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/admin-panel/create")
+    @PostMapping("/admin")
     public ResponseEntity<?> createOrderAdmin(@RequestBody Map<String, Object> orderData) {
         try {
             Map<String, Object> response = orderService.handleOrderCUD("INSERT", orderData);
@@ -160,7 +160,7 @@ public class OrderController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/admin-panel/update")
+    @PutMapping("/admin")
     public ResponseEntity<?> updateOrder(@RequestBody Map<String, Object> orderData) {
         try {
             Map<String, Object> response = orderService.handleOrderCUD("UPDATE", orderData);
@@ -171,7 +171,7 @@ public class OrderController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/admin-panel/delete")
+    @DeleteMapping("/admin")
     public ResponseEntity<?> deleteOrder(@RequestBody Map<String, Object> orderData) {
         try {
             Map<String, Object> response = orderService.handleOrderCUD("DELETE", orderData);
@@ -182,7 +182,7 @@ public class OrderController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/admin-panel")
+    @GetMapping("/admin")
     public ResponseEntity<?> getAllOrders() {
         try {
             List<Map<String, Object>> orders = orderService.getAllObjednavky();

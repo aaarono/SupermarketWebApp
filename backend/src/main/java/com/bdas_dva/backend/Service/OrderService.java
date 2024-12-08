@@ -21,10 +21,8 @@ import java.sql.Types;
 import java.sql.Timestamp;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Collections;
+import java.util.*;
+
 /**
  * Služba pro zpracování objednávek a plateb.
  * Všechny operace jsou prováděny v rámci jedné transakce.
@@ -52,46 +50,46 @@ public class OrderService {
         this.objectMapper = objectMapper;
     }
 
-    /**
-     * Метод для создания, обновления или удаления заказа
-     *
-     * @param operation       Операция (INSERT, UPDATE, DELETE)
-     * @param orderData       Данные для заказа в виде Map
-     * @return ID созданного заказа для INSERT, или ответ для других операций
-     */
-    @Transactional
+
     public Map<String, Object> handleOrderCUD(String operation, Map<String, Object> orderData) {
         Map<String, Object> response = new HashMap<>();
         try {
-            // Вызов процедуры proc_objednavka_cud
-            Map<String, Object> params = new HashMap<>();
-            params.put("p_operation", operation);
-            params.put("p_id_objednavky", orderData.get("idObjednavky"));
-            params.put("p_datum", orderData.get("datum"));
-            params.put("p_status_id", orderData.get("statusId"));
-            params.put("p_supermarket_id", orderData.get("supermarketId"));
-            params.put("p_zakaznik_id", orderData.get("zakaznikId"));
+            // Преобразуем дату в Timestamp
+            String rawDate = (String) orderData.get("DATUM");
+            Timestamp formattedDate = rawDate != null
+                    ? Timestamp.valueOf(rawDate) // Преобразование строки в Timestamp
+                    : null;
+
+            // Создаем список параметров для процедуры
+            List<SqlParameter> paramList = new ArrayList<>();
+            paramList.add(new SqlParameter("p_operation", Types.VARCHAR));
+            paramList.add(new SqlParameter("p_id_objednavky", Types.INTEGER));
+            paramList.add(new SqlParameter("p_datum", Types.TIMESTAMP));
+            paramList.add(new SqlParameter("p_status_id", Types.INTEGER));
+            paramList.add(new SqlParameter("p_supermarket_id", Types.INTEGER));
+            paramList.add(new SqlParameter("p_zakaznik_id", Types.INTEGER));
 
             // Вызов хранимой процедуры
             jdbcTemplate.call((CallableStatementCreator) conn -> {
                 CallableStatement cs = conn.prepareCall("{call proc_objednavka_cud(?, ?, ?, ?, ?, ?)}");
-                cs.setString(1, (String) params.get("p_operation"));
-                cs.setObject(2, params.get("p_id_objednavky"));
-                cs.setObject(3, params.get("p_datum"));
-                cs.setObject(4, params.get("p_status_id"));
-                cs.setObject(5, params.get("p_supermarket_id"));
-                cs.setObject(6, params.get("p_zakaznik_id"));
+                cs.setString(1, operation);
+                cs.setObject(2, orderData.get("ID_OBJEDNAVKY"));
+                cs.setObject(3, formattedDate);
+                cs.setObject(4, orderData.get("STATUS_ID"));
+                cs.setObject(5, orderData.get("SUPERMARKET_ID_SUPERMARKETU"));
+                cs.setObject(6, orderData.get("ZAKAZNIK_ID_ZAKAZNIKU"));
                 return cs;
-            }, (List<SqlParameter>) params);
+            }, paramList);
 
             response.put("message", operation + " operation completed successfully.");
-            response.put("id_objednavky", params.get("p_id_objednavky"));
+            response.put("id_objednavky", orderData.get("idObjednavky"));
         } catch (DataAccessException e) {
             response.put("message", "Error executing CUD operation: " + e.getMessage());
             e.printStackTrace();
         }
         return response;
     }
+
 
     /**
      * Получить всех пользователей из USER_VIEW.

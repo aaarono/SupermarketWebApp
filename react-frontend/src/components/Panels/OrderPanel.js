@@ -49,6 +49,7 @@ function OrderPanel({ setActivePanel }) {
   const [editOpen, setEditOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [formData, setFormData] = useState({
+    ID_OBJEDNAVKY: '',
     DATUM: '',
     STATUS_ID: '',
     ZAKAZNIK_ID_ZAKAZNIKU: '',
@@ -56,9 +57,25 @@ function OrderPanel({ setActivePanel }) {
   });
 
   useEffect(() => {
-    fetchOrdersStatuses();
-    fetchOrders();
-    fetchSupermarkets();
+    // Сначала загружаем статусы и супермаркеты, затем заказы
+    const fetchData = async () => {
+      try {
+        // Запрос статусов
+        const statusesResponse = await api.get('/api/order-statuses');
+        setOrderStatuses(Array.isArray(statusesResponse) ? statusesResponse : [statusesResponse]);
+
+        // Запрос супермаркетов
+        const marketsResponse = await api.get('/api/supermarkets');
+        setSupermarkets(Array.isArray(marketsResponse) ? marketsResponse : [marketsResponse]);
+
+        // Запрос заказов после получения статусов и супермаркетов
+        fetchOrders();
+      } catch (error) {
+        console.error('Error fetching initial data:', error);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const fetchOrdersStatuses = async () => {
@@ -83,19 +100,21 @@ function OrderPanel({ setActivePanel }) {
 
   const fetchOrders = async () => {
     try {
-      const response = await api.get('/api/orders/admin-panel');
+      const response = await api.get('/api/orders/admin');
       const ordersArray = Array.isArray(response) ? response : [response];
       
       console.log(response)
       const formattedOrders = ordersArray.map(order => {
         // Находим статус по ID
-        const foundStatus = orderStatuses.find(s => s.ID_STATUS == order.STATUS_ID);
+        const foundStatus = orderStatuses.find(s => s.ID_STATUS === order.STATUS_ID);
         const statusName = foundStatus ? foundStatus.NAZEV : 'Unknown';
       
+
+
         // Находим супермаркет по ID
-        const foundMarket = supermarkets.find(m => m.ID_SUPERMARKETU == order.SUPERMARKET_ID_SUPERMARKETU);
+        const foundMarket = supermarkets.find(m => m.ID_SUPERMARKETU === order.SUPERMARKET_ID_SUPERMARKETU);
         const supermarketName = foundMarket ? foundMarket.NAZEV : 'Unknown';
-      
+
         return {
           id: order.ID_OBJEDNAVKY,
           orderDate: new Date(order.DATUM).toLocaleString(),
@@ -109,7 +128,6 @@ function OrderPanel({ setActivePanel }) {
         };
       });
       
-
       setOrders(formattedOrders);
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -117,12 +135,12 @@ function OrderPanel({ setActivePanel }) {
   };
 
   const getStatusLabel = (statusId) => {
-    const status = orderStatuses.find(s => s.ID_STATUS == statusId);
+    const status = orderStatuses.find(s => s.ID_STATUS === statusId);
     return status ? status.NAZEV : 'Unknown';
   };
 
   const getSupermarketName = (supermarketId) => {
-    const market = supermarkets.find(m => m.ID_SUPERMARKETU == supermarketId);
+    const market = supermarkets.find(m => m.ID_SUPERMARKETU === supermarketId);
     return market ? market.NAZEV : 'Unknown';
   };
 
@@ -181,6 +199,7 @@ function OrderPanel({ setActivePanel }) {
     const localISO = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0,16);
 
     setFormData({
+      ID_OBJEDNAVKY: order.id,
       DATUM: localISO,
       STATUS_ID: order.statusId,
       ZAKAZNIK_ID_ZAKAZNIKU: order.customerId,
@@ -193,6 +212,7 @@ function OrderPanel({ setActivePanel }) {
     setEditOpen(false);
     setSelectedOrder(null);
     setFormData({
+      ID_OBJEDNAVKY: '',
       DATUM: '',
       STATUS_ID: '',
       ZAKAZNIK_ID_ZAKAZNIKU: '',
@@ -206,15 +226,28 @@ function OrderPanel({ setActivePanel }) {
 
     try {
       const dateObj = new Date(formData.DATUM);
-      const isoDate = new Date(dateObj.getTime() - dateObj.getTimezoneOffset() * 60000).toISOString();
-
-      await api.put(`/api/orders/admin-panel/update`, {
-        DATUM: isoDate,
+  
+      // Форматируем дату как yyyy-MM-dd HH:mm:ss
+      const formattedDate = dateObj.getFullYear() +
+        '-' +
+        String(dateObj.getMonth() + 1).padStart(2, '0') +
+        '-' +
+        String(dateObj.getDate()).padStart(2, '0') +
+        ' ' +
+        String(dateObj.getHours()).padStart(2, '0') +
+        ':' +
+        String(dateObj.getMinutes()).padStart(2, '0') +
+        ':' +
+        String(dateObj.getSeconds()).padStart(2, '0');
+  
+      await api.put(`/api/orders/admin`, {
+        ID_OBJEDNAVKY: formData.ID_OBJEDNAVKY,
+        DATUM: formattedDate, 
         STATUS_ID: formData.STATUS_ID,
         ZAKAZNIK_ID_ZAKAZNIKU: formData.ZAKAZNIK_ID_ZAKAZNIKU,
         SUPERMARKET_ID_SUPERMARKETU: formData.SUPERMARKET_ID_SUPERMARKETU
       });
-
+      
       setSnackbar({ open: true, message: 'Order successfully updated', severity: 'success' });
       fetchOrders();
       handleEditClose();
